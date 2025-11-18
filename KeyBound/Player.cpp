@@ -11,6 +11,7 @@ void Player::move() {
 	Point old_head = body[0];
 	body[0].move();
 	if (screen.isWall(body[0])) {
+
 		body[0] = old_head;
 	}
 	else if (screen.isWonChar(body[0])) {
