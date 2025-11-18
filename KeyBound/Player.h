@@ -9,7 +9,9 @@ class Player {
 	Point body;
 	char keys[NUM_KEYS];
 	Screen& screen;
+
 	bool won = false,Riddle = false;
+
 public:
 	Player(const Point& start_point, const char(&the_keys)[NUM_KEYS + 1], Screen& theScreen)
 		: screen(theScreen)

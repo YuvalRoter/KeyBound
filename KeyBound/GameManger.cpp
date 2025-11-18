@@ -47,6 +47,7 @@ void handleRiddle(Screen& screen, Player& player)//TODO: REMOVE THIS FROM MAIN A
 
 
 int main() {
+	
 	constexpr char ESC = 27, EXIT = '9';
 	hideCursor();
 	cls();
@@ -61,6 +62,7 @@ int main() {
 
 	char choice = 0;
 	while (true) {
+		
 		choice = _getch();              // blocks until a key is pressed
 
 		if (choice == EXIT) {            // EXIT on the menu -> exit program
