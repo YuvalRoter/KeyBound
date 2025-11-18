@@ -2,33 +2,26 @@
 
 #include "Screen.h"
 #include "utils.h"
-
 #include <fstream> 
 
 
-bool Screen::loadFromFile(const std::string& filename)
+bool Screen::loadFromFile(const std::string& filename)// פונקציה שמנסה לעלות את המפה למסך ומחזירה אמת אם היא הצליחה
 {
-    std::ifstream file(filename);   // פתיחת הקובץ לקריאה (ios::in הוא ברירת מחדל)
+    std::ifstream file(filename);
 
     if (!file) {
         std::cerr << "Error: cannot open map file: " << filename << std::endl;
         return false;
     }
 
-    std::string line;
+    std::string line; // משתנה לאחסון שורות מהקובץ
 
     for (int y = 0; y <= MAX_Y; ++y) {
-        if (!std::getline(file, line)) {
+        if (!std::getline(file, line)) { // קריאה שורה מהקובץ
             std::cerr << "Error: not enough lines in map file: " << filename << std::endl;
             return false;
         }
 
-        // אם השורה קצרה מדי – נשלים ברווחים
-        if ((int)line.size() < MAX_X + 1) {
-            line.resize(MAX_X + 1, ' ');
-        }
-
-        // נעתיק את התווים לשדה screen
         for (int x = 0; x <= MAX_X; ++x) {
             screen[y][x] = line[x];
         }
@@ -36,8 +29,10 @@ bool Screen::loadFromFile(const std::string& filename)
     }
 
 
+    
     return true;
 }
+
 void Screen::draw() const {
 	int y = 0;
 	for (const auto& row : screen) {
