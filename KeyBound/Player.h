@@ -27,5 +27,6 @@ public:
 	bool hasWon() const {
 		return won;
 	}
+	void jump(int NumberOfJumps = 3);
 };
 
