@@ -22,3 +22,7 @@ void hideCursor() {
 void cls() {
     system("cls");
 }
+
+void setTextColor(WORD color) {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
+}
