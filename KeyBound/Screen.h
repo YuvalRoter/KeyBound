@@ -25,6 +25,9 @@ public:
 	bool isWonChar(const Point& p) const {
 		return charAt(p) == '%';
 	}
+	bool isSpring(const Point& p) const {
+		return charAt(p) == 'S';
+	}
 	void draw() const;
 
 	char getCharAt(int y, int x) const {
