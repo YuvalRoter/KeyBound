@@ -8,6 +8,44 @@
 #include <filesystem> 
 #include <string> 
 
+void handleRiddle(Screen& screen, Player& player)//TODO: REMOVE THIS FROM MAIN AND ADD IT TO A CLASS
+{
+
+	while (true) {
+		char ch = _getch();          // blocks until a key
+
+		// ignore everything that is not 1–4
+		if (ch < '1' || ch > '4')
+			continue;
+
+		bool correct = false;
+
+		// *** choose the correct answer here ***
+		if (ch == '1') {
+			correct = true;
+		}
+
+		if (correct) {
+			// 1. reload the main level
+			screen.restoreBackup();
+			screen.draw();
+
+			// 2. exit riddle mode for this player
+			player.Change_Riddle(false);   // add a simple setter in Player
+
+			break;   // leave handleRiddle, game loop resumes
+		}
+		else {
+			// simple feedback + retry
+			gotoxy(8, 22);
+			std::cout << "Wrong answer, try again (1-4)..." << std::flush;
+			// loop continues and waits for next key
+		}
+	}
+}
+
+
+
 int main() {
 	
 	constexpr char ESC = 27, EXIT = '9';
@@ -67,7 +105,12 @@ int main() {
 					won = true;
 					break;
 				}
+				if (player.inRiddle()) {
+					handleRiddle(theScreen, player);
+
+				}
 			}
+
 			Sleep(50);
 			if (_kbhit()) {
 				char key = _getch();
@@ -91,3 +134,4 @@ int main() {
 
 	
 }
+

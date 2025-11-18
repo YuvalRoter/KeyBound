@@ -25,6 +25,9 @@ public:
 	void changeDir(const Direction& new_dir) {
 		dir = new_dir;
 	}
+	Direction getDir() const {
+		return dir;
+	}
 	int getX() const {
 		return x;
 	}

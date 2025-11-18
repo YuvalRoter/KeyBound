@@ -4,27 +4,71 @@
 #include "Direction.h"
 
 void Player::move() {
-	body[SIZE - 1].draw(' '); // erase the tail from screen
-	for (size_t index = SIZE - 1; index > 0; --index) {
-		body[index] = body[index - 1];
-	}
-	Point old_head = body[0];
-	body[0].move();
-	if (screen.isWall(body[0])) {
+	body.draw(' ');// erase old position
 
-		body[0] = old_head;
+
+	Point old_head = body;//save old position in case we hit a wall
+	body.move();// move to new position
+	if (screen.isWall(body)) {
+
+		body = old_head;
 	}
-	else if (screen.isWonChar(body[0])) {
+	else if (screen.isWonChar(body)) {
 		won = true;
+	}	
+	else if (screen.isSpring(body)) {
+		body.changeDir(body.getDir()*-1);
+		jump();        // uses default NumberOfJumps = 3
+		return;        // jump() already draws final position
+	}	
+	else if (screen.isRiddle(body)) {
+
+		// 1. Remove the ? from the map so riddle doesn't repeat
+		screen.setCell(body.getY(), body.getX(), ' ');   // <-- NEW
+		screen.saveBackup();
+
+		// 2. Load the riddle screen
+		screen.loadFromFile("riddle1.txt");
+		screen.draw();
+
+		Player::Riddle = true;
+		return;
 	}
-	body[0].draw();
+
+	body.draw();
+}
+
+void Player::jump(int NumberOfJumps) {
+	// IMPORTANT: do NOT erase here – move() already erased the starting cell
+	Point old_head = body;  // starting point of the jump
+
+	for (int i = 0; i < NumberOfJumps; ++i) {
+		body.move();   // move one more step in current direction
+		
+		if (screen.isWall(body)) {
+			// If we hit a wall at any point in the jump,
+			// cancel whole jump and stay on the spring. 
+			body = old_head;
+			break;
+		}
+
+		if (screen.isWonChar(body)) {
+			won = true;
+			break;
+		}
+
+		// (optional) if we want chained springs
+	}
+
+	// draw final position (either reverted or after jump)
+	body.draw();
 }
 
 void Player::keyPressed(char ch) {
 	size_t index = 0;
 	for (char key : keys) {
 		if (std::tolower(key) == std::tolower(ch)) {
-			body[0].changeDir(Direction::directions[index]);
+			body.changeDir(Direction::directions[index]);
 			break;
 		}
 		++index;
