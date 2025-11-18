@@ -9,7 +9,7 @@ class Player {
 	Point body;
 	char keys[NUM_KEYS];
 	Screen& screen;
-	bool won = false;
+	bool won = false,Riddle = false;
 public:
 	Player(const Point& start_point, const char(&the_keys)[NUM_KEYS + 1], Screen& theScreen)
 		: screen(theScreen)
@@ -27,6 +27,13 @@ public:
 	bool hasWon() const {
 		return won;
 	}
+	bool inRiddle() const {
+		return Riddle;
+	}
+	void Change_Riddle(bool type) {
+		Riddle = type;
+	}
+
 	void jump(int NumberOfJumps = 3);
 };
 

@@ -17,9 +17,23 @@ void Player::move() {
 		won = true;
 	}	
 	else if (screen.isSpring(body)) {
+		body.changeDir(body.getDir()*-1);
 		jump();        // uses default NumberOfJumps = 3
 		return;        // jump() already draws final position
 	}	
+	else if (screen.isRiddle(body)) {
+
+		// 1. Remove the ? from the map so riddle doesn't repeat
+		screen.setCell(body.getY(), body.getX(), ' ');   // <-- NEW
+		screen.saveBackup();
+
+		// 2. Load the riddle screen
+		screen.loadFromFile("riddle1.txt");
+		screen.draw();
+
+		Player::Riddle = true;
+		return;
+	}
 
 	body.draw();
 }
@@ -30,7 +44,7 @@ void Player::jump(int NumberOfJumps) {
 
 	for (int i = 0; i < NumberOfJumps; ++i) {
 		body.move();   // move one more step in current direction
-
+		
 		if (screen.isWall(body)) {
 			// If we hit a wall at any point in the jump,
 			// cancel whole jump and stay on the spring. 

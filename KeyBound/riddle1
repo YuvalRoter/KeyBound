@@ -1,16 +1,16 @@
 o==============================================================================o
 |                                                                              |
-|                               KEYBOUND MENU                                  |
+|                     WHAT DOES THE OPERATOR '&' RETURN?                       |
 |                                                                              |
-|                 (1) Start a New Game                                         |
-|                 (2) Load Map                                                 |
-|                 (3) Choose Player Color                                      |
-|                 (4) Keybinding Options                                       |
-|                 (5) High Scores                                              |
-|                 (6) Toggle Sound                                             |
-|                 (7) Developer Mode                                           |
-|                 (8) Instructions and Keys                                    |
-|                 (9) Exit                                                     |
+|                 (1) A pointer to a value                                     |
+|                 (2) The size of a variable                                   |
+|                 (3) The value stored in a variable                           |
+|                 (4)  A new allocated memory block                            |
+|             						                                           |
+|                                                                              |
+|               				                                               |
+|             								                                   |
+|                			                                                   |
 |                                                                              |
 |                                                                              |
 |                                                                              |

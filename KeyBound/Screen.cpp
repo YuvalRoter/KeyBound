@@ -40,3 +40,19 @@ void Screen::draw() const {
 		std::cout << row << std::flush;
 	}
 }
+
+
+void Screen::saveBackup()
+{
+    std::memcpy(backup, screen, sizeof(screen));
+    hasBackup = true;
+}
+
+
+
+void Screen::restoreBackup()
+{
+    if (hasBackup) {
+        std::memcpy(screen, backup, sizeof(screen));
+    }
+}
