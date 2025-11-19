@@ -36,22 +36,23 @@ bool Screen::loadFromFile(const std::string& filename)// פונקציה שמנס
 void Screen::draw() const {
     for (int y = 0; y <= MAX_Y; ++y) {
         gotoxy(0, y);
-
+        // here i should add a ifcolorpressed --------------------------------------------x 
         for (int x = 0; x <= MAX_X; ++x) {
             char c = screen[y][x];
 
-            if (c == 'W') {                 // wall character from level1.txt
-                setTextColor(6);            // Dark Yellow
-                std::cout << (char)176;     // █
-                setTextColor(7);            // reset
+            if (c == WALL) {               // wall character from level1.txt
+                setTextColor(Brown);
+                std::cout << (char)MediumBlock;
+                setTextColor(LightGray);            // reset
             }
-            else if (c == '%') {            // win tile from level1.txt
-                setTextColor(10);           // Bright Green
-                std::cout << (char)178;     // █
-                setTextColor(7);            // reset
+
+            else if (c == WONCHAR) {      // win tile from level1.txt
+                setTextColor(LightRed);
+                std::cout << (char)DarkBlock;
+                setTextColor(LightGray);            // reset
             }
             else {
-                setTextColor(7);
+                setTextColor(LightGray);
                 std::cout << c;
             }
         }
