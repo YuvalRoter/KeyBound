@@ -36,6 +36,14 @@ public:
 		Riddle = type;
 	}
 
+	Point getPoint() const {
+		return body;
+	}
+
+	void setPosition(const Point& p) {
+		body = p;
+	}
+
 	void jump(int NumberOfJumps = 3);
 
 	int getX() const {

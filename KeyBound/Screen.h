@@ -8,7 +8,7 @@
 #define WALL '#'
 #define RIDDEL '?'
 #define DOOR 'D'
-#define SPRING 'S'
+#define SPRING '+'
 #define BOMB 'B'
 #define PLAYER1 '@'
 #define PLAYER2 '&'
@@ -87,6 +87,11 @@ public:
 	bool isSpring(const Point& p) const {
 		return charAt(p) == SPRING;
 	}
+
+	bool isDoor(const Point& p) const {
+		return charAt(p) == DOOR;
+	}
+
 	void draw() const;
 
 	void drawSimonSquare(int left, int top,char filler) const;

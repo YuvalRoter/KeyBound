@@ -37,32 +37,52 @@ void Player::move() {
 
 	body.draw();
 }
-
 void Player::jump(int NumberOfJumps) {
-	// IMPORTANT: do NOT erase here – move() already erased the starting cell
-	Point old_head = body;  // starting point of the jump
+    // starting point: we are already standing on the spring
+    Point start = body;
 
-	for (int i = 0; i < NumberOfJumps; ++i) {
-		body.move();   // move one more step in current direction
-		
-		if (screen.isWall(body)) {
-			// If we hit a wall at any point in the jump,
-			// cancel whole jump and stay on the spring. 
-			body = old_head;
-			break;
-		}
+    for (int i = 0; i < NumberOfJumps; ++i) {
+        Point prev = body;    // remember previous position
+        body.move();          // move one step in current direction
 
-		if (screen.isWonChar(body)) {
-			won = true;
-			break;
-		}
+        // If we hit a WALL, stand just before it 
+        if (screen.isWall(body)) {
+            body = prev;     
+            break;
+        }
 
-		// (optional) if we want chained springs
-	}
+        // If we land on the WIN tile, stop there and mark win
+        if (screen.isWonChar(body)) {
+            won = true;
+            break;
+        }
 
-	// draw final position (either reverted or after jump)
-	body.draw();
+        // If we land on a RIDDLE during the jump – trigger it immediately
+        if (screen.isRiddle(body)) {
+            screen.setCell(body.getY(), body.getX(), ' ');
+            screen.saveBackup();
+            screen.loadFromFile("riddle1.txt");
+            screen.draw();
+
+            Player::Riddle = true;
+            body.draw();
+            return;
+        }
+
+        // If we land on ANOTHER SPRING:
+        // stop here; next game tick `move()` will see the spring and
+        // start a new jump automatically. This makes spring–spring chains work.
+        if (screen.isSpring(body)) {
+            break;
+        }
+
+        
+    }
+
+    // draw final position (either before a wall, or on some special char)
+    body.draw();
 }
+
 
 void Player::keyPressed(char ch) {
 	size_t index = 0;

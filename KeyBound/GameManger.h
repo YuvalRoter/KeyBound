@@ -7,14 +7,18 @@
 #include <cstddef>
 #include <filesystem>
 #include "Riddle.h"
+#include "Room.h"
 
 
 class GameManger {
     static constexpr char ESC = 27;
     static constexpr char EXIT = '9';
     static constexpr std::size_t NUMBER_OF_PLAYERS = 2;
+    static constexpr std::size_t NUMBER_OF_ROOMS = 3;
     Screen  screen;
     Player  players[NUMBER_OF_PLAYERS];
+    Room    rooms[NUMBER_OF_ROOMS]; 
+    int     currentRoom = 0;       
     bool    running = true;
     bool    won = false;
 public:
@@ -46,5 +50,8 @@ private:
 
     static Riddle generateRandomRiddle();
     int NumbersInput();
+
+    void initRooms();            // fill rooms[]
+    void loadRoom(int index);    // load room & position players
 
 };

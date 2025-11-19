@@ -39,6 +39,8 @@ void Screen::draw() const {
         for (int x = 0; x <= MAX_X; ++x) {
             char c = screen[y][x];
 
+
+
             if (c == WALL) {               // wall character from level1.txt
                 setTextColor(Brown);
                 std::cout << (char)MediumBlock;

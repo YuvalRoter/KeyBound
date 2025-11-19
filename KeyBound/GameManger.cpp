@@ -4,6 +4,7 @@
 #include "utils.h"
 #include "Riddle.h"
 #include <string>
+#include "Room.h"
 
 GameManger::GameManger(): 
 	players{
@@ -12,9 +13,9 @@ GameManger::GameManger():
 } 
 
 {
-
     hideCursor();
     cls();
+	initRooms();
 }
 
 
@@ -42,7 +43,7 @@ void GameManger::run() {
 		return;          // user chose EXIT
 	}
 
-	loadMap("level1.txt");
+	loadRoom(0);
 
 	gameLoop();
 }
@@ -62,6 +63,42 @@ bool GameManger::showMenu() {
 
 	cls();
 	return true;               // continue game
+}
+
+void GameManger::initRooms()
+{
+	rooms[0] = Room(
+		"level1.txt",
+		Point(10, 4, Direction::directions[Direction::RIGHT], PLAYER1),
+		Point(7, 4, Direction::directions[Direction::RIGHT], PLAYER2)
+	);
+
+	rooms[1] = Room(
+		"level2.txt",
+		Point(5, 10, Direction::directions[Direction::RIGHT], PLAYER1),
+		Point(5, 12, Direction::directions[Direction::RIGHT], PLAYER2)
+	);
+
+	rooms[2] = Room(
+		"level3.txt",
+		Point(3, 3, Direction::directions[Direction::RIGHT], PLAYER1),
+		Point(3, 5, Direction::directions[Direction::RIGHT], PLAYER2)
+	);
+}
+void GameManger::loadRoom(int index)
+{
+	currentRoom = index;
+
+	// load map
+	loadMap(rooms[currentRoom].mapFile);
+
+
+	// reset players to starting positions
+	for (std::size_t i = 0; i < NUMBER_OF_PLAYERS; ++i) {
+		players[i].setPosition(rooms[index].startPositions[i]);
+	}
+
+	screen.draw();
 }
 
 
@@ -112,6 +149,12 @@ void GameManger::handleInput() {
 void GameManger::updatePlayers() {
 	for (auto& player : players) {
 		player.move();
+
+		if (screen.isDoor(player.getPoint())) {
+			int next = (currentRoom + 1) % NUMBER_OF_ROOMS;
+			loadRoom(next);
+			return; // break update, map changed
+		}
 
 		if (player.hasWon()) {
 			Sleep(20);
