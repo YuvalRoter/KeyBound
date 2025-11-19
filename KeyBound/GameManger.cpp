@@ -41,8 +41,14 @@ bool GameManger::showMenu() {
 			return false;      // user chose to exit game
 		}
 
-		if (choice >= '1' && choice <= '8') {
-			break;             // for now we only have level 1
+		if (choice == '1') {           
+			g_colorsEnabled = false;
+			break;
+		}
+
+		if (choice == '3') {           
+			g_colorsEnabled = true;
+			break;
 		}
 	}
 
