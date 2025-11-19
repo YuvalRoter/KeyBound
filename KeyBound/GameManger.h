@@ -6,6 +6,7 @@
 #include <iostream>   
 #include <cstddef>
 #include <filesystem>
+#include "Riddle.h"
 
 
 class GameManger {
@@ -16,7 +17,6 @@ class GameManger {
     Player  players[NUMBER_OF_PLAYERS];
     bool    running = true;
     bool    won = false;
-
 public:
     GameManger();
 
@@ -35,6 +35,16 @@ private:
 
     // helpers
     void updatePlayers(); // movement, win, riddles
+
     void handleInput();   // read keyboard, move players / pause
-    void handleRiddle(Player& player); // your current global handleRiddle
+
+    void handleRiddle(Player& player); 
+
+    void handleSimon(Riddle& riddle, Player& player);
+
+    void handleMulti(Riddle& riddle,Player& player); 
+
+    static Riddle generateRandomRiddle();
+    int NumbersInput();
+
 };

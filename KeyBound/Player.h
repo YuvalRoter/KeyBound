@@ -37,5 +37,12 @@ public:
 	}
 
 	void jump(int NumberOfJumps = 3);
+
+	int getX() const {
+		return body.getX();
+	}
+	int getY() const {
+		return body.getY();
+	}
 };
 

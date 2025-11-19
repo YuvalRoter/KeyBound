@@ -13,16 +13,18 @@
 #define PLAYER1 '@'
 #define PLAYER2 '&'
 #define WONCHAR '%'
+#define HEARTCHAR '$'
 
 class Screen {
 public:
 	static constexpr int MAX_X = 79;
-	static constexpr int MAX_Y = 24;
+	static constexpr int MAX_Y = 24;	
 
 	enum {
 		LightBlock = 176,
 		MediumBlock = 177,
 		DarkBlock = 178
+		
 	};
 
 	enum {
@@ -80,8 +82,12 @@ public:
 	}
 	void draw() const;
 
+	void drawSimonSquare(int left, int top,
+		int normalColor) const;
+
+	void drawSimon(int litIndex)const;
+
 	char getCharAt(int y, int x) const {
 		return screen[y][x];
 	}
-	
 };

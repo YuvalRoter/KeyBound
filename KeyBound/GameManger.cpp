@@ -3,16 +3,37 @@
 #include <conio.h>
 #include "utils.h"
 #include "Riddle.h"
+#include <string>
 
-GameManger::GameManger()
-    : players{
+GameManger::GameManger(): 
+	players{
         Player(Point(10, 4, Direction::directions[Direction::RIGHT], PLAYER1), {'w', 'd', 's', 'a', ' '}, screen),
         Player(Point(7, 4, Direction::directions[Direction::RIGHT], PLAYER2), {'i', 'l', 'k', 'j', 'm'}, screen)
-    }
+} 
 
 {
+
     hideCursor();
     cls();
+}
+
+
+Riddle GameManger::generateRandomRiddle() {
+	int r = rand() % 2;   // 0 or 1
+
+	if (r == 0) {
+		// --- Multiple choice ---
+		return Riddle::makeMultipleChoice(
+			"What is 2 + 2?",
+			{ "4", "3", "5", "2" },
+			0  // correct index
+		);
+	}
+	else {
+		// --- Simon Says ---
+		std::vector<int> pattern = { 0, 1, 3, 2 };
+		return Riddle::makeSimonSays(pattern, 400);
+	}
 }
 
 
@@ -33,35 +54,26 @@ bool GameManger::showMenu() {
 
 
 	// 2. Wait for valid choice
-	char choice = 0;
-	while (true) {
-		choice = _getch();
-
-		if (choice == EXIT) { // '9'
-			cls();
-			return false;      // user chose to exit game
-		}
-
-
-		if (choice >= '1' && choice <= '8') {
-			break;
-		}
-		if (choice == '1') {           
-			g_colorsEnabled = false;
-			break;
-		}
-
-		if (choice == '3') {           
-			g_colorsEnabled = true;
-			break;
-
-		}
-	}
+	int Choice = NumbersInput();
+	if (Choice == 1)
+		g_colorsEnabled = true;
+	else if (Choice == 3)
+		g_colorsEnabled = false;
 
 	cls();
 	return true;               // continue game
 }
 
+
+int GameManger::NumbersInput()
+{
+	char choice = 0;
+	while (true) {
+		choice = _getch();
+		if (std::isdigit(choice))
+			return choice - '0';   
+	}
+}
 
 
 
@@ -111,40 +123,149 @@ void GameManger::updatePlayers() {
 		}
 
 		if (player.inRiddle()) {
+
 			handleRiddle(player);
-			// after this returns, main level screen should be restored
+			
 		}
 	}
 }
 
 void GameManger::handleRiddle(Player& player) {
-	while (true) {
-		char ch = _getch();
 
-		// ignore everything that is not 1–4
-		if (ch < '1' || ch > '4')
-			continue;
+	Riddle r = generateRandomRiddle();
+	
+	// 2. Backup the map & draw riddle screen
+	screen.setCell(player.getY(), player.getX(), ' ');
+	screen.saveBackup();
+	screen.loadFromFile("riddle1.txt");   
 
-		bool correct = false;
+	// 3. Now solve according to type:
+	if (r.getType() == RiddleType::MultipleChoice) {
+		handleMulti(r, player);
+	}
+	else {
+		handleSimon(r, player);
+	}
 
-		// *** for now, hard-coded correct answer ***
-		if (ch == '1') {
-			correct = true;
+	// After finishing:
+	screen.restoreBackup();
+	screen.draw();
+	player.Change_Riddle(false);
+}
+
+
+void GameManger::handleSimon(Riddle& riddle, Player& player)
+{
+	// 1. Get pattern from riddle
+	std::vector<int> pattern = riddle.getSimonPattern();
+
+	
+	int flashDelayMs = riddle.getSimonDelayMs();
+
+	// 2. SHOW the pattern (computer plays)
+	for (int idx : pattern) {
+		// first draw all squares, none highlighted
+		screen.drawSimon(-1);
+		Sleep(150);
+
+		// highlight the one at 'idx'
+		screen.drawSimon(idx);
+		Sleep(flashDelayMs);
+
+		// turn off again between steps
+		screen.drawSimon(-1);
+		Sleep(150);
+	}
+
+	// 3. ASK PLAYER to repeat the pattern
+	for (std::size_t i = 0; i < pattern.size(); ++i) {
+
+		int digit = NumbersInput();   // wait for user input
+		int choiceIndex = digit - 1;  // we need it to be 0 , 1 ,2 ,3 
+
+		// show what the user pressed
+		screen.drawSimon(choiceIndex);
+
+		// check correctness
+		if (choiceIndex != pattern[i]) {
+			// WRONG – show message and exit the riddle
+			cls();
+			gotoxy(30, 12);          // adjust position as you like
+			std::cout << "YOU FAILED!";
+			Sleep(1000);
+			return;                  // handleRiddle will then restore map
 		}
+	}
 
-		if (correct) {
-			// 1. reload the main level from backup
-			screen.restoreBackup();
-			screen.draw();
+	// 4. If we get here – success
+	cls();
+	gotoxy(30, 12);
+	std::cout << "GOOD JOB!";
+	Sleep(1000);
+}
 
-			// 2. exit riddle mode for this player
-			player.Change_Riddle(false);
+void GameManger::handleMulti(Riddle& riddle, Player& player)
+{
+	// 1. Prepare screen (border / clear)
+	cls();
 
+	const int consoleWidth = Screen::MAX_X + 1;
+
+	const int correctIndex = riddle.getCorrectIndex(); // 0..3
+	const auto& options = riddle.getOptions();      // vector<string>
+	const std::string& Q = riddle.getQuestion();
+
+	// 2. Print question in the middle (horizontally)
+	int qX = (int)((consoleWidth - (int)Q.size()) / 2);
+	if (qX < 0) qX = 0;     // just in case question is too long
+	int qY = Screen::MAX_Y / 3;   // about one-third from top
+
+	gotoxy(qX, qY);
+	std::cout << Q;
+
+	// 3. Print options below the question, numbered 1-4
+	int optStartY = qY + 2;       // start two lines below question
+
+	for (std::size_t i = 0; i < options.size(); ++i) {
+		std::string line =
+			std::to_string(i + 1) + ". " + options[i];   // "1. option text"
+
+		int x = (int)((consoleWidth - (int)line.size()) / 2);
+		if (x < 0) x = 0;
+
+		int y = optStartY + (int)i * 2;  // 1 empty line between options
+
+		gotoxy(x, y);
+		std::cout << line;
+	}
+
+	// 4. Wait for valid input 1-4
+	int chosenIndex = -1;
+	while (true) {
+		int digit = NumbersInput();      // must return 0..9
+
+		if (digit >= 1 && digit <= (int)options.size()) {
+			chosenIndex = digit - 1;     // map 1..4 -> 0..3
 			break;
 		}
-		else {
-			gotoxy(8, 22);
-			std::cout << "Wrong answer, try again (1-4)..." << std::flush;
-		}
+		// otherwise ignore and keep waiting
+	}
+
+	// 5. Check answer
+	if (chosenIndex != correctIndex) {
+		// WRONG
+		cls();                           // clear whole screen
+		gotoxy(consoleWidth / 2 - 5, Screen::MAX_Y / 2);
+		std::cout << "YOU FAILED!";
+		Sleep(1000);
+		return;                          // handleRiddle() will restore map
+	}
+	else {
+		// Optional: show success message
+		cls();
+		gotoxy(consoleWidth / 2 - 5, Screen::MAX_Y / 2);
+		std::cout << "CORRECT!";
+		Sleep(700);
+		return;
 	}
 }
