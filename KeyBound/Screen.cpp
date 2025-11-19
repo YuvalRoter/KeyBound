@@ -59,16 +59,14 @@ void Screen::draw() const {
     }
 }
 
-void Screen::drawSimonSquare(int left, int top,
-    int normalColor) const
+void Screen::drawSimonSquare(int left, int top,char filler) const
 {
-    setTextColor(normalColor);
     const int SIZE = 6;
 
     for (int dy = 0; dy < SIZE; ++dy) {
         gotoxy(left, top + dy);
         for (int dx = 0; dx < SIZE; ++dx) {
-            std::cout << ':';       // fill the block
+            std::cout << char(filler);   
         }
     }
 
@@ -107,7 +105,20 @@ void Screen::drawSimon(int litIndex) const
 
     for (int i = 0; i < 4; ++i) {
         int color = (i == litIndex ? sq[i].hiColor : sq[i].baseColor);
-        drawSimonSquare(sq[i].x, sq[i].y, color);
+        setTextColor(color);
+        if (g_colorsEnabled)
+            drawSimonSquare(sq[i].x, sq[i].y,char(219));    // 219 is solid block, NOT WORKING IN ENUMS!!
+        else
+        {
+            if ( color == Black)
+                drawSimonSquare(sq[i].x, sq[i].y, ' ');
+            else
+                drawSimonSquare(sq[i].x, sq[i].y, char(219));
+
+        }
+           
+
+        
     }
 }
 
@@ -119,6 +130,7 @@ void Screen::drawSimon(int litIndex) const
 
 void Screen::saveBackup()
 {
+    //std::cout << "[DEBUG] saveBackup: char(0,0) = " << screen[0][0] << "\n"; - for debug
     std::memcpy(backup, screen, sizeof(screen));
     hasBackup = true;
 }
@@ -129,5 +141,7 @@ void Screen::restoreBackup()
 {
     if (hasBackup) {
         std::memcpy(screen, backup, sizeof(screen));
+        //std::cout << "[DEBUG] restoreBackup: char(0,0) = " << screen[0][0] << "\n"; - for debug 
     }
+    
 }

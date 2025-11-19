@@ -134,9 +134,7 @@ void GameManger::handleRiddle(Player& player) {
 
 	Riddle r = generateRandomRiddle();
 	
-	// 2. Backup the map & draw riddle screen
-	screen.setCell(player.getY(), player.getX(), ' ');
-	screen.saveBackup();
+
 	screen.loadFromFile("riddle1.txt");   
 
 	// 3. Now solve according to type:

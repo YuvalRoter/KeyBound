@@ -23,6 +23,7 @@ public:
 	enum {
 		LightBlock = 176,
 		MediumBlock = 177,
+		FullBlock = 219,
 		DarkBlock = 178
 		
 	};
@@ -34,7 +35,7 @@ public:
 		Cyan = 3,
 		Red = 4,
 		Magenta = 5,
-		Brown = 6,   
+		Brown = 6,
 		LightGray = 7,
 		DarkGray = 8,
 		LightBlue = 9,
@@ -43,7 +44,8 @@ public:
 		LightRed = 12,
 		LightMagenta = 13,
 		Yellow = 14,
-		White = 15
+		White = 15,
+		BLANK = -1
 	};
 private:
 
@@ -82,8 +84,7 @@ public:
 	}
 	void draw() const;
 
-	void drawSimonSquare(int left, int top,
-		int normalColor) const;
+	void drawSimonSquare(int left, int top,char filler) const;
 
 	void drawSimon(int litIndex)const;
 

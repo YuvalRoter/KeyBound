@@ -24,7 +24,7 @@ void Player::move() {
 	else if (screen.isRiddle(body)) {
 
 		// 1. Remove the ? from the map so riddle doesn't repeat
-		screen.setCell(body.getY(), body.getX(), ' ');   // <-- NEW
+		screen.setCell(body.getY(), body.getX(), ' ');   
 		screen.saveBackup();
 
 		// 2. Load the riddle screen
