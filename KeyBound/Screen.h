@@ -3,10 +3,46 @@
 #include "Point.h"
 #include <string>
 
+// ---------------- def objects ---------------- // 
+
+#define WALL '#'
+#define RIDDEL '?'
+#define DOOR 'D'
+#define SPRING 'S'
+#define BOMB 'B'
+#define PLAYER1 '@'
+#define PLAYER2 '&'
+#define WONCHAR '%'
+
 class Screen {
 public:
 	static constexpr int MAX_X = 79;
 	static constexpr int MAX_Y = 24;
+
+	enum {
+		LightBlock = 176,
+		MediumBlock = 177,
+		DarkBlock = 178
+	};
+
+	enum {
+		Black = 0,
+		Blue = 1,
+		Green = 2,
+		Cyan = 3,
+		Red = 4,
+		Magenta = 5,
+		Brown = 6,   
+		LightGray = 7,
+		DarkGray = 8,
+		LightBlue = 9,
+		LightGreen = 10,
+		LightCyan = 11,
+		LightRed = 12,
+		LightMagenta = 13,
+		Yellow = 14,
+		White = 15
+	};
 private:
 
 	char screen[MAX_Y + 1][MAX_X + 2];
@@ -31,16 +67,16 @@ public:
 		screen[y][x] = c;
 	}
 	bool isWall(const Point& p) const {
-		return charAt(p) == 'W';
+		return charAt(p) == WALL;
 	}
 	bool isRiddle(const Point& p) const {
-		return charAt(p) == '?';
+		return charAt(p) == RIDDEL;
 	}
 	bool isWonChar(const Point& p) const {
-		return charAt(p) == '%';
+		return charAt(p) == WONCHAR;
 	}
 	bool isSpring(const Point& p) const {
-		return charAt(p) == 'S';
+		return charAt(p) == SPRING;
 	}
 	void draw() const;
 
