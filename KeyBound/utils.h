@@ -8,3 +8,5 @@ void hideCursor();
 void cls();
 
 void setTextColor(WORD color);
+
+extern bool g_colorsEnabled;
