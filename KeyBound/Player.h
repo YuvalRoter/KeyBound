@@ -9,7 +9,7 @@ class Player {
 	Point body;
 	char keys[NUM_KEYS];
 	Screen& screen;
-
+	int PlayerSpeed = 1;
 	bool won = false,Riddle = false;
 
 public:

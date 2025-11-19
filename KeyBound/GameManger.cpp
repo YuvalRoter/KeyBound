@@ -2,13 +2,14 @@
 #include <windows.h>
 #include <conio.h>
 #include "utils.h"
-
+#include "Riddle.h"
 
 GameManger::GameManger()
     : players{
-        Player(Point(10, 4, Direction::directions[Direction::RIGHT], '@'), {'w', 'd', 's', 'a', ' '}, screen),
-        Player(Point(7, 4, Direction::directions[Direction::RIGHT], '*'), {'i', 'l', 'k', 'j', 'm'}, screen)
+        Player(Point(10, 4, Direction::directions[Direction::RIGHT], PLAYER1), {'w', 'd', 's', 'a', ' '}, screen),
+        Player(Point(7, 4, Direction::directions[Direction::RIGHT], PLAYER2), {'i', 'l', 'k', 'j', 'm'}, screen)
     }
+
 {
     hideCursor();
     cls();
@@ -42,7 +43,7 @@ bool GameManger::showMenu() {
 		}
 
 		if (choice >= '1' && choice <= '8') {
-			break;             // for now we only have level 1
+			break;           
 		}
 	}
 
@@ -71,7 +72,7 @@ void GameManger::handleInput() {
 	char key = _getch();
 	if (key == ESC) {
 		key = _getch();
-		if (key == 'h' || key == 'H') {
+		if (key == 'h' || key == 'H') {// exit if escape is active
 			running = false;
 		}
 	}
