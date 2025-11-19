@@ -3,6 +3,8 @@
 #include <cstdlib>
 #include "utils.h"
 
+bool g_colorsEnabled = false;   // start with colors OFF by default
+
 void gotoxy(int x, int y) {
     std::cout.flush();
     COORD coord;
@@ -24,5 +26,13 @@ void cls() {
 }
 
 void setTextColor(WORD color) {
-    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), color);
+    static HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    if (!g_colorsEnabled) {
+        // If colors are disabled ? always use the default gray (7)
+        SetConsoleTextAttribute(hConsole, 7);
+        return;
+    }
+
+    SetConsoleTextAttribute(hConsole, color);
 }

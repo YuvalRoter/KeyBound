@@ -4,7 +4,7 @@
 |                                                                              |
 |                 (1) Start a New Game                                         |
 |                 (2) Load Map                                                 |
-|                 (3) Choose Player Color                                      |
+|                 (3) Start a New Game with color                              |
 |                 (4) Keybinding Options                                       |
 |                 (5) High Scores                                              |
 |                 (6) Toggle Sound                                             |

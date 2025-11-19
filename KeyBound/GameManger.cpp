@@ -70,8 +70,16 @@ int main() {
 			return 0;
 		}
 
-		if (choice >= '1' && choice <= '8') {
-			break;                      // valid menu option
+		if (choice == '1') {
+			// Option 1: play WITHOUT colors
+			g_colorsEnabled = false;
+			break;
+		}
+
+		if (choice == '3') {
+			// Option 3: play WITH colors
+			g_colorsEnabled = true;
+			break;
 		}
 
 		// any other key is ignored; loop continues
