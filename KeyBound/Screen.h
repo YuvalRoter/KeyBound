@@ -20,6 +20,11 @@ public:
 	static constexpr int MAX_X = 79;
 	static constexpr int MAX_Y = 24;	
 
+	static constexpr int SIMON_WIDTH = 16;  // columns
+	static constexpr int SIMON_HEIGHT = 8;   // rows
+	static constexpr int SIMON_GAP_X = 4;   // horizontal gap
+	static constexpr int SIMON_GAP_Y = 2;   // vertical gap
+
 	enum {
 		LightBlock = 176,
 		MediumBlock = 177,

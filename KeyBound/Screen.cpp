@@ -59,35 +59,41 @@ void Screen::draw() const {
     }
 }
 
-void Screen::drawSimonSquare(int left, int top,char filler) const
+void Screen::drawSimonSquare(int left, int top, char filler) const
 {
-    const int SIZE = 6;
+    const int WIDTH = SIMON_WIDTH;
+    const int HEIGHT = SIMON_HEIGHT;
 
-    for (int dy = 0; dy < SIZE; ++dy) {
+    for (int dy = 0; dy < HEIGHT; ++dy) {
         gotoxy(left, top + dy);
-        for (int dx = 0; dx < SIZE; ++dx) {
-            std::cout << char(filler);   
+        for (int dx = 0; dx < WIDTH; ++dx) {
+            std::cout << filler;
         }
     }
 
-    setTextColor(LightGray);//reset to player color
+    setTextColor(LightGray); // reset
 }
+
+
 
 void Screen::drawSimon(int litIndex) const
 {
-    const int SQUARE_SIZE = 6;
-    const int GAP = 2;  // space between squares
+    const int WIDTH = SIMON_WIDTH;
+    const int HEIGHT = SIMON_HEIGHT;
+    const int GAP_X = SIMON_GAP_X;
+    const int GAP_Y = SIMON_GAP_Y;
 
-    const int totalWidth = 2 * SQUARE_SIZE + GAP;
-    const int totalHeight = 2 * SQUARE_SIZE + GAP;
+    const int totalWidth = 2 * WIDTH + GAP_X;
+    const int totalHeight = 2 * HEIGHT + GAP_Y;
 
-    const int startX = (MAX_X - totalWidth) / 2;
-    const int startY = (MAX_Y - totalHeight) / 2;
+    // +1 because coordinates are 0..MAX_X
+    const int startX = ((MAX_X + 1) - totalWidth) / 2;
+    const int startY = ((MAX_Y + 1) - totalHeight) / 2;
 
     int x0 = startX;
-    int x1 = startX + SQUARE_SIZE + GAP;
+    int x1 = startX + WIDTH + GAP_X;
     int y0 = startY;
-    int y1 = startY + SQUARE_SIZE + GAP;
+    int y1 = startY + HEIGHT + GAP_Y;
 
     // colors for each square (base + highlight)
     struct Square {
@@ -108,7 +114,7 @@ void Screen::drawSimon(int litIndex) const
         setTextColor(color);
         if (g_colorsEnabled)
             drawSimonSquare(sq[i].x, sq[i].y,char(219));    // 219 is solid block, NOT WORKING IN ENUMS!!
-        else
+        else// color blind mode!
         {
             if ( color == Black)
                 drawSimonSquare(sq[i].x, sq[i].y, ' ');
