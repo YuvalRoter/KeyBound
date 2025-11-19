@@ -44,8 +44,8 @@ bool GameManger::showMenu() {
 
 
 		if (choice >= '1' && choice <= '8') {
-			break;           
-
+			break;
+		}
 		if (choice == '1') {           
 			g_colorsEnabled = false;
 			break;
