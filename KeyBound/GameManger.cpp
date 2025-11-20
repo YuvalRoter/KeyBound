@@ -5,6 +5,15 @@
 #include "Riddle.h"
 #include <string>
 #include "Room.h"
+#include <random>
+
+static std::mt19937 rng(std::random_device{}());
+
+static int randomInt(int min, int max) {
+	std::uniform_int_distribution<int> dist(min, max);
+	return dist(rng);
+}
+
 
 GameManger::GameManger(): 
 	players{
@@ -20,8 +29,8 @@ GameManger::GameManger():
 
 
 Riddle GameManger::generateRandomRiddle() {
-	int r = rand() % 2;   // 0 or 1
-
+	int r = randomInt(0,1);   // 0 or 1
+	size_t SimonSize = randomInt(4, 6);;   // 4-6
 	if (r == 0) {
 		// --- Multiple choice ---
 		return Riddle::makeMultipleChoice(
@@ -30,9 +39,12 @@ Riddle GameManger::generateRandomRiddle() {
 			0  // correct index
 		);
 	}
-	else {
-		// --- Simon Says ---
-		std::vector<int> pattern = { 0, 1, 3, 2 };
+	else {// Simon Says
+		std::vector<int> pattern(SimonSize, 0);
+		for (size_t i = 0; i < SimonSize; ++i) {
+			int num = randomInt(0, 3);
+			pattern[i] = num;
+		}
 		return Riddle::makeSimonSays(pattern, 400);
 	}
 }
@@ -60,6 +72,20 @@ bool GameManger::showMenu() {
 		g_colorsEnabled = true;
 	else if (Choice == 3)
 		g_colorsEnabled = false;
+	else if (Choice == 8)
+	{	
+		screen.loadFromFile("Guide.txt");
+		screen.draw();
+		Choice = NumbersInput();
+		if (Choice == 1)
+			showMenu();
+		else if (Choice == 2) {
+			screen.loadFromFile("SimonGuide.txt");
+			screen.draw();
+		}
+
+
+	}
 
 	cls();
 	return true;               // continue game
@@ -177,7 +203,6 @@ void GameManger::handleRiddle(Player& player) {
 
 	Riddle r = generateRandomRiddle();
 	
-
 	screen.loadFromFile("riddle1.txt");   
 
 	// 3. Now solve according to type:
@@ -185,6 +210,7 @@ void GameManger::handleRiddle(Player& player) {
 		handleMulti(r, player);
 	}
 	else {
+
 		handleSimon(r, player);
 	}
 
@@ -202,6 +228,8 @@ void GameManger::handleSimon(Riddle& riddle, Player& player)
 
 	
 	int flashDelayMs = riddle.getSimonDelayMs();
+
+	
 
 	// 2. SHOW the pattern (computer plays)
 	for (int idx : pattern) {
