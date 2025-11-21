@@ -10,6 +10,9 @@ enum class RiddleType {
     SimonSays
 };
 
+
+
+
 class Riddle {
 public:
     // Default constructor: makes a trivial multiple-choice riddle.

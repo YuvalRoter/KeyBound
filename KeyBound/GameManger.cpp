@@ -7,6 +7,10 @@
 #include "Room.h"
 #include <random>
 
+#include <fstream>
+#include <sstream>
+
+
 static std::mt19937 rng(std::random_device{}());
 
 static int randomInt(int min, int max) {
@@ -25,6 +29,7 @@ GameManger::GameManger():
     hideCursor();
     cls();
 	initRooms();
+	loadQuestionsFromFile("questions.txt");
 }
 
 
@@ -32,13 +37,25 @@ Riddle GameManger::generateRandomRiddle() {
 	int r = randomInt(0,1);   // 0 or 1
 	size_t SimonSize = randomInt(4, 6);;   // 4-6
 	if (r == 0) {
-		// --- Multiple choice ---
+		// If no questions loaded, fallback so the game doesn't crash
+		if (numQuestions == 0) {
+			return Riddle::makeMultipleChoice(
+				"ERROR: NO QUESTIONS LOADED",
+				{ "0", "0", "0", "0" },
+				0
+			);
+		}
+
+		int idx = randomInt(0, numQuestions - 1);
+		const Question& q = questions[idx];
+
 		return Riddle::makeMultipleChoice(
-			"What is 2 + 2?",
-			{ "4", "3", "5", "2" },
-			0  // correct index
+			q.text,
+			{ q.options[0], q.options[1], q.options[2], q.options[3] },
+			q.correctIndex
 		);
 	}
+
 	else {// Simon Says
 		std::vector<int> pattern(SimonSize, 0);
 		for (size_t i = 0; i < SimonSize; ++i) {
@@ -74,13 +91,13 @@ bool GameManger::showMenu() {
 		g_colorsEnabled = false;
 	else if (Choice == 8)
 	{	
-		screen.loadFromFile("Guide.txt");
+		screen.loadFromFileToMap("Guide.txt");
 		screen.draw();
 		Choice = NumbersInput();
 		if (Choice == 1)
 			showMenu();
-		else if (Choice == 2) {
-			screen.loadFromFile("SimonGuide.txt");
+		else {
+			screen.loadFromFileToMap("SimonGuide.txt");
 			screen.draw();
 		}
 
@@ -203,7 +220,7 @@ void GameManger::handleRiddle(Player& player) {
 
 	Riddle r = generateRandomRiddle();
 	
-	screen.loadFromFile("riddle1.txt");   
+	screen.loadFromFileToMap("riddle1.txt");   
 
 	// 3. Now solve according to type:
 	if (r.getType() == RiddleType::MultipleChoice) {
@@ -337,4 +354,37 @@ void GameManger::handleMulti(Riddle& riddle, Player& player)
 		Sleep(700);
 		return;
 	}
+}
+
+bool GameManger::loadQuestionsFromFile(const std::string& filename)
+{
+	std::ifstream file;
+	if (!openFileForRead(filename, file, "questions"))
+		return false;
+
+	for (int i = 0; i < 100; i++) {
+		Question& q = questions[i];
+
+		// Read question text
+		if (!std::getline(file, q.text)) return false;
+
+		// Read 4 options
+		for (int j = 0; j < 4; j++) {
+			if (!std::getline(file, q.options[j])) return false;
+		}
+
+		// Read correct index
+		std::string indexLine;
+		if (!std::getline(file, indexLine)) return false;
+		q.correctIndex = std::stoi(indexLine);
+
+		// Read explanation
+		if (!std::getline(file, q.explanation)) return false;
+
+		// Read the empty separator line
+		std::string empty;
+		std::getline(file, empty);
+	}
+
+	return true;
 }

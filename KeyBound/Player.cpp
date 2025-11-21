@@ -28,7 +28,7 @@ void Player::move() {
 		screen.saveBackup();
 
 		// 2. Load the riddle screen
-		screen.loadFromFile("riddle1.txt");
+		screen.loadFromFileToMap("riddle1.txt");
 		screen.draw();
 
 		Player::Riddle = true;
@@ -61,7 +61,7 @@ void Player::jump(int NumberOfJumps) {
         if (screen.isRiddle(body)) {
             screen.setCell(body.getY(), body.getX(), ' ');
             screen.saveBackup();
-            screen.loadFromFile("riddle1.txt");
+            screen.loadFromFileToMap("riddle1.txt");
             screen.draw();
 
             Player::Riddle = true;

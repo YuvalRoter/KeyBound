@@ -1,6 +1,7 @@
 #include <windows.h>
 #include <iostream>
 #include <cstdlib>
+#include <fstream> 
 #include "utils.h"
 
 bool g_colorsEnabled = false;
@@ -35,6 +36,18 @@ void setTextColor(WORD color) {
     }
 
     SetConsoleTextAttribute(hConsole, color);
+}
+
+bool openFileForRead(const std::string& filename,
+    std::ifstream& file,
+    const std::string& what)
+{
+    file.open(filename);
+    if (!file) {
+        std::cerr << "Error: cannot open " << what << " file: " << filename << std::endl;
+        return false;
+    }
+    return true;
 }
 
 

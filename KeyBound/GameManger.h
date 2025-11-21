@@ -8,6 +8,7 @@
 #include <filesystem>
 #include "Riddle.h"
 #include "Room.h"
+#include "Question.h"
 
 
 class GameManger {
@@ -21,17 +22,23 @@ class GameManger {
     int     currentRoom = 0;       
     bool    running = true;
     bool    won = false;
+
+    static const int MAX_QUESTIONS = 100;
+    Question questions[MAX_QUESTIONS];
+    int numQuestions = 50;   // how many were actually loaded from file
+
 public:
     GameManger();
 
     void run();
 
 private:
+
     
 	bool showMenu();    // returns false if user chose EXIT
 
     void loadMap(const std::string& filename) {
-            if (!screen.loadFromFile(filename))  // failed to load
+            if (!screen.loadFromFileToMap(filename))  // failed to load
                 std::cout << "Failed to load map!\n";
             screen.draw();
     }
@@ -48,10 +55,12 @@ private:
 
     void handleMulti(Riddle& riddle,Player& player); 
 
-    static Riddle generateRandomRiddle();
+    Riddle generateRandomRiddle();
     int NumbersInput();
 
     void initRooms();            // fill rooms[]
     void loadRoom(int index);    // load room & position players
+    bool loadQuestionsFromFile(const std::string& filename);
+
 
 };

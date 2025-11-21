@@ -70,7 +70,9 @@ public:
 	void saveBackup();
 	void restoreBackup();
 
-	bool loadFromFile(const std::string& filename);
+	bool loadFromFileToMap(const std::string& filename);
+	bool loadfile(const std::string& filename, std::ifstream& file);
+
 
 	void setCell(int y, int x, char c) {
 		screen[y][x] = c;
