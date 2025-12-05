@@ -10,19 +10,36 @@ class Player {
 	char keys[NUM_KEYS];
 	Screen& screen;
 	int PlayerSpeed = 1;
-	bool won = false,Riddle = false;
+	bool won = false, Riddle = false;
+
 
 public:
-	Player(const Point& start_point, const char(&the_keys)[NUM_KEYS + 1], Screen& theScreen)
+
+
+	struct Controls {
+		char up;
+		char right;
+		char stay;
+		char left;
+		char pause;
+	};
+
+
+	Player(const Point& start_point, const Player::Controls& controls, Screen& theScreen)
 		: screen(theScreen)
 	{
-		
 		body = start_point;
-		
-		memcpy(keys, the_keys, sizeof(keys[0]) * NUM_KEYS);
+		keys[0] = controls.up;
+		keys[1] = controls.right;
+		keys[2] = controls.stay;
+		keys[3] = controls.left;
+		keys[4] = controls.pause;
 	}
 	char getChar() const {
 		return body.getChar();
+	}
+	char getstaybutton() const {
+		return keys[4];
 	}
 	void move();
 	void keyPressed(char ch);

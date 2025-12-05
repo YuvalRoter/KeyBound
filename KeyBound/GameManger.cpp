@@ -13,18 +13,22 @@
 
 static std::mt19937 rng(std::random_device{}());
 
+
+
 static int randomInt(int min, int max) {
 	std::uniform_int_distribution<int> dist(min, max);
 	return dist(rng);
 }
 
+static constexpr Player::Controls P1_KEYS = { 'w', 'd', 's', 'a', ' ' };
+static constexpr Player::Controls P2_KEYS = { 'i', 'l', 'k', 'j', 'm' };
+
 
 GameManger::GameManger(): 
 	players{
-        Player(Point(10, 4, Direction::directions[Direction::RIGHT], PLAYER1), {'w', 'd', 's', 'a', ' '}, screen),
-        Player(Point(7, 4, Direction::directions[Direction::RIGHT], PLAYER2), {'i', 'l', 'k', 'j', 'm'}, screen)
-} 
-
+	   Player(Point(10, 4, Direction::directions[Direction::STAY], PLAYER1), P1_KEYS, screen),
+		Player(Point(7, 4, Direction::directions[Direction::STAY], PLAYER2), P2_KEYS, screen)
+}
 {
     hideCursor();
     cls();
@@ -210,6 +214,8 @@ void GameManger::updatePlayers() {
 
 		if (player.inRiddle()) {
 
+			player.keyPressed(player.getstaybutton());
+
 			handleRiddle(player);
 			
 		}
@@ -217,6 +223,7 @@ void GameManger::updatePlayers() {
 }
 
 void GameManger::handleRiddle(Player& player) {
+
 
 	Riddle r = generateRandomRiddle();
 	

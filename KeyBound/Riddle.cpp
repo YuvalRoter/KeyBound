@@ -30,7 +30,7 @@ Riddle Riddle::makeMultipleChoice(
     return r;
 }
 
-// Static factory for Simon-Says riddles
+// Static factory for Simon-Says riddles this is a bouns part
 Riddle Riddle::makeSimonSays(
     const std::vector<int>& pattern,
     int delayMs)
