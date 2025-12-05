@@ -1,19 +1,16 @@
 #pragma once
 #include <string>
+#include <vector> 
 #include "Point.h"
 
 struct Room {
-    std::string mapFile;        // file name for this room
-    Point       startPositions[2]; // starting position for the 2 players
+    std::string mapFile;
+    std::vector<Point> startPositions; 
 
     Room() = default;
 
-    Room(const std::string& file,
-        const Point& p1,
-        const Point& p2)
-        : mapFile(file)
+    Room(const std::string& file, const std::vector<Point>& starts)
+        : mapFile(file), startPositions(starts)
     {
-        startPositions[0] = p1;
-        startPositions[1] = p2;
     }
 };

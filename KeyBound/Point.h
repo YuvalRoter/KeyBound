@@ -1,41 +1,33 @@
 #pragma once
+#include <iostream> 
 
-#include <utility>
-#include <cmath>
-
-#include "Direction.h"
+class Direction;
 
 class Point {
-	int x = 0, y = 0;
-	Direction dir = Direction::directions[Direction::RIGHT];
-	char ch = '*';
+    int x, y;
+    char ch = ' ';
 public:
-	Point() {}
-	Point(int x1, int y1, const Direction& the_dir, char c) {
-		x = x1;
-		y = y1;
-		dir = the_dir;
-		ch = c;
-	}
-	void draw() {
-		draw(ch);
-	}
-	void draw(char c);
-	void move();
-	void changeDir(const Direction& new_dir) {
-		dir = new_dir;
-	}
-	Direction getDir() const {
-		return dir;
-	}
-	int getX() const {
-		return x;
-	}
-	int getY() const {
-		return y;
-	}
-	char getChar() const {
-		return ch;
-	}
-};
+    Point() : x(0), y(0), ch(' ') {} // Default constructor
 
+    // Constructor used by GameManager
+    Point(int x1, int y1, char c) : x(x1), y(y1), ch(c) {}
+
+    // Helper constructor
+    Point(int x1, int y1) : x(x1), y(y1), ch('*') {}
+
+    int getX() const { return x; }
+    int getY() const { return y; }
+    char getChar() const { return ch; }
+
+    // Logic: New Point = Old Point + Vector
+    Point operator+(const Direction& d) const;
+
+    bool operator==(const Point& other) const {
+        return x == other.x && y == other.y;
+    }
+
+    void draw(); // Only draw, no move
+    void draw(char c);
+
+  
+};

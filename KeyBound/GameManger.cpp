@@ -12,7 +12,9 @@
 
 
 static std::mt19937 rng(std::random_device{}());
-
+static constexpr Player::Controls P1_KEYS = { 'w', 'd', 's', 'a', ' ' };
+static constexpr Player::Controls P2_KEYS = { 'i', 'l', 'k', 'j', 'm' };
+static constexpr int START = 6,MAXSIMON = 4,MINSIMON =3;
 
 
 static int randomInt(int min, int max) {
@@ -20,14 +22,12 @@ static int randomInt(int min, int max) {
 	return dist(rng);
 }
 
-static constexpr Player::Controls P1_KEYS = { 'w', 'd', 's', 'a', ' ' };
-static constexpr Player::Controls P2_KEYS = { 'i', 'l', 'k', 'j', 'm' };
 
 
 GameManger::GameManger(): 
 	players{
-	   Player(Point(10, 4, Direction::directions[Direction::STAY], PLAYER1), P1_KEYS, screen),
-		Player(Point(7, 4, Direction::directions[Direction::STAY], PLAYER2), P2_KEYS, screen)
+	   Player(Point(START, START-1, PLAYER1), Direction::directions[Direction::STAY], P1_KEYS, screen),
+       Player(Point(START-2,START-1, PLAYER2), Direction::directions[Direction::STAY], P2_KEYS, screen)
 }
 {
     hideCursor();
@@ -39,7 +39,7 @@ GameManger::GameManger():
 
 Riddle GameManger::generateRandomRiddle() {
 	int r = randomInt(0,1);   // 0 or 1
-	size_t SimonSize = randomInt(4, 6);;   // 4-6
+	size_t SimonSize = randomInt(MINSIMON, MAXSIMON);; 
 	if (r == 0) {
 		// If no questions loaded, fallback so the game doesn't crash
 		if (numQuestions == 0) {
@@ -114,35 +114,50 @@ bool GameManger::showMenu() {
 
 void GameManger::initRooms()
 {
+	
 	rooms[0] = Room(
 		"level1.txt",
-		Point(10, 4, Direction::directions[Direction::RIGHT], PLAYER1),
-		Point(7, 4, Direction::directions[Direction::RIGHT], PLAYER2)
+		{
+			Point(10, 4, PLAYER1), //MAGIC NUMBERS!!!!!
+			Point(7, 4, PLAYER2)
+		}
 	);
+
 
 	rooms[1] = Room(
 		"level2.txt",
-		Point(5, 10, Direction::directions[Direction::RIGHT], PLAYER1),
-		Point(5, 12, Direction::directions[Direction::RIGHT], PLAYER2)
+		{
+			Point(5, 10, PLAYER1)
+			
+		}
 	);
+
 
 	rooms[2] = Room(
 		"level3.txt",
-		Point(3, 3, Direction::directions[Direction::RIGHT], PLAYER1),
-		Point(3, 5, Direction::directions[Direction::RIGHT], PLAYER2)
+		{
+			Point(3, 3, PLAYER1),
+			Point(3, 5, PLAYER2)
+		}
 	);
 }
+
 void GameManger::loadRoom(int index)
 {
 	currentRoom = index;
-
-	// load map
 	loadMap(rooms[currentRoom].mapFile);
 
+	const auto& starts = rooms[index].startPositions;
 
-	// reset players to starting positions
 	for (std::size_t i = 0; i < NUMBER_OF_PLAYERS; ++i) {
-		players[i].setPosition(rooms[index].startPositions[i]);
+		// RESET THE STATE
+		players[i].setFinished(false);
+		// Reset speed if necessary
+		// players[i].setSpeed(1); 
+
+		if (i < starts.size()) {
+			players[i].setPosition(starts[i]);
+		}
 	}
 
 	screen.draw();
@@ -194,34 +209,28 @@ void GameManger::handleInput() {
 
 
 void GameManger::updatePlayers() {
-	for (auto& player : players) {
-		player.move();
+	bool allFinished = true;
+for (auto& player : players) {
+        
+        // 1. Only move if NOT finished
+        if (!player.isFinished()) {
+            player.move();
+            allFinished = false; // If someone is moving, we are not done
+        }
+        
+        if (player.inRiddle()) {
+            player.keyPressed(player.getstaybutton());
+            handleRiddle(player);
+        }
+    }
 
-		if (screen.isDoor(player.getPoint())) {
-			int next = (currentRoom + 1) % NUMBER_OF_ROOMS;
-			loadRoom(next);
-			return; // break update, map changed
-		}
-
-		if (player.hasWon()) {
-			Sleep(20);
-			cls();
-			std::cout << player.getChar() << " won!" << std::endl;
-			(void)_getch();
-			won = true;
-			return; // leave updatePlayers, gameLoop will exit
-		}
-
-		if (player.inRiddle()) {
-
-			player.keyPressed(player.getstaybutton());
-
-			handleRiddle(player);
-			
-		}
-	}
+    // 2. SYNCHRONIZATION POINT
+    // Only if ALL players have reached the door do we change the room
+    if (allFinished) {
+        int next = (currentRoom + 1) % NUMBER_OF_ROOMS;
+        loadRoom(next);
+    }
 }
-
 void GameManger::handleRiddle(Player& player) {
 
 

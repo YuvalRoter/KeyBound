@@ -4,93 +4,70 @@
 #include "Direction.h"
 
 void Player::move() {
+
+
 	body.draw(' ');// erase old position
+    int current_speed = PlayerSpeed;
 
+    for (int i = 0; i < current_speed; ++i) {
 
-	Point old_head = body;//save old position in case we hit a wall
-	body.move();// move to new position
-	if (screen.isWall(body)) {
+    Point next_pos = body + dir;
 
-		body = old_head;
+	if (screen.isWall(next_pos)) {
+        dir = Direction::directions[Direction::STAY];
+        break;
+		
 	}
-	else if (screen.isWonChar(body)) {
-		won = true;
-	}	
-	else if (screen.isSpring(body)) {
-		body.changeDir(body.getDir()*-1);
-		jump();        // uses default NumberOfJumps = 3
-		return;        // jump() already draws final position
-	}	
-	else if (screen.isRiddle(body)) {
-
-		// 1. Remove the ? from the map so riddle doesn't repeat
-		screen.setCell(body.getY(), body.getX(), ' ');   
-		screen.saveBackup();
-
-		// 2. Load the riddle screen
-		screen.loadFromFileToMap("riddle1.txt");
-		screen.draw();
-
-		Player::Riddle = true;
-		return;
-	}
-
-	body.draw();
-}
-void Player::jump(int NumberOfJumps) {
-    // starting point: we are already standing on the spring
-    Point start = body;
-
-    for (int i = 0; i < NumberOfJumps; ++i) {
-        Point prev = body;    // remember previous position
-        body.move();          // move one step in current direction
-
-        // If we hit a WALL, stand just before it 
-        if (screen.isWall(body)) {
-            body = prev;     
-            break;
-        }
-
-        // If we land on the WIN tile, stop there and mark win
-        if (screen.isWonChar(body)) {
-            won = true;
-            break;
-        }
-
-        // If we land on a RIDDLE during the jump – trigger it immediately
-        if (screen.isRiddle(body)) {
-            screen.setCell(body.getY(), body.getX(), ' ');
-            screen.saveBackup();
-            screen.loadFromFileToMap("riddle1.txt");
-            screen.draw();
-
-            Player::Riddle = true;
-            body.draw();
-            return;
-        }
-
-        // If we land on ANOTHER SPRING:
-        // stop here; next game tick `move()` will see the spring and
-        // start a new jump automatically. This makes spring–spring chains work.
-        if (screen.isSpring(body)) {
-            break;
-        }
-
-        
+    if (screen.isWonChar(next_pos)) {
+        body = next_pos;
+        won = true;
+        break;
     }
 
-    // draw final position (either before a wall, or on some special char)
+    if (screen.isDoor(next_pos)) {
+        finishedLevel = true; // Mark as done
+        body.draw(' ');       // Erase character (visualize entering the door)
+        return;               // Stop moving immediately
+    }
+   
+    if (screen.isSpring(next_pos)) {
+        // Logic: Land on spring, reverse, and charge speed for NEXT turn
+        body = next_pos;      
+        dir = dir * -1;       // Reverse direction
+        PlayerSpeed += 2;      // Add 2 speed
+        break;                // Stop moving for this turn
+    }
+
+    // --- CHECK RIDDLE ---
+    if (screen.isRiddle(next_pos)) {
+        body = next_pos;
+        screen.setCell(body.getY(), body.getX(), ' ');
+        screen.saveBackup();
+        screen.loadFromFileToMap("riddle1.txt");
+        screen.draw();
+        Player::Riddle = true;
+        return; // Exit function completely
+    }
+
+
+    body = next_pos;
+    }
+
+    
     body.draw();
+    //reset speed
+    if (PlayerSpeed > 1 && !screen.isSpring(body)) {
+        PlayerSpeed = 1;
+    }
 }
-
-
 void Player::keyPressed(char ch) {
-	size_t index = 0;
-	for (char key : keys) {
-		if (std::tolower(key) == std::tolower(ch)) {
-			body.changeDir(Direction::directions[index]);
-			break;
-		}
-		++index;
-	}
+    for (size_t i = 0; i < NUM_KEYS; ++i) {
+        if (std::tolower(keys[i]) == std::tolower(ch)) {
+
+        
+            dir = Direction::directions[i];
+
+            return; // We found the key, exit 
+        }
+    }
 }
