@@ -10,7 +10,6 @@ void Player::move() {
     int current_speed = PlayerSpeed;
 
     for (int i = 0; i < current_speed; ++i) {
-
     Point next_pos = body + dir;
 
 	if (screen.isWall(next_pos)) {
