@@ -25,7 +25,6 @@ static int randomInt(int min, int max) {
 }
 
 
-
 GameManger::GameManger():
 	currentRoom(-1),
 	players{
@@ -40,6 +39,22 @@ GameManger::GameManger():
 	loadQuestionsFromFile("questions.txt");
 }
 
+static bool visibleFromPlayer(const Player& p, int x, int y) {
+	// radius 0 = only the player's own tile (1x1)
+	// radius 4 = 4 tiles in each direction when holding a torch
+	int radius = p.hasTorch() ? 4 : 0;
+
+	Point pp = p.getPoint();
+	int dx = x - pp.getX();
+	int dy = y - pp.getY();
+
+	if (dx < 0) dx = -dx;
+	if (dy < 0) dy = -dy;
+
+	int chebyshev = (dx > dy) ? dx : dy;
+
+	return chebyshev <= radius;
+}
 
 Riddle GameManger::generateRandomRiddle() {
 	int r = randomInt(0,1);   // 0 or 1
