@@ -23,6 +23,9 @@ class GameManger {
     bool    running = true;
     bool    won = false;
 
+
+    int score = 0;
+
     static const int MAX_DOORS = 9;
     Door globalDoors[MAX_DOORS];
     static const int MAX_QUESTIONS = 100;
@@ -35,6 +38,9 @@ public:
     void run();
 
 private:
+
+
+    void printStatsBar();
 
     void initDoors();
 

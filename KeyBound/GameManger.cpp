@@ -204,6 +204,7 @@ void GameManger::loadRoom(int index)
 	}
 
 	screen.draw();
+	printStatsBar();
 }
 
 int GameManger::NumbersInput()
@@ -219,6 +220,7 @@ int GameManger::NumbersInput()
 void GameManger::gameLoop() {
 	while (running && !won) {
 		updatePlayers();  // move & check win / riddle
+		printStatsBar();
 		handleInput();    // keyboard / pause
 		Sleep(50);
 	}
@@ -307,6 +309,43 @@ for (auto& player : players) {
     }
 }
 
+void GameManger::printStatsBar() {
+	// 1. Setup variables
+	// Assuming collectedKeys is static in Player, otherwise sum them up:
+	// int totalKeys = players[0].getKeys() + players[1].getKeys(); 
+	// based on your code it looks static:
+	int totalKeys = Player::getCollectedKeys();
+
+	// Check inventory
+	std::string inventory = "";
+	if (players[0].hasTorch() || players[1].hasTorch()) {
+		inventory += "[TORCH] ";
+	}
+	if (inventory.empty()) inventory = "[EMPTY]";
+
+	// 2. Move to the HUD location
+	// Using (0,0) overwrites the top wall
+	gotoxy(0, 0);
+
+	// 3. Set a specific color for the HUD (e.g., Cyan on Black)
+	setTextColor(Screen::Cyan);
+
+	// 4. Print the line. 
+	// We use printf or cout with specific spacing to ensure it overwrites old text.
+	std::cout << "LEVEL: " << (currentRoom + 1)
+		<< " | SCORE: " << score
+		<< " | KEYS: " << totalKeys
+		<< " | INV: " << inventory;
+
+	// 5. Clear the rest of the line (padding) to remove leftovers
+	// 80 is roughly the console width
+	int currentLen = 50; // estimate your string length or calculate it
+	for (int i = 0; i < (Screen::MAX_X - currentLen); i++) std::cout << " ";
+
+	// 6. Reset color so the map doesn't draw in Cyan
+	setTextColor(Screen::LightGray);
+}
+
 void GameManger::handleRiddle(Player& player) {
 
 
@@ -326,6 +365,7 @@ void GameManger::handleRiddle(Player& player) {
 	// After finishing:
 	screen.restoreBackup();
 	screen.draw();
+	printStatsBar();
 	player.Change_Riddle(false);
 }
 

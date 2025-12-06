@@ -39,7 +39,7 @@ class Player {
     Direction launchDir = { 0,0 };
 
     // Inventory
-    int collectedKeys = 0;
+    static int collectedKeys;
     bool hasTorchFlag = false;
 
 public:
@@ -69,6 +69,7 @@ public:
     int getY() const { return body.getY(); }
     int getTargetRoom() const { return targetRoomIndex; }
     bool hasTorch() const { return hasTorchFlag; }
+    static int getCollectedKeys() {return collectedKeys; }
 
     // Setters
     void setFinished(bool state) { finishedLevel = state; }
