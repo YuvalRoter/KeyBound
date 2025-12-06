@@ -6,6 +6,7 @@
 #include "Door.h"
 #include "utils.h"
 
+int Player::collectedKeys = 0;
 void Player::move(Door* doors, int maxDoors, int currentRoomIndex) {
 
     if (screen.isSpring(body)) 
@@ -140,9 +141,7 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex) {
         if (screen.isKey(next_pos)) {
             collectedKeys++;
             screen.setCell(next_pos.getY(), next_pos.getX(), ' ');
-               
-            gotoxy(30, 0);
-            std::cout << collectedKeys;
+           
         }
 
         //Commit Move
@@ -206,8 +205,6 @@ void Player::keyPressed(char ch) {
 bool Player::tryToOpenDoor(int requiredKeys) {
     if (requiredKeys <= Player::collectedKeys) {
         collectedKeys -= requiredKeys;
-        gotoxy(30, 0);
-        std::cout << collectedKeys;
         return true;
     }
     return false;
