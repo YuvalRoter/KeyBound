@@ -153,17 +153,17 @@ void GameManger::initDoors() {
 	// --- DOOR 0: Located in Level 1 (Room 0) ---
 	// Position: Top Right (79, 4)
 	// Leads to: Room 1 (Level 2)
-	globalDoors[0] = { Point(79, 3), 0, 0, 1, 1, false };
+	globalDoors[0] = { Point(79, 3), 0, 1, 1, 1, false };
 
 	// --- DOOR 1: Located in Level 2 (Room 1) ---
 	// Position: Bottom Right area (57, 22)
 	// Leads to: Room 2 (Level 3)
-	globalDoors[1] = { Point(57, 22), 1, 1, 2, 1, false };
+	globalDoors[1] = { Point(57, 22), 1, 0, 2, 1, false };
 
 	// --- DOOR 2: Located in Level 3 (Room 2) ---
 	// Position: Bottom Middle area (17, 22)
 	// Leads to: Room 0 (Loop back to Level 1 or Win)
-	globalDoors[2] = { Point(17, 22), 2, 2, 0, 1, false };
+	globalDoors[2] = { Point(17, 22), 2, 1, 0, 1, false };
 
 	// Initialize the rest as empty/inactive
 	for (int i = 3; i < MAX_DOORS; i++) {

@@ -85,46 +85,39 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex) {
         }
         // CHECK FOR DOORS
         if (screen.isDoor(next_pos)) {
+           bool logicalDoorFound = false; // FLAG: Did we find the data for this door?
 
-            // Loop through the Global List
-            for (int i = 0; i < maxDoors; ++i) {
+        for (int i = 0; i < maxDoors; ++i) {
+            // Filter: Only check doors belonging to the current room
+            if (doors[i].sourceRoomIndex == currentRoomIndex) {
+                
+                // CRITICAL CHECK: Coordinate Match
+                if (doors[i].position == next_pos) {
+                    logicalDoorFound = true; // We found the data!
 
-                // FILTER: Only look at doors that are in THIS room
-                if (doors[i].sourceRoomIndex == currentRoomIndex) {
-
-                    // CHECK: Is this the specific door we stepped on?
-                    if (doors[i].position == next_pos) {
-
-                        // CASE A: Already Open (e.g., Player 2 follows Player 1)
-                        if (doors[i].isOpen) {
-                            finishedLevel = true; // Level Done
-
-                  
-                            targetRoomIndex = doors[i].targetRoomIndex;
-                            return;
-                        }
-
-                        // CASE B: Closed -> Try to open
-                        else if (tryToOpenDoor(doors[i].KeysToOpen)) {
-                            doors[i].isOpen = true; // Mark as permanently open
-                            finishedLevel = true;   // Level Done
-
-                           
-                            targetRoomIndex = doors[i].targetRoomIndex;
-
-                           
-                            return;
-                        }
-
-                        // CASE C: Locked -> Not enough keys
-                        else {
-                           
-                         
-                            return;
-                        }
+                    // --- LOGIC: Handle Opening/Entering ---
+                    
+                    // Case A: Door is already open
+                    if (doors[i].isOpen) {
+                        finishedLevel = true;
+                        targetRoomIndex = doors[i].targetRoomIndex;
+                        return;
+                    }
+                    // Case B: Door is closed, try to open with keys
+                    else if (tryToOpenDoor(doors[i].KeysToOpen)) {
+                        doors[i].isOpen = true; // Unlock forever
+                        finishedLevel = true;
+                        targetRoomIndex = doors[i].targetRoomIndex;
+                        return;
+                    }
+                    // Case C: Locked and no keys
+                    else {
+                        // Optional: Print "Locked!" message here
+                        return; // Stop moving, treat as wall
                     }
                 }
             }
+        }
             return; // We hit a door (locked or not), so stop moving
         }
 
