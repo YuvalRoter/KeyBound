@@ -73,6 +73,5 @@ private:
     void loadRoom(int index);    // load room & position players
     bool loadQuestionsFromFile(const std::string& filename);
 
-  
-
+    void drawWithFog();
 };

@@ -36,8 +36,6 @@ static int randomInt(int min, int max) {
 	return dist(rng);
 }
 
-
-
 GameManger::GameManger() :
 	currentRoom(-1),
 	players{
@@ -67,6 +65,42 @@ static bool visibleFromPlayer(const Player& p, int x, int y) {
 	int chebyshev = (dx > dy) ? dx : dy;
 
 	return chebyshev <= radius;
+}
+
+void GameManger::drawWithFog() {
+
+	for (int y = 0; y <= Screen::MAX_Y; y++) {
+		for (int x = 0; x <= Screen::MAX_X; x++){
+			if (y == 0) {
+				char hudChar = screen.getCharAt(y, x);
+				gotoxy(x, y);
+				std::cout << hudChar; 
+				continue;
+			}
+			bool visible = visibleFromPlayer(players[0], x, y) || visibleFromPlayer(players[1], x, y);
+			if (!visible) {
+				gotoxy(x, y);
+				std::cout << ' ';
+				continue;
+			}
+			Point p1 = players[0].getPoint();
+			Point p2 = players[1].getPoint();
+			char c;
+
+			if (p1.getX() == x && p1.getY() == y) {
+				c = players[0].getChar();
+			}
+			else if (p2.getX() == x && p2.getY() == y) {
+				c = players[1].getChar();
+			}
+			else {
+				c = screen.getCharAt(y, x);  // wall, floor, '?', '+', 'T', etc.
+			}
+
+			gotoxy(x, y);
+			std::cout << c;
+		}
+	}
 }
 
 Riddle GameManger::generateRandomRiddle() {
@@ -268,15 +302,23 @@ int GameManger::NumbersInput()
 	}
 }
 
-void GameManger::gameLoop() {
+void GameManger::gameLoop()
+{
 	while (running && !won) {
-		updatePlayers();  // move & check win / riddle
-		printStatsBar();
-		handleInput();    // keyboard / pause
-		Sleep(50);
+
+		handleInput();
+		updatePlayers();
+
+		if (rooms[currentRoom].dark) {
+			drawWithFog();
+			Sleep(70);   // a bit slower – fewer full redraws per second
+		}
+		else {
+			Sleep(50);   // normal speed in bright rooms
+		}
 	}
 
-	cls(); // clear screen at the end of the level
+	cls();
 }
 
 void GameManger::handleInput() {
