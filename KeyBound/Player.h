@@ -40,6 +40,7 @@ class Player {
 
     // Inventory
     int collectedKeys = 0;
+    bool hasTorchFlag = false;
 
 public:
     struct Controls {
@@ -67,12 +68,14 @@ public:
     int getX() const { return body.getX(); }
     int getY() const { return body.getY(); }
     int getTargetRoom() const { return targetRoomIndex; }
+    bool hasTorch() const { return hasTorchFlag; }
 
     // Setters
     void setFinished(bool state) { finishedLevel = state; }
     void setPosition(const Point& p) { body = p; }
     void setDirection(Direction d) { dir = d; }
     void Change_Riddle(bool type) { Riddle = type; }
+    void setTorch(bool v) { hasTorchFlag = v; }
 
     // Actions
     void addkey() { collectedKeys++; }
@@ -87,4 +90,5 @@ public:
     void startSpringLaunch();
     void keyPressed(char ch);
     bool tryToOpenDoor(int requiredKeys);
+    void dropTorch();
 };

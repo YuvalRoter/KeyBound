@@ -15,7 +15,8 @@ static std::mt19937 rng(std::random_device{}());
 static constexpr Player::Controls P1_KEYS = { 'w', 'd', 's', 'a', ' ' };
 static constexpr Player::Controls P2_KEYS = { 'i', 'l', 'k', 'j', 'm' };
 static constexpr int START = 6,MAXSIMON = 4,MINSIMON =3;
-
+static constexpr char P1_DROP_KEY = 'e';
+static constexpr char P2_DROP_KEY = 'O';
 
 static int randomInt(int min, int max) {
 	std::uniform_int_distribution<int> dist(min, max);
@@ -206,7 +207,6 @@ void GameManger::loadRoom(int index)
 	screen.draw();
 }
 
-
 int GameManger::NumbersInput()
 {
 	char choice = 0;
@@ -217,8 +217,6 @@ int GameManger::NumbersInput()
 	}
 }
 
-
-
 void GameManger::gameLoop() {
 	while (running && !won) {
 		updatePlayers();  // move & check win / riddle
@@ -228,8 +226,6 @@ void GameManger::gameLoop() {
 
 	cls(); // clear screen at the end of the level
 }
-
-	
 
 void GameManger::handleInput() {
 	if (!_kbhit()) return;
@@ -242,14 +238,22 @@ void GameManger::handleInput() {
 		}
 	}
 	else {
-		for (auto& player : players) {
-			player.keyPressed(key);
+		// Drop torch for Player 1
+		if (key == P1_DROP_KEY || key == std::toupper(P1_DROP_KEY)){
+			players[0].dropTorch();
+		}
+		// Drop torch for Player 2
+		else if (key == P2_DROP_KEY || key == std::toupper(P2_DROP_KEY)) {
+			players[1].dropTorch();
+		}
+		// Otherwise normal controls
+		else {
+			for (auto& player : players) {
+				player.keyPressed(key);
+			}
 		}
 	}
 }
-
-
-
 
 void GameManger::updatePlayers() {
 	bool allFinished = true;
@@ -303,6 +307,7 @@ for (auto& player : players) {
 		}
     }
 }
+
 void GameManger::handleRiddle(Player& player) {
 
 

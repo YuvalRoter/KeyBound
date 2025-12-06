@@ -17,6 +17,7 @@ struct Room;
 #define PLAYER2 '&'
 #define WONCHAR '%'
 #define HEARTCHAR '$'
+#define TORCH 'T'
 
 class Screen {
 public:
@@ -105,6 +106,11 @@ public:
 	bool isKey(const Point& p) const {
 		return charAt(p) == KEY;
 	}
+
+	bool isTorch(const Point& p) const {
+		return charAt(p) == TORCH;
+	}
+
 	void draw() const;
 
 	void drawSimonSquare(int left, int top,char filler) const;

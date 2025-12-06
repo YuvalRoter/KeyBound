@@ -139,6 +139,10 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex) {
             Player::Riddle = true;
             return;
         }
+        if (screen.isTorch(next_pos)) {
+            setTorch(true); // now this player has a torch
+            screen.setCell(next_pos.getY(), next_pos.getX(), ' ');
+        }
 
         if (screen.isKey(next_pos)) {
             collectedKeys++;
@@ -214,4 +218,74 @@ bool Player::tryToOpenDoor(int requiredKeys) {
         return true;
     }
     return false;
+}
+
+void Player::dropTorch() {
+    //No torch ? nothing to drop
+    if (!hasTorchFlag) {
+        return;
+    }
+
+    int px = body.getX();
+    int py = body.getY();
+
+    //Decide side directions based on current facing dir
+    int dx = dir.getDirX();
+    int dy = dir.getDirY();
+
+    int offsets[2][2];
+
+    if (dx != 0 && dy == 0) {
+        //Moving horizontally (left/right):
+        //drop to the SIDE: up or down (not along the path)
+        offsets[0][0] = 0; offsets[0][1] = -1; // up
+        offsets[1][0] = 0; offsets[1][1] = 1; // down
+    }
+    else if (dx == 0 && dy != 0) {
+        //Moving vertically (up/down):
+        //drop to the SIDE: left or right (not along the path)
+        offsets[0][0] = -1; offsets[0][1] = 0; // left
+        offsets[1][0] = 1; offsets[1][1] = 0; // right
+    }
+    else {
+        //STAY (0,0) or undefined ? choose some default (left/right)
+        offsets[0][0] = -1; offsets[0][1] = 0; // left
+        offsets[1][0] = 1; offsets[1][1] = 0; // right
+    }
+
+    int tx = -1;
+    int ty = -1;
+
+    //Find first empty side tile
+    for (int i = 0; i < 2; ++i) {
+        int nx = px + offsets[i][0];
+        int ny = py + offsets[i][1];
+
+        if (nx < 0 || nx > Screen::MAX_X ||
+            ny < 0 || ny > Screen::MAX_Y) {
+            continue;
+        }
+
+        char here = screen.getCharAt(ny, nx);
+        if (here == ' ') { //empty floor on the map
+            tx = nx;
+            ty = ny;
+            break;
+        }
+    }
+
+    //No free side tile ? cannot drop
+    if (tx == -1) {
+        return;
+    }
+
+    //Write torch into the map
+    screen.setCell(ty, tx, TORCH);
+
+    //Draw the torch directly so it appears immediately
+    Point torchPoint(tx, ty, TORCH);
+    torchPoint.draw();
+
+    //Player no longer has the torch
+    hasTorchFlag = false;
 }
