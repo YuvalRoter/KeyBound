@@ -5,8 +5,10 @@
 
 void Player::move() {
 
-
-	body.draw(' ');// erase old position
+    if (screen.isSpring(body)) 
+        body.draw(SPRING); 
+    else
+	    body.draw(' ');// erase old position
 
     if (isLaunched) {
         if (launchTimer > 0) {
