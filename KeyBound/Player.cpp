@@ -1,5 +1,6 @@
 #include <cstdlib>
 #include <cctype>
+#include <iostream>
 #include "Player.h"
 #include "Direction.h"
 
@@ -20,7 +21,13 @@ void Player::move() {
 		body.changeDir(body.getDir()*-1);
 		jump();        // uses default NumberOfJumps = 3
 		return;        // jump() already draws final position
-	}	
+	}
+    else if (screen.isTorch(body)) {
+        // player picks up the torch: remove it from map and set flag
+        screen.setCell(body.getY(), body.getX(), ' ');
+        setTorch(true);
+    }
+
 	else if (screen.isRiddle(body)) {
 
 		// 1. Remove the ? from the map so riddle doesn't repeat
@@ -34,6 +41,7 @@ void Player::move() {
 		Player::Riddle = true;
 		return;
 	}
+
 
 	body.draw();
 }
@@ -94,3 +102,67 @@ void Player::keyPressed(char ch) {
 		++index;
 	}
 }
+
+void Player::dropTorch() {
+    // If we don't have a torch, nothing to drop
+    if (!hasTorchFlag) {
+        return;
+    }
+
+    int px = body.getX();
+    int py = body.getY();
+
+    // Determine movement axis from current direction
+    const Direction& dir = body.getDir();
+    int dx = dir.getDx();
+    int dy = dir.getDy();
+
+    int offsets[2][2];
+
+    if (dx != 0 && dy == 0) {
+        // Moving horizontally (left/right):
+        // drop to the SIDE: up or down, not along the path
+        offsets[0][0] = 0; offsets[0][1] = -1; // up
+        offsets[1][0] = 0; offsets[1][1] = 1; // down
+    }
+    else if (dx == 0 && dy != 0) {
+        // Moving vertically (up/down):
+        // drop to the SIDE: left or right
+        offsets[0][0] = -1; offsets[0][1] = 0; // left
+        offsets[1][0] = 1; offsets[1][1] = 0; // right
+    }
+    else {
+        // Direction is STAY (0,0) or weird; choose a fallback (left/right)
+        offsets[0][0] = -1; offsets[0][1] = 0; // left
+        offsets[1][0] = 1; offsets[1][1] = 0; // right
+    }
+    int tx = -1;
+    int ty = -1;
+    for (int i = 0; i < 2; ++i) {
+        int nx = px + offsets[i][0];
+        int ny = py + offsets[i][1];
+
+        // bounds check
+        if (nx < 0 || nx > Screen::MAX_X ||
+            ny < 0 || ny > Screen::MAX_Y) {
+            continue;
+        }
+
+        char here = screen.getCharAt(ny, nx);
+        if (here == ' ') {           // empty floor on the map
+            tx = nx;
+            ty = ny;
+            break;
+        }
+    }
+    if (tx == -1) {
+        return;
+    }
+
+    screen.setCell(ty, tx, TORCH);
+    Point torchPoint(tx, ty, body.getDir(), TORCH);
+    torchPoint.draw();
+
+    hasTorchFlag = false;
+}
+

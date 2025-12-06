@@ -12,6 +12,7 @@ class Player {
 	int PlayerSpeed = 1;
 	bool won = false, Riddle = false;
 
+	bool hasTorchFlag = false;
 
 public:
 
@@ -69,5 +70,15 @@ public:
 	int getY() const {
 		return body.getY();
 	}
+
+	bool hasTorch() const {
+		return hasTorchFlag;
+	}
+
+	void setTorch(bool v) {
+		hasTorchFlag = v;
+	}
+
+	void dropTorch();
 };
 

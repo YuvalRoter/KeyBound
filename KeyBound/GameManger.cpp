@@ -23,6 +23,8 @@ static int randomInt(int min, int max) {
 static constexpr Player::Controls P1_KEYS = { 'w', 'd', 's', 'a', ' ' };
 static constexpr Player::Controls P2_KEYS = { 'i', 'l', 'k', 'j', 'm' };
 
+static constexpr char P1_DROP_KEY = 'e';
+static constexpr char P2_DROP_KEY = 'o';
 
 GameManger::GameManger(): 
 	players{
@@ -184,8 +186,19 @@ void GameManger::handleInput() {
 		}
 	}
 	else {
-		for (auto& player : players) {
-			player.keyPressed(key);
+		// 1. Check drop key for Player 1
+		if (key == P1_DROP_KEY || key == std::toupper(P1_DROP_KEY)) {
+			players[0].dropTorch();
+		}
+		// 2. Check drop key for Player 2
+		else if (key == P2_DROP_KEY || key == std::toupper(P2_DROP_KEY)) {
+			players[1].dropTorch();
+		}
+		// 3. Otherwise, it is a normal control key ? send to both players
+		else {
+			for (auto& player : players) {
+				player.keyPressed(key);
+			}
 		}
 	}
 }

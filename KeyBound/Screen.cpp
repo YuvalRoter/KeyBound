@@ -129,11 +129,6 @@ void Screen::drawSimon(int litIndex) const
 }
 
 
-
-
-
-
-
 void Screen::saveBackup()
 {
     //std::cout << "[DEBUG] saveBackup: char(0,0) = " << screen[0][0] << "\n"; - for debug

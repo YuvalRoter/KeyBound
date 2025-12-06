@@ -14,6 +14,7 @@
 #define PLAYER2 '&'
 #define WONCHAR '%'
 #define HEARTCHAR '$'
+#define TORCH 'T'
 
 class Screen {
 public:
@@ -92,6 +93,9 @@ public:
 
 	bool isDoor(const Point& p) const {
 		return charAt(p) == DOOR;
+	}
+	bool isTorch(const Point& p) const {
+		return charAt(p) == TORCH;
 	}
 
 	void draw() const;

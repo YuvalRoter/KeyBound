@@ -14,9 +14,14 @@ public:
 	
 	};
 	static const Direction directions[NUM_DIRECTIONS];
+
 	Direction(int dir_x, int dir_y)
 		: dirx(dir_x), diry(dir_y) {
 	}
+
+	int getDx() const { return dirx; }
+	int getDy() const { return diry; }
+
 	
 	Direction operator*(int scalar) const {
 		return Direction(dirx * scalar, diry * scalar);
