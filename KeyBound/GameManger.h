@@ -66,10 +66,12 @@ private:
 
     Riddle generateRandomRiddle();
     int NumbersInput();
+    void increaseScore(int points);
 
     void initRooms();            // fill rooms[]
     void loadRoom(int index);    // load room & position players
     bool loadQuestionsFromFile(const std::string& filename);
 
+  
 
 };
