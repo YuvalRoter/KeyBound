@@ -23,8 +23,14 @@ class GameManger {
     bool    running = true;
     bool    won = false;
 
+    int activePlayerMode = -1;
+
+    std::vector<int> executionStack;
 
     int score = 0;
+
+    const Point P1_SPAWN = Point(2, 3);
+    const Point P2_SPAWN = Point(2, 4);
  
     static const int MAX_DOORS = 6;
     static const Point initialDoorLocations[MAX_DOORS];
@@ -64,6 +70,8 @@ private:
     void handleSimon(Riddle& riddle, Player& player);
 
     void handleMulti(Riddle& riddle,Player& player); 
+
+    void startNextSoloLevel();
 
     Riddle generateRandomRiddle();
     int NumbersInput();

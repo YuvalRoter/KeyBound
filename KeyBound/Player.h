@@ -22,6 +22,10 @@ class Player {
     bool Riddle = false;
     bool finishedLevel = false;
     int targetRoomIndex = -1;
+    bool waiting = false;
+    int ourRoomIndex = 0;
+    int pendingTargetRoom = -1;
+    Point pendingSpawnPoint = Point(2, 3);
 
     // Spring / Launch Variables
     int springCompressed = 0;
@@ -70,6 +74,11 @@ public:
     int getTargetRoom() const { return targetRoomIndex; }
     bool hasTorch() const { return hasTorchFlag; }
     static int getCollectedKeys() {return collectedKeys; }
+    bool isWaiting() const { return waiting; }
+    int getPendingRoom() const { return pendingTargetRoom; }
+    Point getPendingSpawn() const { return pendingSpawnPoint; }
+    int getRoom() const { return ourRoomIndex; }
+
 
     // Setters
     void setFinished(bool state) { finishedLevel = state; }
@@ -77,6 +86,12 @@ public:
     void setDirection(Direction d) { dir = d; }
     void Change_Riddle(bool type) { Riddle = type; }
     void setTorch(bool v) { hasTorchFlag = v; }
+    void setWaiting(bool w) { waiting = w; }
+    void setPendingMove(int room, Point spawn) {
+        pendingTargetRoom = room;
+        pendingSpawnPoint = spawn;
+    }
+    void setRoom(int room) { ourRoomIndex = room; }
 
     // Actions
     void addkey() { collectedKeys++; }

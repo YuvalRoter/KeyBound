@@ -20,11 +20,12 @@ static constexpr char P1_DROP_KEY = 'e';
 static constexpr char P2_DROP_KEY = 'O';
 
 const Point GameManger::initialDoorLocations[MAX_DOORS] = {
-	Point(79, 2),   // [0] Bottom Door (Lead to Room 1?)
-	Point(36, 0),    // [1] Top Door (Lead to Room 2?)
-	Point(48, 2),    // [2] Side/Floating Door (Lead to Final?)
+	Point(79, 2),   // [0] Left Door (Lead to Room 1)
+	Point(36, 1),    // [1] Top Door (Lead to Room 2)
+	
 
 	// --- ROOM 1 (level2.txt) DOORS ---
+	Point(22, 0),    // [2] 
 	Point(0, 9),     // [3] Left Door
 	Point(38, 20),   // [4] Bottom Door
 
@@ -191,10 +192,10 @@ void GameManger::initRooms()
 	rooms[1] = Room(
 		"level2.txt",
 		{
-			Point(5, 10, PLAYER1),
-			Point(5, 12, PLAYER2)
+			Point(3, 3, PLAYER1),
+			Point(3, 5, PLAYER2)
 		},
-		true  // dark room
+		false  // dark room
 	);
 
 
@@ -204,7 +205,7 @@ void GameManger::initRooms()
 			Point(3, 3, PLAYER1),
 			Point(3, 5, PLAYER2)
 		},
-		true  // dark room
+		false  // dark room
 	);
 
 	rooms[3] = Room(
@@ -213,7 +214,7 @@ void GameManger::initRooms()
 			Point(3, 3, PLAYER1),
 			Point(3, 5, PLAYER2)
 		},
-		true  // dark room
+		false  // dark room
 	);
 }
 
@@ -224,7 +225,7 @@ void GameManger::initDoors() {
 	globalDoors[0] = { initialDoorLocations[0], 0, 0, 1, 1, false };
 
 	// --- DOOR 1: Level 1 (Room 0) -> (Room 2) ---
-	globalDoors[1] = { initialDoorLocations[1], 1, 0, 2, 3, false };
+	globalDoors[1] = { initialDoorLocations[1], 1, 0, 2, 2, false };
 
 	// --- DOOR 2: Level 2 (Room 1) ->  (Room 0) --- 
 	globalDoors[2] = { initialDoorLocations[2], 2, 1, 0, 0, false };
@@ -314,8 +315,9 @@ void GameManger::gameLoop()
 			Sleep(70);   // a bit slower – fewer full redraws per second
 		}
 		else {
-			Sleep(50);   // normal speed in bright rooms
+			Sleep(70);   // normal speed in bright rooms
 		}
+		printStatsBar();
 	}
 
 	cls();
@@ -566,7 +568,7 @@ void GameManger::increaseScore(int Points)
 	// F. Force HUD Update
 	// We call this here so the player sees the score go up BEFORE the room comes back
 	printStatsBar();
-	Sleep(1000); // Let them bask in glory for half a second
+	Sleep(600); // Let them bask in glory for half a second
 }
 void GameManger::handleMulti(Riddle& riddle, Player& player)
 {
