@@ -10,12 +10,19 @@ struct Room {
 
     std::vector<std::string> savedMapState;
 
+    bool dark = false;
     bool isVisited = false;
 
     Room() = default;
 
-    Room(const std::string& file, const std::vector<Point>& starts)
-        : mapFile(file), startPositions(starts), isVisited(false)
+    Room(const std::string& file,
+        const std::vector<Point>& starts,
+        bool isDark = false)
+        : mapFile(file),
+        startPositions(starts),
+        savedMapState(),
+        dark(isDark),
+        isVisited(false)
     {
     }
 };

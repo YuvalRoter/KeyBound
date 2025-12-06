@@ -6,7 +6,8 @@
 #include <string>
 #include "Room.h"
 #include <random>
-
+#include <algorithm>
+#include <cstdlib>
 #include <fstream>
 #include <sstream>
 
@@ -73,7 +74,6 @@ Riddle GameManger::generateRandomRiddle() {
 	}
 }
 
-
 void GameManger::run() {
 	if (!showMenu()) {
 		return;          // user chose EXIT
@@ -83,7 +83,6 @@ void GameManger::run() {
 
 	gameLoop();
 }
-
 
 bool GameManger::showMenu() {
 	// 1. Load and draw menu
@@ -117,15 +116,13 @@ bool GameManger::showMenu() {
 
 void GameManger::initRooms()
 {
-	
-
-
 	rooms[0] = Room(
 		"level1.txt",
 		{
 			Point(10, 4, PLAYER1), //MAGIC NUMBERS!!!!!
 			Point(7, 4, PLAYER2)
-		}
+		},
+		false // not dark
 	);
 
 
@@ -134,7 +131,8 @@ void GameManger::initRooms()
 		{
 			Point(5, 10, PLAYER1),
 			Point(5, 12, PLAYER2)
-		}
+		},
+		true  // dark room
 	);
 
 
@@ -143,7 +141,8 @@ void GameManger::initRooms()
 		{
 			Point(3, 3, PLAYER1),
 			Point(3, 5, PLAYER2)
-		}
+		},
+		true  // dark room
 	);
 }
 
