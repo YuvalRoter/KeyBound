@@ -3,7 +3,7 @@
 #include "utils.h"
 #include <fstream> 
 #include "Room.h"
-
+#include <windows.h> 
 
 
 bool Screen::loadFromFileToMap(const std::string& filename)
@@ -107,30 +107,35 @@ void Screen::drawSimon(int litIndex) const
         int x, y;
         int baseColor;
         int hiColor;
+        int BeepNumber;
     };
 
     Square sq[4] = {
-        { x0, y0, Green,      Black  },  // 0: top-left - for user 1
-        { x1, y0, Yellow,     Black       },  // 1: top-right - for user 2
-        { x0, y1, Red,        Black    },  // 2: bottom-left - for user 3
-        { x1, y1, Blue,       Black   }   // 3: bottom-right- for user 4
+        { x0, y0, Green,      Black, 330  },  // 0: top-left - for user 1
+        { x1, y0, Yellow,     Black, 440       },  // 1: top-right - for user 2
+        { x0, y1, Red,        Black, 523    },  // 2: bottom-left - for user 3
+        { x1, y1, Blue,       Black,659   }   // 3: bottom-right- for user 4
     };
 
     for (int i = 0; i < 4; ++i) {
-        int color = (i == litIndex ? sq[i].hiColor : sq[i].baseColor);
+        bool isLit = (i == litIndex);
+        int color = isLit ? sq[i].hiColor : sq[i].baseColor;
+
         setTextColor(color);
-        if (g_colorsEnabled)
-            drawSimonSquare(sq[i].x, sq[i].y,char(219));    // 219 is solid block, NOT WORKING IN ENUMS!!
-        else// color blind mode!
-        {
-            if ( color == Black)
+
+        if (g_colorsEnabled) {
+            drawSimonSquare(sq[i].x, sq[i].y, char(219)); // solid block
+        }
+        else { // color-blind mode
+            if (color == Black)
                 drawSimonSquare(sq[i].x, sq[i].y, ' ');
             else
                 drawSimonSquare(sq[i].x, sq[i].y, char(219));
-
         }
-           
 
+        if (isLit) {
+            Beep(sq[i].BeepNumber, 250); 
+        }
         
     }
 }

@@ -15,7 +15,7 @@
 static std::mt19937 rng(std::random_device{}());
 static constexpr Player::Controls P1_KEYS = { 'w', 'd', 's', 'a', ' ' };
 static constexpr Player::Controls P2_KEYS = { 'i', 'l', 'k', 'j', 'm' };
-static constexpr int START = 6,MAXSIMON = 4,MINSIMON =3;
+static constexpr int START = 6, MAXSIMON = 4, MINSIMON = 3;
 static constexpr char P1_DROP_KEY = 'e';
 static constexpr char P2_DROP_KEY = 'O';
 
@@ -26,15 +26,15 @@ static int randomInt(int min, int max) {
 
 
 
-GameManger::GameManger():
+GameManger::GameManger() :
 	currentRoom(-1),
 	players{
-	   Player(Point(START, START-1, PLAYER1), Direction::directions[Direction::STAY], P1_KEYS, screen),
-       Player(Point(START-2,START-1, PLAYER2), Direction::directions[Direction::STAY], P2_KEYS, screen)
-}
+	   Player(Point(START, START - 1, PLAYER1), Direction::directions[Direction::STAY], P1_KEYS, screen),
+	   Player(Point(START - 2,START - 1, PLAYER2), Direction::directions[Direction::STAY], P2_KEYS, screen)
+	}
 {
-    hideCursor();
-    cls();
+	hideCursor();
+	cls();
 	initRooms();
 	initDoors();
 	loadQuestionsFromFile("questions.txt");
@@ -42,8 +42,8 @@ GameManger::GameManger():
 
 
 Riddle GameManger::generateRandomRiddle() {
-	int r = randomInt(0,1);   // 0 or 1
-	size_t SimonSize = randomInt(MINSIMON, MAXSIMON);; 
+	int r = randomInt(0, 1);   // 0 or 1
+	size_t SimonSize = randomInt(MINSIMON, MAXSIMON);;
 	if (r == 0) {
 		// If no questions loaded, fallback so the game doesn't crash
 		if (numQuestions == 0) {
@@ -96,7 +96,7 @@ bool GameManger::showMenu() {
 	else if (Choice == 3)
 		g_colorsEnabled = false;
 	else if (Choice == 8)
-	{	
+	{
 		screen.loadFromFileToMap("Guide.txt");
 		screen.draw();
 		Choice = NumbersInput();
@@ -148,7 +148,7 @@ void GameManger::initRooms()
 
 void GameManger::initDoors() {
 	// Format: { Position, ID, SourceRoom, TargetRoom, KeysCost, IsOpen }
-	
+
 	// --- DOOR 0: Located in Level 1 (Room 0) ---
 	// Position: Top Right (79, 4)
 	// Leads to: Room 1 (Level 2)
@@ -213,7 +213,7 @@ int GameManger::NumbersInput()
 	while (true) {
 		choice = _getch();
 		if (std::isdigit(choice))
-			return choice - '0';   
+			return choice - '0';
 	}
 }
 
@@ -240,7 +240,7 @@ void GameManger::handleInput() {
 	}
 	else {
 		// Drop torch for Player 1
-		if (key == P1_DROP_KEY || key == std::toupper(P1_DROP_KEY)){
+		if (key == P1_DROP_KEY || key == std::toupper(P1_DROP_KEY)) {
 			players[0].dropTorch();
 		}
 		// Drop torch for Player 2
@@ -259,27 +259,27 @@ void GameManger::handleInput() {
 void GameManger::updatePlayers() {
 	bool allFinished = true;
 
-for (auto& player : players) {
-        
-	// 1. Move logic
-	if (!player.isFinished()) {
-		player.move(globalDoors, MAX_DOORS, currentRoom);
+	for (auto& player : players) {
 
-		// If they are STILL not finished after moving, the level isn't done.
+		// 1. Move logic
 		if (!player.isFinished()) {
-			allFinished = false;
+			player.move(globalDoors, MAX_DOORS, currentRoom);
+
+			// If they are STILL not finished after moving, the level isn't done.
+			if (!player.isFinished()) {
+				allFinished = false;
+			}
+		}
+
+		if (player.inRiddle()) {
+			player.keyPressed(player.getstaybutton());
+			handleRiddle(player);
 		}
 	}
-        
-        if (player.inRiddle()) {
-            player.keyPressed(player.getstaybutton());
-            handleRiddle(player);
-        }
-    }
 
-    // 2. SYNCHRONIZATION POINT
-    // Only if ALL players have reached the door do we change the room
-    if (allFinished) {
+	// 2. SYNCHRONIZATION POINT
+	// Only if ALL players have reached the door do we change the room
+	if (allFinished) {
 		int destination = -1;
 
 		// LOGIC: Check who has a valid target room. 
@@ -306,7 +306,7 @@ for (auto& player : players) {
 			loadRoom(0);
 			for (auto& player : players) player.resetLevelData();
 		}
-    }
+	}
 }
 
 void GameManger::printStatsBar() {
@@ -350,8 +350,8 @@ void GameManger::handleRiddle(Player& player) {
 
 
 	Riddle r = generateRandomRiddle();
-	
-	screen.loadFromFileToMap("riddle1.txt");   
+
+	screen.loadFromFileToMap("riddle1.txt");
 
 	// 3. Now solve according to type:
 	if (r.getType() == RiddleType::MultipleChoice) {
@@ -375,10 +375,10 @@ void GameManger::handleSimon(Riddle& riddle, Player& player)
 	// 1. Get pattern from riddle
 	std::vector<int> pattern = riddle.getSimonPattern();
 
-	
+
 	int flashDelayMs = riddle.getSimonDelayMs();
 
-	
+
 
 	// 2. SHOW the pattern (computer plays)
 	for (int idx : pattern) {
@@ -417,11 +417,63 @@ void GameManger::handleSimon(Riddle& riddle, Player& player)
 
 	// 4. If we get here – success
 	cls();
-	gotoxy(30, 12);
-	std::cout << "GOOD JOB!";
-	Sleep(1000);
-}
+	int pointsEarned = 50;
+	increaseScore(pointsEarned);
 
+
+}
+void GameManger::increaseScore(int Points)
+{
+	//this part AI helped me write
+		// A. Calculate Points
+	score += Points; // Update the internal score immediately
+
+	// B. Define Center Screen
+	int cx = Screen::MAX_X / 2;
+	int cy = Screen::MAX_Y / 2;
+
+	// C. The Animation Loop (Flashes 6 times)
+	// We alternate colors to create a "party" effect
+	int colors[] = { Screen::Yellow, Screen::LightGreen, Screen::LightCyan };
+
+	for (int i = 0; i < 6; ++i) {
+		// Cycle through the colors
+		setTextColor(colors[i % 3]);
+
+		// Draw a "Victory Box" (approx 20 wide, 5 high)
+		// Top Border
+		gotoxy(cx - 10, cy - 2);
+		std::cout << "#####################";
+
+		// Middle Lines (with text)
+		gotoxy(cx - 10, cy - 1);
+		std::cout << "#  SIMON SAYS WIN!  #";
+
+		gotoxy(cx - 10, cy);
+		std::cout << "#                   #"; // spacer
+
+		gotoxy(cx - 10, cy + 1);
+		std::cout << "#    SCORE + " << Points << "     #";
+
+		// Bottom Border
+		gotoxy(cx - 10, cy + 2);
+		std::cout << "#####################";
+
+		// D. Sound effect (Optional system beep)
+		// Beep(frequency, duration_ms) - creates a rising tone
+		if (i < 3) Beep(400 + (i * 100), 50);
+
+		Sleep(150); // Wait so the user sees the flash
+	}
+
+	// E. Cleanup
+	setTextColor(Screen::LightGray); // Reset color
+
+	// F. Force HUD Update
+	// We call this here so the player sees the score go up BEFORE the room comes back
+	printStatsBar();
+	Sleep(1000); // Let them bask in glory for half a second
+}
 void GameManger::handleMulti(Riddle& riddle, Player& player)
 {
 	// 1. Prepare screen (border / clear)
