@@ -3,6 +3,8 @@
 #include "Point.h"
 #include <string>
 
+struct Room;
+
 // ---------------- def objects ---------------- // 
 
 #define WALL '#'
@@ -67,6 +69,12 @@ private:
 	
 
 public:
+
+	// Saves current screen char array into the Room object
+	void saveScreenToRoom(Room& room);
+
+	// Overwrites screen char array with data from the Room object
+	void loadScreenFromRoom(const Room& room);
 
 	void saveBackup();
 	void restoreBackup();

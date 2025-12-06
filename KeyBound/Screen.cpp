@@ -2,6 +2,7 @@
 #include "Screen.h"
 #include "utils.h"
 #include <fstream> 
+#include "Room.h"
 
 
 
@@ -9,26 +10,32 @@ bool Screen::loadFromFileToMap(const std::string& filename)
 {
     std::ifstream file;
 
+
     if (!openFileForRead(filename, file, "map"))
         return false;
 
-    std::string line; // משתנה לאחסון שורות מהקובץ
+    std::string line;
+
 
     for (int y = 0; y <= MAX_Y; ++y) {
+
         if (!std::getline(file, line)) {
-            std::cerr << "Error: not enough lines in map file: " << filename << std::endl;
-            return false;
+            line = "";
         }
 
         for (int x = 0; x <= MAX_X; ++x) {
-            screen[y][x] = line[x];
+            if (x < line.length()) {
+                screen[y][x] = line[x];
+            }
+            else {
+                screen[y][x] = ' ';
+            }
         }
         screen[y][MAX_X + 1] = '\0';
     }
 
     return true;
 }
-
 
 void Screen::draw() const {
     for (int y = 0; y <= MAX_Y; ++y) {
@@ -130,6 +137,46 @@ void Screen::drawSimon(int litIndex) const
 
 
 
+void Screen::saveScreenToRoom(Room& room) {
+    room.savedMapState.clear(); // Clear old state
+
+    for (int y = 0; y <= MAX_Y; ++y) {
+        // Convert the char array row into a std::string
+        // We use the string constructor that takes a char*
+        room.savedMapState.push_back(std::string(screen[y]));
+    }
+
+    room.isVisited = true; // Mark that we have valid data for this room
+}
+
+void Screen::loadScreenFromRoom(const Room& room) {
+    // Safety check
+    if (!room.isVisited) return;
+
+    for (int y = 0; y <= MAX_Y; ++y) {
+        // Check if the saved state has this row
+        if (y < room.savedMapState.size()) {
+            std::string line = room.savedMapState[y];
+
+            // Copy string back to char array
+            for (int x = 0; x <= MAX_X; ++x) {
+                if (x < line.size()) {
+                    screen[y][x] = line[x];
+                }
+                else {
+                    screen[y][x] = ' '; // Fill remaining width with spaces
+                }
+            }
+        }
+        else {
+            // If saved state has fewer rows than screen, fill with spaces
+            for (int x = 0; x <= MAX_X; ++x) {
+                screen[y][x] = ' ';
+            }
+        }
+        screen[y][MAX_X + 1] = '\0'; // Null-terminate the C-string
+    }
+}
 
 
 

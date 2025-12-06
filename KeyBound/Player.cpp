@@ -109,7 +109,7 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex) {
                             doors[i].isOpen = true; // Mark as permanently open
                             finishedLevel = true;   // Level Done
 
-                            // [FIX 2] SAVE THE DESTINATION
+                           
                             targetRoomIndex = doors[i].targetRoomIndex;
 
                            

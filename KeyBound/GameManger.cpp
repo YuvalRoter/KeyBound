@@ -24,7 +24,8 @@ static int randomInt(int min, int max) {
 
 
 
-GameManger::GameManger(): 
+GameManger::GameManger():
+	currentRoom(-1),
 	players{
 	   Player(Point(START, START-1, PLAYER1), Direction::directions[Direction::STAY], P1_KEYS, screen),
        Player(Point(START-2,START-1, PLAYER2), Direction::directions[Direction::STAY], P2_KEYS, screen)
@@ -116,6 +117,8 @@ bool GameManger::showMenu() {
 void GameManger::initRooms()
 {
 	
+
+
 	rooms[0] = Room(
 		"level1.txt",
 		{
@@ -167,19 +170,33 @@ void GameManger::initDoors() {
 	}
 }
 
-
 void GameManger::loadRoom(int index)
 {
-	currentRoom = index;
-	loadMap(rooms[currentRoom].mapFile);
+	// 1. Save the state of the CURRENT room before leaving
+	// We check if currentRoom is valid 
+	if (currentRoom >= 0 && currentRoom < NUMBER_OF_ROOMS) {
+		screen.saveScreenToRoom(rooms[currentRoom]);
+	}
 
+	// 2. Switch the index
+	currentRoom = index;
+
+	// 3. Load the NEW room
+	if (rooms[currentRoom].isVisited) {
+		// If we have been here before, load the SAVED state (with missing keys)
+		screen.loadScreenFromRoom(rooms[currentRoom]);
+	}
+	else {
+		// If this is the first time, load from the TEXT FILE
+		screen.loadFromFileToMap(rooms[currentRoom].mapFile);
+	}
+
+	// 4. Reset Players (Positions only, keep inventory)
 	const auto& starts = rooms[index].startPositions;
 
 	for (std::size_t i = 0; i < NUMBER_OF_PLAYERS; ++i) {
-		// RESET THE STATE
 		players[i].setFinished(false);
-		// Reset speed if necessary
-		// players[i].setSpeed(1); 
+		// The inventory should persist.
 
 		if (i < starts.size()) {
 			players[i].setPosition(starts[i]);
