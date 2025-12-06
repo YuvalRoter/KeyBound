@@ -2,12 +2,10 @@
 #include "Point.h"
 struct Door
 {
-    Point position;      // Where is it on the screen?
-    int id;              // 1-9
-    int targetRoomIndex; // Which room does it lead to?
-    int KeysToOpen;
-    bool isOpen = false;         // Is it unlocked?
-    int sourceRoomIndex;  // Which room is this door sitting in?
-
+    Point position;       // 1. Position
+    int id = -1;          // 2. ID (Initialized to -1)
+    int sourceRoomIndex = -1; // 3. Source (Where the door IS)
+    int targetRoomIndex = -1; // 4. Target (Where the door LEADS)
+    int KeysToOpen = 0;   // 5. Cost
+    bool isOpen = false;  // 6. Status
 };
-    

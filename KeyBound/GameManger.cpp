@@ -19,6 +19,18 @@ static constexpr int START = 6, MAXSIMON = 4, MINSIMON = 3;
 static constexpr char P1_DROP_KEY = 'e';
 static constexpr char P2_DROP_KEY = 'O';
 
+const Point GameManger::initialDoorLocations[MAX_DOORS] = {
+	Point(79, 2),   // [0] Bottom Door (Lead to Room 1?)
+	Point(36, 0),    // [1] Top Door (Lead to Room 2?)
+	Point(48, 2),    // [2] Side/Floating Door (Lead to Final?)
+
+	// --- ROOM 1 (level2.txt) DOORS ---
+	Point(0, 9),     // [3] Left Door
+	Point(38, 20),   // [4] Bottom Door
+
+	// --- ROOM 2 (level3.txt) DOORS ---
+	Point(40, 0),    // [5] Top Door
+};
 static int randomInt(int min, int max) {
 	std::uniform_int_distribution<int> dist(min, max);
 	return dist(rng);
@@ -160,30 +172,41 @@ void GameManger::initRooms()
 		},
 		true  // dark room
 	);
+
+	rooms[3] = Room(
+		"levelFinal.txt",
+		{
+			Point(3, 3, PLAYER1),
+			Point(3, 5, PLAYER2)
+		},
+		true  // dark room
+	);
 }
 
 void GameManger::initDoors() {
 	// Format: { Position, ID, SourceRoom, TargetRoom, KeysCost, IsOpen }
 
-	// --- DOOR 0: Located in Level 1 (Room 0) ---
-	// Position: Top Right (79, 4)
-	// Leads to: Room 1 (Level 2)
-	globalDoors[0] = { Point(79, 3), 0, 1, 1, 1, false };
+	// --- DOOR 0: Level 1 (Room 0) ->  (Room 1) ---
+	globalDoors[0] = { initialDoorLocations[0], 0, 0, 1, 1, false };
 
-	// --- DOOR 1: Located in Level 2 (Room 1) ---
-	// Position: Bottom Right area (57, 22)
-	// Leads to: Room 2 (Level 3)
-	globalDoors[1] = { Point(57, 22), 1, 0, 2, 1, false };
+	// --- DOOR 1: Level 1 (Room 0) -> (Room 2) ---
+	globalDoors[1] = { initialDoorLocations[1], 1, 0, 2, 3, false };
 
-	// --- DOOR 2: Located in Level 3 (Room 2) ---
-	// Position: Bottom Middle area (17, 22)
-	// Leads to: Room 0 (Loop back to Level 1 or Win)
-	globalDoors[2] = { Point(17, 22), 2, 1, 0, 1, false };
+	// --- DOOR 2: Level 2 (Room 1) ->  (Room 0) --- 
+	globalDoors[2] = { initialDoorLocations[2], 2, 1, 0, 0, false };
 
-	// Initialize the rest as empty/inactive
-	for (int i = 3; i < MAX_DOORS; i++) {
-		globalDoors[i] = { Point(0,0), i, -1, -1, 0, false };
-	}
+	// --- DOOR 3: Level 2 (Room 1) ->  (Room 2) --- 
+	globalDoors[3] = { initialDoorLocations[3], 3, 1, 2, 1, false };
+
+
+	// --- DOOR 4: Level 3  (Room 2) ->  (Room 0) --- 
+	globalDoors[4] = { initialDoorLocations[3], 3, 2, 0, 1, false };
+
+
+	// --- DOOR 5:  Level 1  (Room 0) ->  (Room Final) --- 
+	globalDoors[5] = { initialDoorLocations[3], 3, 0, 3, 5, false };
+
+	
 }
 
 void GameManger::loadRoom(int index)
@@ -206,8 +229,20 @@ void GameManger::loadRoom(int index)
 		// If this is the first time, load from the TEXT FILE
 		screen.loadFromFileToMap(rooms[currentRoom].mapFile);
 	}
+	// 4. Print our local Doors
+	for (int i = 0; i < MAX_DOORS; ++i) {
+		// Only draw the door if it belongs to the CURRENT room
+		if (globalDoors[i].sourceRoomIndex == currentRoom) {
+			// Get position from the door object (which got it from your static array)
+			int x = globalDoors[i].position.getX();
+			int y = globalDoors[i].position.getY();
 
-	// 4. Reset Players (Positions only, keep inventory)
+			// Set the character on the screen to the number of required keys
+			screen.setCell(y, x, '0' + globalDoors[i].KeysToOpen);
+		}
+	}
+
+	// 5. Reset Players (Positions only, keep inventory)
 	const auto& starts = rooms[index].startPositions;
 
 	for (std::size_t i = 0; i < NUMBER_OF_PLAYERS; ++i) {
@@ -438,9 +473,10 @@ void GameManger::handleSimon(Riddle& riddle, Player& player)
 
 
 }
+//this part AI helped me write this is bouns 
 void GameManger::increaseScore(int Points)
 {
-	//this part AI helped me write
+	
 		// A. Calculate Points
 	score += Points; // Update the internal score immediately
 

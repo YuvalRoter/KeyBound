@@ -15,7 +15,7 @@ class GameManger {
     static constexpr char ESC = 27;
     static constexpr char EXIT = '9';
     static constexpr std::size_t NUMBER_OF_PLAYERS = 2;
-    static constexpr std::size_t NUMBER_OF_ROOMS = 3;
+    static constexpr std::size_t NUMBER_OF_ROOMS = 4;
     Screen  screen;
     Player  players[NUMBER_OF_PLAYERS];
     Room    rooms[NUMBER_OF_ROOMS]; 
@@ -25,8 +25,9 @@ class GameManger {
 
 
     int score = 0;
-
-    static const int MAX_DOORS = 9;
+ 
+    static const int MAX_DOORS = 6;
+    static const Point initialDoorLocations[MAX_DOORS];
     Door globalDoors[MAX_DOORS];
     static const int MAX_QUESTIONS = 100;
     Question questions[MAX_QUESTIONS];

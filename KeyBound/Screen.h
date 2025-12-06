@@ -56,6 +56,13 @@ public:
 		White = 15,
 		BLANK = -1
 	};
+
+	Screen() {
+		
+		screen[0][0] = '\0';
+		backup[0][0] = '\0';
+		hasBackup = false;
+	}
 private:
 
 	char screen[MAX_Y + 1][MAX_X + 2];
@@ -100,7 +107,7 @@ public:
 	}
 
 	bool isDoor(const Point& p) const {
-		return charAt(p) == DOOR;
+		return isdigit(charAt(p));
 	}
 
 	bool isKey(const Point& p) const {
