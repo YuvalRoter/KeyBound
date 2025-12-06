@@ -33,6 +33,7 @@ GameManger::GameManger():
     hideCursor();
     cls();
 	initRooms();
+	initDoors();
 	loadQuestionsFromFile("questions.txt");
 }
 
@@ -127,8 +128,8 @@ void GameManger::initRooms()
 	rooms[1] = Room(
 		"level2.txt",
 		{
-			Point(5, 10, PLAYER1)
-			
+			Point(5, 10, PLAYER1),
+			Point(5, 12, PLAYER2)
 		}
 	);
 
@@ -141,6 +142,31 @@ void GameManger::initRooms()
 		}
 	);
 }
+
+void GameManger::initDoors() {
+	// Format: { Position, ID, SourceRoom, TargetRoom, KeysCost, IsOpen }
+	
+	// --- DOOR 0: Located in Level 1 (Room 0) ---
+	// Position: Top Right (79, 4)
+	// Leads to: Room 1 (Level 2)
+	globalDoors[0] = { Point(79, 3), 0, 0, 1, 1, false };
+
+	// --- DOOR 1: Located in Level 2 (Room 1) ---
+	// Position: Bottom Right area (57, 22)
+	// Leads to: Room 2 (Level 3)
+	globalDoors[1] = { Point(57, 22), 1, 1, 2, 1, false };
+
+	// --- DOOR 2: Located in Level 3 (Room 2) ---
+	// Position: Bottom Middle area (17, 22)
+	// Leads to: Room 0 (Loop back to Level 1 or Win)
+	globalDoors[2] = { Point(17, 22), 2, 2, 0, 1, false };
+
+	// Initialize the rest as empty/inactive
+	for (int i = 3; i < MAX_DOORS; i++) {
+		globalDoors[i] = { Point(0,0), i, -1, -1, 0, false };
+	}
+}
+
 
 void GameManger::loadRoom(int index)
 {
@@ -210,13 +236,18 @@ void GameManger::handleInput() {
 
 void GameManger::updatePlayers() {
 	bool allFinished = true;
+
 for (auto& player : players) {
         
-        // 1. Only move if NOT finished
-        if (!player.isFinished()) {
-            player.move();
-            allFinished = false; // If someone is moving, we are not done
-        }
+	// 1. Move logic
+	if (!player.isFinished()) {
+		player.move(globalDoors, MAX_DOORS, currentRoom);
+
+		// If they are STILL not finished after moving, the level isn't done.
+		if (!player.isFinished()) {
+			allFinished = false;
+		}
+	}
         
         if (player.inRiddle()) {
             player.keyPressed(player.getstaybutton());
@@ -227,8 +258,32 @@ for (auto& player : players) {
     // 2. SYNCHRONIZATION POINT
     // Only if ALL players have reached the door do we change the room
     if (allFinished) {
-        int next = (currentRoom + 1) % NUMBER_OF_ROOMS;
-        loadRoom(next);
+		int destination = -1;
+
+		// LOGIC: Check who has a valid target room. 
+		// We check Player 1, then Player 2. 
+		// If Player 2 has a target, it overrides Player 1 (following the "Second Player" rule).
+
+		if (players[0].getTargetRoom() != -1) {
+			destination = players[0].getTargetRoom();
+		}
+		if (players[1].getTargetRoom() != -1) {
+			destination = players[1].getTargetRoom();
+		}
+
+		// 3. EXECUTE LEVEL SWITCH
+		if (destination >= 0 && destination < NUMBER_OF_ROOMS) {
+			loadRoom(destination);
+
+			for (auto& player : players) {
+				player.resetLevelData();
+			}
+		}
+		else {
+			// Fallback (e.g., if something went wrong, restart level 1)
+			loadRoom(0);
+			for (auto& player : players) player.resetLevelData();
+		}
     }
 }
 void GameManger::handleRiddle(Player& player) {
@@ -253,7 +308,7 @@ void GameManger::handleRiddle(Player& player) {
 	player.Change_Riddle(false);
 }
 
-
+//this is a bouns part for a nice riddle simon game
 void GameManger::handleSimon(Riddle& riddle, Player& player)
 {
 	// 1. Get pattern from riddle

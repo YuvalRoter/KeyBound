@@ -42,6 +42,9 @@
     <ClInclude Include="Question.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Door.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Point.cpp">

@@ -23,6 +23,8 @@ class GameManger {
     bool    running = true;
     bool    won = false;
 
+    static const int MAX_DOORS = 9;
+    Door globalDoors[MAX_DOORS];
     static const int MAX_QUESTIONS = 100;
     Question questions[MAX_QUESTIONS];
     int numQuestions = 50;   // how many were actually loaded from file
@@ -34,7 +36,8 @@ public:
 
 private:
 
-    
+    void initDoors();
+
 	bool showMenu();    // returns false if user chose EXIT
 
     void loadMap(const std::string& filename) {

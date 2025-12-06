@@ -2,8 +2,11 @@
 #include <cctype>
 #include "Player.h"
 #include "Direction.h"
+#include <vector>
+#include "Door.h"
+#include "utils.h"
 
-void Player::move() {
+void Player::move(Door* doors, int maxDoors, int currentRoomIndex) {
 
     if (screen.isSpring(body)) 
         body.draw(SPRING); 
@@ -80,11 +83,49 @@ void Player::move() {
                 springCompressedCount = 0;
             }
         }
-
+        // CHECK FOR DOORS
         if (screen.isDoor(next_pos)) {
-            finishedLevel = true;
-            body.draw(' ');
-            return;
+
+            // Loop through the Global List
+            for (int i = 0; i < maxDoors; ++i) {
+
+                // FILTER: Only look at doors that are in THIS room
+                if (doors[i].sourceRoomIndex == currentRoomIndex) {
+
+                    // CHECK: Is this the specific door we stepped on?
+                    if (doors[i].position == next_pos) {
+
+                        // CASE A: Already Open (e.g., Player 2 follows Player 1)
+                        if (doors[i].isOpen) {
+                            finishedLevel = true; // Level Done
+
+                  
+                            targetRoomIndex = doors[i].targetRoomIndex;
+                            return;
+                        }
+
+                        // CASE B: Closed -> Try to open
+                        else if (tryToOpenDoor(doors[i].KeysToOpen)) {
+                            doors[i].isOpen = true; // Mark as permanently open
+                            finishedLevel = true;   // Level Done
+
+                            // [FIX 2] SAVE THE DESTINATION
+                            targetRoomIndex = doors[i].targetRoomIndex;
+
+                           
+                            return;
+                        }
+
+                        // CASE C: Locked -> Not enough keys
+                        else {
+                           
+                         
+                            return;
+                        }
+                    }
+                }
+            }
+            return; // We hit a door (locked or not), so stop moving
         }
 
         // Riddle Logic
@@ -99,8 +140,17 @@ void Player::move() {
             return;
         }
 
+        if (screen.isKey(next_pos)) {
+            collectedKeys++;
+            screen.setCell(next_pos.getY(), next_pos.getX(), ' ');
+               
+            gotoxy(30, 0);
+            std::cout << collectedKeys;
+        }
+
         //Commit Move
         body = next_pos;
+
     }
 
     // Restore Visuals
@@ -121,7 +171,7 @@ void Player::startSpringLaunch() {
     launchTimer = springCompressedCount * springCompressedCount; // Time = N^2
 
     // 2. Direction is opposite of current facing (bounce back)
-    launchDir = dir * -1;
+    launchDir = Direction(-dir.getDirX(), -dir.getDirY());
 
     // 3. Set State
     isLaunched = true;
@@ -156,3 +206,12 @@ void Player::keyPressed(char ch) {
     }
 }
 
+bool Player::tryToOpenDoor(int requiredKeys) {
+    if (requiredKeys <= Player::collectedKeys) {
+        collectedKeys -= requiredKeys;
+        gotoxy(30, 0);
+        std::cout << collectedKeys;
+        return true;
+    }
+    return false;
+}

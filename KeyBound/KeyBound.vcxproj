@@ -20,6 +20,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Direction.h" />
+    <ClInclude Include="Door.h" />
     <ClInclude Include="GameManger.h" />
     <ClInclude Include="Player.h" />
     <ClInclude Include="Point.h" />

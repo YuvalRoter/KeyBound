@@ -6,6 +6,7 @@
 // ---------------- def objects ---------------- // 
 
 #define WALL '#'
+#define KEY 'K'
 #define RIDDEL '?'
 #define DOOR 'D'
 #define SPRING '+'
@@ -71,7 +72,6 @@ public:
 	void restoreBackup();
 
 	bool loadFromFileToMap(const std::string& filename);
-	bool loadfile(const std::string& filename, std::ifstream& file);
 
 
 	void setCell(int y, int x, char c) {
@@ -94,6 +94,9 @@ public:
 		return charAt(p) == DOOR;
 	}
 
+	bool isKey(const Point& p) const {
+		return charAt(p) == KEY;
+	}
 	void draw() const;
 
 	void drawSimonSquare(int left, int top,char filler) const;
