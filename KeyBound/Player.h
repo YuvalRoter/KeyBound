@@ -13,7 +13,18 @@ class Player {
 	Screen& screen;
 	int PlayerSpeed;
 	bool won = false, Riddle = false, finishedLevel = false;;
+	int springCompressed = 0;
+	bool springCompressing = false;
+	Direction springCompressionDir = Direction::directions[Direction::STAY];
+	Direction springBoostDir = Direction::directions[Direction::STAY];
+	int springBoostSpeed = 1;
+	int springBoostTimer = 0;
 
+	int springCompressedCount = 0;   
+	bool isLaunched = false;        
+	int launchTimer = 0;            
+	int launchSpeed = 0;            
+	Direction launchDir = { 0,0 };    
 
 
 public:
@@ -52,6 +63,8 @@ public:
 		return keys[4];
 	}
 	void move();
+	void startSpringLaunch();
+
 	void keyPressed(char ch);
 	bool hasWon() const {
 		return won;
@@ -74,8 +87,6 @@ public:
 		body = p;
 	}
 
-	void jump(int NumberOfJumps = 3);
-
 	int getX() const {
 		return body.getX();
 	}
@@ -85,5 +96,7 @@ public:
 	void setDirection(Direction d) {
 		dir = d;
 	}
-};
 
+private:
+
+};
