@@ -4,56 +4,67 @@
 #include <array>
 #include <vector>
 
-// What kind of riddle this is.
+// Enum defines the specific behavior of the riddle
 enum class RiddleType {
     MultipleChoice,
     SimonSays
 };
 
-
-
-
 class Riddle {
+private:
+    // ===========================
+    //       Private Data
+    // ===========================
+
+    RiddleType type;
+
+    // --- Multiple Choice Data ---
+    std::string question;
+    std::array<std::string, 4> options;
+    int correctIndex;
+
+    // --- Simon Says Data ---
+    std::vector<int> simonPattern;      // Sequence of rectangle indices (0..3)
+    int simonVisibleDelayMs;            // Duration of flash in ms
+
 public:
-    // Default constructor: makes a trivial multiple-choice riddle.
+    // ===========================
+    //       Constructors
+    // ===========================
+
+    // Default: Creates an empty multiple-choice riddle
     Riddle();
 
-    // Factory: create a multiple-choice riddle
+    // ===========================
+    //      Factory Methods
+    // ===========================
+    // Static functions to create specific types of riddles.
+    // This is the "Factory Pattern".
+
     static Riddle makeMultipleChoice(
         const std::string& question,
         const std::array<std::string, 4>& options,
-        int correctIndex  // 0..3 (index in options array)
+        int correctIndex
     );
 
-    // Factory: create a Simon-Says riddle
-    // pattern: sequence of rectangle indices (0..3)
     static Riddle makeSimonSays(
         const std::vector<int>& pattern,
-        int delayMs = 400  // how long each flash is visible
+        int delayMs = 400
     );
 
-    // ---- Getters ----
+    // ===========================
+    //        Accessors
+    // ===========================
+    // All marked 'const' because they do not modify the object.
+
     RiddleType getType() const { return type; }
 
-    // For MultipleChoice
+    // -- For Multiple Choice --
     const std::string& getQuestion() const { return question; }
     const std::array<std::string, 4>& getOptions() const { return options; }
     int getCorrectIndex() const { return correctIndex; }
 
-    // For SimonSays
+    // -- For Simon Says --
     const std::vector<int>& getSimonPattern() const { return simonPattern; }
     int getSimonDelayMs() const { return simonVisibleDelayMs; }
-
-private:
-    // Which variant is active
-    RiddleType type;
-
-    // --- Multiple choice data ---
-    std::string question;                     // question text
-    std::array<std::string, 4> options;       // answers "1".."4"
-    int correctIndex;                         // 0..3
-
-    // --- Simon-Says data ---
-    std::vector<int> simonPattern;            // sequence of 0..3 (rect indices)
-    int simonVisibleDelayMs;                  // per-flash delay in ms
 };

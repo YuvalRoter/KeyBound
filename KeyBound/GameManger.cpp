@@ -147,11 +147,12 @@ void GameManger::run() {
 	gameLoop();
 }
 
+
+
 bool GameManger::showMenu() {
 	// 1. Load and draw menu
-	loadMap("menu.txt");
-
-
+	screen.loadFromFileToMap("menu.txt");
+	screen.draw();
 	// 2. Wait for valid choice
 	int Choice = NumbersInput();
 	if (Choice == 1)
@@ -195,7 +196,7 @@ void GameManger::initRooms()
 			Point(3, 3, PLAYER1),
 			Point(3, 5, PLAYER2)
 		},
-		false  // dark room
+		true  // dark room
 	);
 
 
@@ -205,7 +206,7 @@ void GameManger::initRooms()
 			Point(3, 3, PLAYER1),
 			Point(3, 5, PLAYER2)
 		},
-		false  // dark room
+		true  // dark room
 	);
 
 	rooms[3] = Room(

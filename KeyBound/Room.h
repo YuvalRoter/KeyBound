@@ -1,28 +1,42 @@
 #pragma once
 #include <string>
-#include <vector> 
+#include <vector>
 #include "Point.h"
-#include "Door.h"
 
-struct Room {
-    std::string mapFile;
-    std::vector<Point> startPositions; 
+// Forward Declarations
+class GameManger;
+class Screen;
 
-    std::vector<std::string> savedMapState;
+class Room {
+private:
+    // ===========================
+    //       Private Data
+    // ===========================
 
-    bool dark = false;
-    bool isVisited = false;
+    std::string mapFile;                // The initial template file (e.g., "level1.txt")
+    std::vector<std::string> savedMapState; // Saves the map state (removed keys, open doors) when leaving
+    std::vector<Point> startPositions;  // Spawn points for P1 and P2
+    bool dark = false;                  // Is this a "fog of war" level?
+    bool isVisited = false;             // Have we been here before?
+
+public:
+    // ===========================
+    //       Constructors
+    // ===========================
 
     Room() = default;
 
-    Room(const std::string& file,
-        const std::vector<Point>& starts,
-        bool isDark = false)
-        : mapFile(file),
-        startPositions(starts),
-        savedMapState(),
-        dark(isDark),
-        isVisited(false)
+    // Constructor used in GameManger::initRooms
+    Room(const std::string& file, const std::vector<Point>& starts, bool isDark)
+        : mapFile(file), startPositions(starts), dark(isDark), isVisited(false)
     {
     }
+
+    // ===========================
+    //       Friend Classes
+    // ===========================
+    // GameManger needs access to switch rooms and check 'dark' status.
+    // Screen needs access to save/load the map characters into 'savedMapState'.
+    friend class GameManger;
+    friend class Screen;
 };

@@ -1,85 +1,82 @@
 #pragma once
-
+#include <iostream>
+#include <vector>
+#include <string>
 #include "Screen.h"
 #include "Player.h"
-#include <string>
-#include <iostream>   
-#include <cstddef>
-#include <filesystem>
 #include "Riddle.h"
 #include "Room.h"
-#include "Question.h"
-
+#include "Door.h"       
+#include "Question.h"  
 
 class GameManger {
+private:
+    // ===========================
+    //       Constants
+    // ===========================
     static constexpr char ESC = 27;
-    static constexpr char EXIT = '9';
     static constexpr std::size_t NUMBER_OF_PLAYERS = 2;
     static constexpr std::size_t NUMBER_OF_ROOMS = 4;
-    Screen  screen;
-    Player  players[NUMBER_OF_PLAYERS];
-    Room    rooms[NUMBER_OF_ROOMS]; 
-    int     currentRoom = 0;       
-    bool    running = true;
-    bool    won = false;
+    static const int MAX_DOORS = 6;
+    static const int MAX_QUESTIONS = 100;
 
-    int activePlayerMode = -1;
-
-    std::vector<int> executionStack;
-
+    // ===========================
+    //       Game State
+    // ===========================
+    bool running = true;
+    bool won = false;
+    int currentRoom = 0;
     int score = 0;
 
-    const Point P1_SPAWN = Point(2, 3);
-    const Point P2_SPAWN = Point(2, 4);
- 
-    static const int MAX_DOORS = 6;
-    static const Point initialDoorLocations[MAX_DOORS];
+    // ===========================
+    //       Objects
+    // ===========================
+    Screen screen;
+
+    // Arrays of objects
+    Player players[NUMBER_OF_PLAYERS];
+    Room rooms[NUMBER_OF_ROOMS];
     Door globalDoors[MAX_DOORS];
-    static const int MAX_QUESTIONS = 100;
     Question questions[MAX_QUESTIONS];
-    int numQuestions = 50;   // how many were actually loaded from file
+
+    int numQuestions = 50;
+
+    // Helper data
+    static const Point initialDoorLocations[MAX_DOORS];
 
 public:
+    // ===========================
+    //       Public API
+    // ===========================
     GameManger();
-
     void run();
 
 private:
+    // ===========================
+    //       Internal Logic
+    // ===========================
+    void gameLoop();
+    void handleInput();
+    void updatePlayers();
 
-
-    void printStatsBar();
-
+    // Initialization
+    void initRooms();
     void initDoors();
-
-	bool showMenu();    // returns false if user chose EXIT
-
-    void loadMap(const std::string& filename) {
-            if (!screen.loadFromFileToMap(filename))  // failed to load
-                std::cout << "Failed to load map!\n";
-            screen.draw();
-    }
-    void gameLoop();      // main game loop
-
-    // helpers
-    void updatePlayers(); // movement, win, riddles
-
-    void handleInput();   // read keyboard, move players / pause
-
-    void handleRiddle(Player& player); 
-
-    void handleSimon(Riddle& riddle, Player& player);
-
-    void handleMulti(Riddle& riddle,Player& player); 
-
-    void startNextSoloLevel();
-
-    Riddle generateRandomRiddle();
-    int NumbersInput();
-    void increaseScore(int points);
-
-    void initRooms();            // fill rooms[]
-    void loadRoom(int index);    // load room & position players
     bool loadQuestionsFromFile(const std::string& filename);
 
+    // UI & Rendering
+    bool showMenu();
+    void printStatsBar();
     void drawWithFog();
+    void loadRoom(int index);
+
+    // Riddles & Events
+    void handleRiddle(Player& player);
+    void handleSimon(Riddle& riddle, Player& player);
+    void handleMulti(Riddle& riddle, Player& player);
+    Riddle generateRandomRiddle();
+
+    // Utilities
+    int NumbersInput();
+    void increaseScore(int points);
 };
