@@ -70,6 +70,13 @@ private:
     void drawWithFog();
     void loadRoom(int index);
 
+
+    // MENU
+    void printMainMenu() ;
+    void printInstructions() ;
+    void printControls() ;
+    void drawSettingsMenu() ; 
+
     // Riddles & Events
     void handleRiddle(Player& player);
     void handleSimon(Riddle& riddle, Player& player);

@@ -37,7 +37,6 @@
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="Point.cpp" />
     <ClCompile Include="Riddle.cpp" />
-    <ClCompile Include="Room.cpp" />
     <ClCompile Include="Screen.cpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>

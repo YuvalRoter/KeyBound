@@ -1,26 +1,28 @@
 ﻿#include <iostream>
+#include <fstream> 
+#include <cstring>     
+#include <windows.h>   
 #include "Screen.h"
 #include "utils.h"
-#include <fstream> 
 #include "Room.h"
-#include <windows.h> 
 
+// ===========================
+//      Map Loading
+// ===========================
 
 bool Screen::loadFromFileToMap(const std::string& filename)
 {
     std::ifstream file;
 
-
+    // "map" is the description for error logging in utils
     if (!openFileForRead(filename, file, "map"))
         return false;
 
     std::string line;
 
-
     for (int y = 0; y <= MAX_Y; ++y) {
-
         if (!std::getline(file, line)) {
-            line = "";
+            line = ""; // Handle empty or short files gracefully
         }
 
         for (int x = 0; x <= MAX_X; ++x) {
@@ -28,46 +30,54 @@ bool Screen::loadFromFileToMap(const std::string& filename)
                 screen[y][x] = line[x];
             }
             else {
-                screen[y][x] = ' ';
+                screen[y][x] = ' '; // Pad with spaces
             }
         }
+        // Ensure null termination for C-string compatibility
         screen[y][MAX_X + 1] = '\0';
     }
 
     return true;
 }
 
+// ===========================
+//        Rendering
+// ===========================
+
 void Screen::draw() const {
     for (int y = 0; y <= MAX_Y; ++y) {
         gotoxy(0, y);
-        // here i should add a ifcolorpressed --------------------------------------------x 
+
         for (int x = 0; x <= MAX_X; ++x) {
             char c = screen[y][x];
 
-
-
-            if (c == WALL) {               // wall character from level1.txt
-                setTextColor(Brown);
-                std::cout << (char)MediumBlock;
-                setTextColor(LightGray);            // reset
+            // Use 'Color::' enum values instead of raw numbers or global macros
+            if (c == WALL) {
+                setTextColor(Color::Brown);
+                std::cout << static_cast<char>(BlockType::MediumBlock);
+                setTextColor(Color::LightGray); // Reset
             }
-
-            else if (c == WONCHAR) {      // win tile from level1.txt
-                setTextColor(LightRed);
-                std::cout << (char)DarkBlock;
-                setTextColor(LightGray);            // reset
+            else if (c == WONCHAR) {
+                setTextColor(Color::LightRed);
+                std::cout << static_cast<char>(BlockType::DarkBlock);
+                setTextColor(Color::LightGray); // Reset
             }
-          
             else {
-                setTextColor(LightGray);
+                // Default handling
+                setTextColor(Color::LightGray);
                 std::cout << c;
             }
         }
     }
 }
 
+// ===========================
+//      Simon Says Logic
+// ===========================
+
 void Screen::drawSimonSquare(int left, int top, char filler) const
 {
+    // Use the static constants from the header
     const int WIDTH = SIMON_WIDTH;
     const int HEIGHT = SIMON_HEIGHT;
 
@@ -78,13 +88,12 @@ void Screen::drawSimonSquare(int left, int top, char filler) const
         }
     }
 
-    setTextColor(LightGray); // reset
+    setTextColor(Color::LightGray); // Reset to default
 }
-
-
 
 void Screen::drawSimon(int litIndex) const
 {
+    // Local aliases for readability
     const int WIDTH = SIMON_WIDTH;
     const int HEIGHT = SIMON_HEIGHT;
     const int GAP_X = SIMON_GAP_X;
@@ -93,7 +102,7 @@ void Screen::drawSimon(int litIndex) const
     const int totalWidth = 2 * WIDTH + GAP_X;
     const int totalHeight = 2 * HEIGHT + GAP_Y;
 
-    // +1 because coordinates are 0..MAX_X
+    // Center the game on the screen
     const int startX = ((MAX_X + 1) - totalWidth) / 2;
     const int startY = ((MAX_Y + 1) - totalHeight) / 2;
 
@@ -102,7 +111,7 @@ void Screen::drawSimon(int litIndex) const
     int y0 = startY;
     int y1 = startY + HEIGHT + GAP_Y;
 
-    // colors for each square (base + highlight)
+    // Structure for the 4 Simon buttons
     struct Square {
         int x, y;
         int baseColor;
@@ -110,11 +119,12 @@ void Screen::drawSimon(int litIndex) const
         int BeepNumber;
     };
 
+    // Initialize the 4 quadrants
     Square sq[4] = {
-        { x0, y0, Green,      Black, 330  },  // 0: top-left - for user 1
-        { x1, y0, Yellow,     Black, 440       },  // 1: top-right - for user 2
-        { x0, y1, Red,        Black, 523    },  // 2: bottom-left - for user 3
-        { x1, y1, Blue,       Black,659   }   // 3: bottom-right- for user 4
+        { x0, y0, Color::Green,  Color::Black, 330 }, // Top-Left
+        { x1, y0, Color::Yellow, Color::Black, 440 }, // Top-Right
+        { x0, y1, Color::Red,    Color::Black, 523 }, // Bottom-Left
+        { x1, y1, Color::Blue,   Color::Black, 659 }  // Bottom-Right
     };
 
     for (int i = 0; i < 4; ++i) {
@@ -124,82 +134,76 @@ void Screen::drawSimon(int litIndex) const
         setTextColor(color);
 
         if (g_colorsEnabled) {
-            drawSimonSquare(sq[i].x, sq[i].y, char(219)); // solid block
+            drawSimonSquare(sq[i].x, sq[i].y, static_cast<char>(BlockType::FullBlock));
         }
-        else { // color-blind mode
-            if (color == Black)
+        else {
+            // Color-blind mode support: Lit squares are solid, unlit are empty
+            if (color == Color::Black)
                 drawSimonSquare(sq[i].x, sq[i].y, ' ');
             else
-                drawSimonSquare(sq[i].x, sq[i].y, char(219));
+                drawSimonSquare(sq[i].x, sq[i].y, static_cast<char>(BlockType::FullBlock));
         }
 
+        // Play sound if this is the active square
         if (isLit) {
-            Beep(sq[i].BeepNumber, 250); 
+            Beep(sq[i].BeepNumber, 250);
         }
-        
     }
 }
 
+// ===========================
+//      State Management
+// ===========================
 
 
-void Screen::saveScreenToRoom(Room& room) {
-    room.savedMapState.clear(); // Clear old state
+void Screen::saveScreenToRoom(Room& room) const {
+    room.savedMapState.clear();
 
     for (int y = 0; y <= MAX_Y; ++y) {
-        // Convert the char array row into a std::string
-        // We use the string constructor that takes a char*
+        // Construct std::string from the char array (relies on null-terminator)
         room.savedMapState.push_back(std::string(screen[y]));
     }
 
-    room.isVisited = true; // Mark that we have valid data for this room
+    room.isVisited = true;
 }
 
 void Screen::loadScreenFromRoom(const Room& room) {
-    // Safety check
+    // Basic validation
     if (!room.isVisited) return;
 
     for (int y = 0; y <= MAX_Y; ++y) {
-        // Check if the saved state has this row
         if (y < room.savedMapState.size()) {
             std::string line = room.savedMapState[y];
 
-            // Copy string back to char array
             for (int x = 0; x <= MAX_X; ++x) {
                 if (x < line.size()) {
                     screen[y][x] = line[x];
                 }
                 else {
-                    screen[y][x] = ' '; // Fill remaining width with spaces
+                    screen[y][x] = ' ';
                 }
             }
         }
         else {
-            // If saved state has fewer rows than screen, fill with spaces
+            // Fill extra rows with spaces if map is smaller than screen buffer
             for (int x = 0; x <= MAX_X; ++x) {
                 screen[y][x] = ' ';
             }
         }
-        screen[y][MAX_X + 1] = '\0'; // Null-terminate the C-string
+        // Always ensure null-termination
+        screen[y][MAX_X + 1] = '\0';
     }
 }
 
-
-
-
 void Screen::saveBackup()
 {
-    //std::cout << "[DEBUG] saveBackup: char(0,0) = " << screen[0][0] << "\n"; - for debug
     std::memcpy(backup, screen, sizeof(screen));
     hasBackup = true;
 }
-
-
 
 void Screen::restoreBackup()
 {
     if (hasBackup) {
         std::memcpy(screen, backup, sizeof(screen));
-        //std::cout << "[DEBUG] restoreBackup: char(0,0) = " << screen[0][0] << "\n"; - for debug 
     }
-    
 }

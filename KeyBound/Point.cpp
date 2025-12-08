@@ -4,12 +4,12 @@
 #include "Screen.h"
 #include "Direction.h" 
 
-void Point::draw(char c) {
+void Point::draw(char c) const {
     gotoxy(x, y);
     std::cout << c;
 }
 
-void Point::draw() {
+void Point::draw() const {
     draw(ch);
 }
 

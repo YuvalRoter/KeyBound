@@ -48,8 +48,8 @@ public:
     // ===========================
 
     // Draws the point's stored character 'ch' at (x,y)
-    void draw();
+    void draw() const;
 
     // Draws a specific character 'c' at (x,y) (useful for erasing)
-    void draw(char c);
+    void draw(char c) const;
 };

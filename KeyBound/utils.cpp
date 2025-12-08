@@ -26,7 +26,7 @@ void cls() {
     system("cls");
 }
 
-void setTextColor(WORD color) {
+void setTextColor(unsigned short color) {
     static HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
     if (!g_colorsEnabled) {

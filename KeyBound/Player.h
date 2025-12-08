@@ -5,7 +5,7 @@
 #include "Direction.h"
 
 
-struct Door;
+class Door;
 
 class Player {
 
@@ -19,7 +19,7 @@ class Player {
     // Game State
     int PlayerSpeed = 1;
     bool won = false;
-    bool Riddle = false;
+    bool inRiddleMode = false;
     bool finishedLevel = false;
     int targetRoomIndex = -1;
     bool waiting = false;
@@ -52,6 +52,8 @@ public:
         char up, right, stay, left, pause;
     };
 
+    Player() = default;
+
     Player(const Point& start_point, const Direction& start_dir, const Player::Controls& controls, Screen& theScreen, int speed = 1)
         : body(start_point), dir(start_dir), screen(theScreen), PlayerSpeed(speed)
     {
@@ -67,7 +69,7 @@ public:
     char getstaybutton() const { return keys[4]; }
     int getKeys() { return collectedKeys; }
     bool hasWon() const { return won; }
-    bool inRiddle() const { return Riddle; }
+    bool inRiddle() const { return inRiddleMode; }
     Point getPoint() const { return body; }
     bool isFinished() const { return finishedLevel; }
     int getX() const { return body.getX(); }
@@ -81,12 +83,10 @@ public:
     int getRoom() const { return ourRoomIndex; }
     bool getHUD() const { return HUD_changes; }
 
-
     // Setters
     void setFinished(bool state) { finishedLevel = state; }
     void setPosition(const Point& p) { body = p; }
     void setDirection(Direction d) { dir = d; }
-    void Change_Riddle(bool type) { Riddle = type; }
     void setTorch(bool v) { hasTorchFlag = v; }
     void setWaiting(bool w) { waiting = w; }
     void setPendingMove(int room, Point spawn) {
@@ -95,6 +95,7 @@ public:
     }
     void setRoom(int room) { ourRoomIndex = room; }
     void setHud(bool b) { HUD_changes = b; }
+    void setInRiddle(bool state) { inRiddleMode = state;}
 
     // Actions
     void addkey() { collectedKeys++; }

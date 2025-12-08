@@ -1,182 +1,219 @@
 #include <cstdlib>
 #include <cctype>
+#include <vector>
+#include <iostream>
+
 #include "Player.h"
 #include "Direction.h"
-#include <vector>
 #include "Door.h"
 #include "utils.h"
+#include "Screen.h"
 
+// ===========================
+//      Local Constants
+// ===========================
+namespace {
+    constexpr int DEFAULT_SPEED = 1;
+    constexpr char EMPTY_TILE = ' ';
+
+    // Offsets for dropping items (Left, Right, Up, Down relative logic)
+    // We will use logic to pick specific ones, but 2 is the max neighbors we check
+    constexpr int MAX_NEIGHBOR_CHECKS = 2;
+}
+
+// Initialize static member
 int Player::collectedKeys = 0;
+
+// ===========================
+//      Movement Logic
+// ===========================
 void Player::move(Door* doors, int maxDoors, int currentRoomIndex) {
 
-    if (screen.isSpring(body)) 
-        body.draw(SPRING); 
+    // 1. Visual Cleanup
+    // If we are on a spring, draw the spring char so we don't "erase" it visually.
+    // Otherwise, erase the player's old position.
+    if (screen.isSpring(body))
+        body.draw(Screen::SPRING);
     else
-	    body.draw(' ');// erase old position
+        body.draw(EMPTY_TILE);
 
+    // 2. Handle Spring Physics (Launch State)
     if (isLaunched) {
         if (launchTimer > 0) {
-            PlayerSpeed = launchSpeed;
+            PlayerSpeed = launchSpeed; // Speed determined by compression
             launchTimer--;
-            // Force the direction, but allow lateral movement 
         }
         else {
+            // Launch finished, return to normal physics
             isLaunched = false;
-            PlayerSpeed = 1; // Reset to normal speed
+            PlayerSpeed = DEFAULT_SPEED;
         }
     }
 
+    // 3. Movement Loop
+    // We move 'PlayerSpeed' tiles per frame (usually 1, unless launched)
     int stepsToTake = PlayerSpeed;
+
     for (int i = 0; i < stepsToTake; ++i) {
 
-        // A. Determine Target Direction
+        // --- A. Determine Target Direction ---
         Direction moveDir;
 
         if (isLaunched) {
-            // If launched, we MUST move in launchDir.
-            // But we can add lateral (sideways) movement from user input keys.
+            // Mechanics: Forced movement in launch direction + Optional user control (Lateral)
             moveDir = launchDir;
 
-            // Check if user is pressing a key perpendicular to launch
-            // (e.g. Launching UP, user presses RIGHT -> Diagonal move)
-            if (dir.getDirX() != 0 && launchDir.getDirY() != 0) moveDir = Direction(moveDir.getDirX() + dir.getDirX(), moveDir.getDirY());
-            if (dir.getDirY() != 0 && launchDir.getDirX() != 0) moveDir = Direction(moveDir.getDirX(), moveDir.getDirY() + dir.getDirY());
+            // Allow lateral movement (strafing) while in air
+            // Logic: If launching Y (Up/Down), allow X input. If launching X (Left/Right), allow Y input.
+            if (dir.getDirX() != 0 && launchDir.getDirY() != 0)
+                moveDir = Direction(moveDir.getDirX() + dir.getDirX(), moveDir.getDirY());
+
+            if (dir.getDirY() != 0 && launchDir.getDirX() != 0)
+                moveDir = Direction(moveDir.getDirX(), moveDir.getDirY() + dir.getDirY());
         }
         else {
-            // Normal movement
+            // Standard walking
             moveDir = dir;
         }
 
-        // B. Calculate Next Position
+        // --- B. Calculate Candidates ---
         Point next_pos = body + moveDir;
 
-        // --- COLLISION CHECKS ---
+        // --- C. Collision & Interaction Checks ---
 
-        // Wall Collision
+        // 1. Wall Collision
         if (screen.isWall(next_pos)) {
+            // Special Case: Hitting a wall while compressing a spring triggers the launch
             if (springCompressedCount > 0) {
-               
                 startSpringLaunch();
-                break; // Break this frame to allow direction reset
+                break; // Stop movement this frame
             }
-            // Standard wall hit
+
+            // Standard bonk
             if (!isLaunched) dir = Direction::directions[Direction::STAY];
-            break;
+            break; // Stop movement loop
         }
 
-        // Spring Logic (Compression Phase)
+        // 2. Spring Interaction
         if (screen.isSpring(next_pos)) {
-            // If we are NOT launched, we are compressing
             if (!isLaunched) {
+                // Compression phase: The longer we stay, the faster we launch
                 springCompressedCount++;
-                // "Collapse" visual: We move onto it, effectively hiding the '+'
-                // (The previous '+' is erased by body.draw(' ') at start of loop)
             }
-            // Move player onto the spring
+            // Move onto the spring (visual "squash" effect handled by draw logic)
             body = next_pos;
-            continue; // Continue to next step in speed loop
+            continue; // Move successful, continue loop
         }
         else {
-            // We stepped OFF a spring or onto normal ground. 
-            // If we were compressing but didn't hit a wall, we just walked off the spring.
-            // Reset compression if we wander off.
+            // We stepped OFF a spring. Reset compression.
             if (!isLaunched && springCompressedCount > 0 && !screen.isSpring(next_pos)) {
                 springCompressedCount = 0;
             }
         }
-        // CHECK FOR DOORS
+
+        // 3. Door Interaction
         if (screen.isDoor(next_pos)) {
-           bool logicalDoorFound = false; // FLAG: Did we find the data for this door?
+            bool doorHandled = false;
 
-        for (int i = 0; i < maxDoors; ++i) {
-            // Filter: Only check doors belonging to the current room
-            if (doors[i].sourceRoomIndex == currentRoomIndex) {
-                
-                // CRITICAL CHECK: Coordinate Match
-                if (doors[i].position == next_pos) {
-                    logicalDoorFound = true; // We found the data!
+            for (int k = 0; k < maxDoors; ++k) {
+                // Optimization: Only check doors in this room
+                if (doors[k].sourceRoomIndex == currentRoomIndex) {
+                    if (doors[k].position == next_pos) {
 
-                    // --- LOGIC: Handle Opening/Entering ---
-                    
-                    // Case A: Door is already open
-                    if (doors[i].isOpen) {
-                        finishedLevel = true;
-                        targetRoomIndex = doors[i].targetRoomIndex;
-                        return;
-                    }
-                    // Case B: Door is closed, try to open with keys
-                    else if (tryToOpenDoor(doors[i].KeysToOpen)) {
-                        doors[i].isOpen = true; // Unlock forever
-                        finishedLevel = true;
-                        targetRoomIndex = doors[i].targetRoomIndex;
-                        return;
-                    }
-                    // Case C: Locked and no keys
-                    else {
-                        // Optional: Print "Locked!" message here
-                        return; // Stop moving, treat as wall
+                        // Case: Door Open -> Win/Exit
+                        if (doors[k].isOpen) {
+                            finishedLevel = true;
+                            targetRoomIndex = doors[k].targetRoomIndex;
+                            doorHandled = true;
+                        }
+                        // Case: Door Closed -> Try Keys
+                        else if (tryToOpenDoor(doors[k].KeysToOpen)) {
+                            doors[k].isOpen = true;
+                            finishedLevel = true;
+                            targetRoomIndex = doors[k].targetRoomIndex;
+                            doorHandled = true;
+                        }
+                        // Case: Door Locked -> Block movement
+                        else {
+                            doorHandled = true; // Handled, but failed to enter
+                        }
+                        break; // Found the matching door object
                     }
                 }
             }
-        }
-            return; // We hit a door (locked or not), so stop moving
-        }
-
-        // Riddle Logic
-        if (screen.isRiddle(next_pos)) {
-            body = next_pos;
-           
-            screen.setCell(body.getY(), body.getX(), ' ');
-            screen.saveBackup();
-            screen.loadFromFileToMap("riddle1.txt");
-            screen.draw();
-            Player::Riddle = true;
+            // Whether we opened it or hit it locked, we stop moving (it's solid)
             return;
         }
-        if (screen.isTorch(next_pos)) {
-            setTorch(true); // now this player has a torch
-            screen.setCell(body.getY(), body.getX(), ' ');
-            HUD_changes = true;
+
+        // 4. Riddle Interaction
+        if (screen.isRiddle(next_pos)) {
+            body = next_pos; // Move onto the riddle tile
+
+            // Clear the riddle from map so it doesn't trigger again immediately
+            screen.setCell(body.getY(), body.getX(), EMPTY_TILE);
+
+            // Save state and trigger Riddle Mode
+            screen.saveBackup();
+            screen.loadFromFileToMap("riddle1.txt"); // Consider making filename a constant
+            screen.draw();
+
+            setInRiddle(true);
+            return;
         }
 
+        // 5. Torch Pickup
+        if (screen.isTorch(next_pos)) {
+            setTorch(true);
 
+            // Remove torch from map
+            screen.setCell(next_pos.getY(), next_pos.getX(), EMPTY_TILE);
+            setHud(true); // Request HUD update
+        }
+
+        // 6. Key Pickup
         if (screen.isKey(next_pos)) {
             collectedKeys++;
-            screen.setCell(body.getY(), body.getX(), ' ');
-            HUD_changes = true;
-           
+
+ 
+            screen.setCell(next_pos.getY(), next_pos.getX(), EMPTY_TILE);
+
+            setHud(true);
         }
 
-        //Commit Move
+        // --- D. Commit Move ---
         body = next_pos;
-
     }
 
-    // Restore Visuals
+    // 4. Render
     body.draw();
 
-    // Reset speed if we are done with the launch
-    if (!isLaunched && PlayerSpeed > 1) {
-        PlayerSpeed = 1;
+    // 5. Reset Speed (if launch ended during this frame)
+    if (!isLaunched && PlayerSpeed > DEFAULT_SPEED) {
+        PlayerSpeed = DEFAULT_SPEED;
     }
 }
 
+// ===========================
+//      Physics Logic
+// ===========================
+
 void Player::startSpringLaunch() {
-    if (springCompressedCount == 0) 
+    if (springCompressedCount == 0)
         return;
 
-    // 1. Calculate Mechanics
-    launchSpeed = springCompressedCount;              // Speed = N
-    launchTimer = springCompressedCount * springCompressedCount; // Time = N^2
+    // Speed is proportional to compression distance (time spent pressing)
+    launchSpeed = springCompressedCount;
 
-    // 2. Direction is opposite of current facing (bounce back)
+    // Duration is quadratic to give weight/impact to the launch
+    launchTimer = springCompressedCount * springCompressedCount;
+
+    // Reverse direction (Bounce)
     launchDir = Direction(-dir.getDirX(), -dir.getDirY());
 
-    // 3. Set State
+    // Update flags
     isLaunched = true;
-    springCompressedCount = 0; // Reset compression
+    springCompressedCount = 0;
 }
-
 
 void Player::keyPressed(char ch) {
     for (size_t i = 0; i < NUM_KEYS; ++i) {
@@ -184,16 +221,12 @@ void Player::keyPressed(char ch) {
 
             Direction newDir = Direction::directions[i];
 
-            // --- SPRING TRIGGER CHECK ---
-            // If we are currently compressing a spring (on top of it)
+            // Spring Logic: Trying to move AWAY or STOP while compressing triggers launch
             if (springCompressedCount > 0) {
-                // If user presses STAY or tries to reverse/turn
-                if (newDir.getDirX() == 0 && newDir.getDirY() == 0) {
-                    startSpringLaunch();
-                    return;
-                }
-                // Check if direction changed (simple check against current dir)
-                if (newDir.getDirX() != dir.getDirX() || newDir.getDirY() != dir.getDirY()) {
+                bool isStay = (newDir.getDirX() == 0 && newDir.getDirY() == 0);
+                bool isChangeDir = (newDir.getDirX() != dir.getDirX() || newDir.getDirY() != dir.getDirY());
+
+                if (isStay || isChangeDir) {
                     startSpringLaunch();
                     return;
                 }
@@ -205,6 +238,10 @@ void Player::keyPressed(char ch) {
     }
 }
 
+// ===========================
+//      Inventory Logic
+// ===========================
+
 bool Player::tryToOpenDoor(int requiredKeys) {
     if (requiredKeys <= Player::collectedKeys) {
         collectedKeys -= requiredKeys;
@@ -214,71 +251,58 @@ bool Player::tryToOpenDoor(int requiredKeys) {
 }
 
 void Player::dropTorch() {
-    //No torch ? nothing to drop
     if (!hasTorchFlag) {
         return;
     }
 
     int px = body.getX();
     int py = body.getY();
-
-    //Decide side directions based on current facing dir
     int dx = dir.getDirX();
     int dy = dir.getDirY();
 
-    int offsets[2][2];
+    // Calculate drop candidates (perpendicular to facing direction)
+    // If facing Horizontal (X!=0), drop Up/Down.
+    // If facing Vertical (Y!=0), drop Left/Right.
+    struct Offset { int x, y; };
+    Offset candidates[MAX_NEIGHBOR_CHECKS];
 
-    if (dx != 0 && dy == 0) {
-        //Moving horizontally (left/right):
-        //drop to the SIDE: up or down (not along the path)
-        offsets[0][0] = 0; offsets[0][1] = -1; // up
-        offsets[1][0] = 0; offsets[1][1] = 1; // down
+    if (dx != 0) { // Horizontal movement
+        candidates[0] = { 0, -1 }; // Up
+        candidates[1] = { 0, 1 };  // Down
     }
-    else if (dx == 0 && dy != 0) {
-        //Moving vertically (up/down):
-        //drop to the SIDE: left or right (not along the path)
-        offsets[0][0] = -1; offsets[0][1] = 0; // left
-        offsets[1][0] = 1; offsets[1][1] = 0; // right
-    }
-    else {
-        //STAY (0,0) or undefined ? choose some default (left/right)
-        offsets[0][0] = -1; offsets[0][1] = 0; // left
-        offsets[1][0] = 1; offsets[1][1] = 0; // right
+    else { // Vertical movement or Stay
+        candidates[0] = { -1, 0 }; // Left
+        candidates[1] = { 1, 0 };  // Right
     }
 
-    int tx = -1;
-    int ty = -1;
+    // Find a valid spot
+    int targetX = -1;
+    int targetY = -1;
 
-    //Find first empty side tile
-    for (int i = 0; i < 2; ++i) {
-        int nx = px + offsets[i][0];
-        int ny = py + offsets[i][1];
+    for (int i = 0; i < MAX_NEIGHBOR_CHECKS; ++i) {
+        int nx = px + candidates[i].x;
+        int ny = py + candidates[i].y;
 
-        if (nx < 0 || nx > Screen::MAX_X ||
-            ny < 0 || ny > Screen::MAX_Y) {
+        // Boundary Check
+        if (nx < 0 || nx > Screen::MAX_X || ny < 0 || ny > Screen::MAX_Y) {
             continue;
         }
 
-        char here = screen.getCharAt(ny, nx);
-        if (here == ' ') { //empty floor on the map
-            tx = nx;
-            ty = ny;
+        // Logic Check: Is the tile empty?
+        if (screen.getCharAt(ny, nx) == EMPTY_TILE) {
+            targetX = nx;
+            targetY = ny;
             break;
         }
     }
 
-    //No free side tile ? cannot drop
-    if (tx == -1) {
-        return;
+    // Perform Drop
+    if (targetX != -1) {
+        screen.setCell(targetY, targetX, Screen::TORCH);
+
+        Point torchPoint(targetX, targetY, Screen::TORCH);
+        torchPoint.draw(); // Immediate visual update
+
+        hasTorchFlag = false;
     }
-
-    //Write torch into the map
-    screen.setCell(ty, tx, TORCH);
-
-    //Draw the torch directly so it appears immediately
-    Point torchPoint(tx, ty, TORCH);
-    torchPoint.draw();
-
-    //Player no longer has the torch
-    hasTorchFlag = false;
 }
