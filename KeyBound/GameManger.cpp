@@ -318,7 +318,7 @@ void GameManger::gameLoop()
 		else {
 			Sleep(70);   // normal speed in bright rooms
 		}
-		printStatsBar();
+		
 	}
 
 	cls();
@@ -338,10 +338,12 @@ void GameManger::handleInput() {
 		// Drop torch for Player 1
 		if (key == P1_DROP_KEY || key == std::toupper(P1_DROP_KEY)) {
 			players[0].dropTorch();
+			printStatsBar();
 		}
 		// Drop torch for Player 2
 		else if (key == P2_DROP_KEY || key == std::toupper(P2_DROP_KEY)) {
 			players[1].dropTorch();
+			printStatsBar();
 		}
 		// Otherwise normal controls
 		else {
@@ -359,8 +361,15 @@ void GameManger::updatePlayers() {
 
 		// 1. Move logic
 		if (!player.isFinished()) {
+			
 			player.move(globalDoors, MAX_DOORS, currentRoom);
-
+			// check for HUD changes
+			if (player.getHUD())
+			{
+				player.setHud(false);
+				printStatsBar();
+			 }
+			
 			// If they are STILL not finished after moving, the level isn't done.
 			if (!player.isFinished()) {
 				allFinished = false;
@@ -461,7 +470,6 @@ void GameManger::handleRiddle(Player& player) {
 	// After finishing:
 	screen.restoreBackup();
 	screen.draw();
-	printStatsBar();
 	player.Change_Riddle(false);
 }
 

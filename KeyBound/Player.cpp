@@ -135,12 +135,15 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex) {
         }
         if (screen.isTorch(next_pos)) {
             setTorch(true); // now this player has a torch
-            screen.setCell(next_pos.getY(), next_pos.getX(), ' ');
+            screen.setCell(body.getY(), body.getX(), ' ');
+            HUD_changes = true;
         }
+
 
         if (screen.isKey(next_pos)) {
             collectedKeys++;
-            screen.setCell(next_pos.getY(), next_pos.getX(), ' ');
+            screen.setCell(body.getY(), body.getX(), ' ');
+            HUD_changes = true;
            
         }
 

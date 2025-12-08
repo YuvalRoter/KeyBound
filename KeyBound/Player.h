@@ -45,6 +45,7 @@ class Player {
     // Inventory
     static int collectedKeys;
     bool hasTorchFlag = false;
+    bool HUD_changes = false;
 
 public:
     struct Controls {
@@ -78,6 +79,7 @@ public:
     int getPendingRoom() const { return pendingTargetRoom; }
     Point getPendingSpawn() const { return pendingSpawnPoint; }
     int getRoom() const { return ourRoomIndex; }
+    bool getHUD() const { return HUD_changes; }
 
 
     // Setters
@@ -92,6 +94,7 @@ public:
         pendingSpawnPoint = spawn;
     }
     void setRoom(int room) { ourRoomIndex = room; }
+    void setHud(bool b) { HUD_changes = b; }
 
     // Actions
     void addkey() { collectedKeys++; }
