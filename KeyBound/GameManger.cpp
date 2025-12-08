@@ -259,7 +259,7 @@ void GameManger::printMainMenu()  {
     // 2. Title
     if (g_colorsEnabled) setTextColor(Screen::Color::Cyan);
     gotoxy(cx - 12, cy);     std::cout << "########################";
-    gotoxy(cx - 12, cy + 1); std::cout << "#      THE MAZE        #";
+    gotoxy(cx - 12, cy + 1); std::cout << "#      KeyBound        #";
     gotoxy(cx - 12, cy + 2); std::cout << "########################";
 
     if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
