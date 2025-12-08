@@ -102,53 +102,91 @@ static bool visibleFromPlayer(const Player& p, int x, int y) {
 }
 
 void GameManger::drawWithFog() {
-    for (int y = 0; y <= Screen::MAX_Y; y++) {
-        for (int x = 0; x <= Screen::MAX_X; x++) {
+    // 0. On first use in this room, mark everything as "unknown"
+    if (!fogInitialized) {
+        for (int y = 0; y <= Screen::MAX_Y; ++y) {
+            for (int x = 0; x <= Screen::MAX_X; ++x) {
+                fogLastFrame[y][x] = '\0';   // impossible screen char
+            }
+        }
+        fogInitialized = true;
+    }
 
-            // 1. Always draw the HUD (top line)
-            if (y == 0) {
-                char hudChar = screen.getCharAt(y, x);
-                gotoxy(x, y);
-                std::cout << hudChar;
-                continue;
+    // 1. Cache player positions
+    Point p1 = players[0].getPoint();
+    Point p2 = players[1].getPoint();
+
+    // IMPORTANT: do NOT touch y == 0 (HUD row).
+    // Row 0 is owned by printStatsBar().
+    for (int y = 1; y <= Screen::MAX_Y; ++y) {
+        for (int x = 0; x <= Screen::MAX_X; ++x) {
+
+            bool visible =
+                visibleFromPlayer(players[0], x, y) ||
+                visibleFromPlayer(players[1], x, y);
+
+            // 2. "raw" character: what's logically on this tile now?
+            char raw = ' ';
+
+            if (visible) {
+                if (p1.getX() == x && p1.getY() == y) {
+                    raw = players[0].getChar();
+                }
+                else if (p2.getX() == x && p2.getY() == y) {
+                    raw = players[1].getChar();
+                }
+                else {
+                    raw = screen.getCharAt(y, x); // map: wall, floor, key, etc.
+                }
             }
 
-            // 2. Check visibility from BOTH players
-            bool visible = visibleFromPlayer(players[0], x, y) || visibleFromPlayer(players[1], x, y);
+            // 3. Convert raw + visibility into display char + color
+            char displayChar;
+            Screen::Color color;
 
             if (!visible) {
-                gotoxy(x, y);
-                std::cout << ' '; // Draw darkness
+                displayChar = ' ';
+                color = Screen::Color::LightGray;
+            }
+            else if (raw == Screen::PLAYER1) {
+                displayChar = raw;
+                color = Screen::Color::Cyan;
+            }
+            else if (raw == Screen::PLAYER2) {
+                displayChar = raw;
+                color = Screen::Color::Red;
+            }
+            else if (raw == Screen::WALL) {
+                displayChar = static_cast<char>(Screen::BlockType::MediumBlock);
+                color = Screen::Color::Brown;
+            }
+            else if (raw == Screen::WONCHAR) {
+                displayChar = static_cast<char>(Screen::BlockType::DarkBlock);
+                color = Screen::Color::LightRed;
+            }
+            else {
+                displayChar = raw;
+                color = Screen::Color::LightGray;
+            }
+
+            // 4. If nothing changed since last fog frame, skip this cell
+            if (fogLastFrame[y][x] == displayChar) {
                 continue;
             }
 
-            // 3. Draw Players or Map Elements
-            Point p1 = players[0].getPoint();
-            Point p2 = players[1].getPoint();
-            char c;
-
-            if (p1.getX() == x && p1.getY() == y) {
-                c = players[0].getChar(); // Using accessor
-            }
-            else if (p2.getX() == x && p2.getY() == y) {
-                c = players[1].getChar();
-            }
-            else {
-                c = screen.getCharAt(y, x);
-            }
+            // 5. Otherwise update console + buffer
+            fogLastFrame[y][x] = displayChar;
 
             gotoxy(x, y);
-
-            // Simple coloring for players in Fog mode
-            if (c == Screen::PLAYER1) setTextColor(Screen::Color::Cyan);
-            else if (c == Screen::PLAYER2) setTextColor(Screen::Color::Red);
-            else setTextColor(Screen::Color::LightGray);
-
-            std::cout << c;
-            setTextColor(Screen::Color::LightGray); // Reset
+            setTextColor(static_cast<unsigned short>(color));
+            std::cout << displayChar;
         }
     }
+
+    // 6. Reset color so HUD and other text are correct
+    setTextColor(static_cast<unsigned short>(Screen::Color::LightGray));
 }
+
 
 // ===========================
 //      Game Flow
@@ -365,8 +403,6 @@ void GameManger::printControls()  {
     (void)_getch();
 }
 
-
-
 void GameManger::gameLoop()
 {
     while (running && !won) {
@@ -374,18 +410,21 @@ void GameManger::gameLoop()
         handleInput();
         updatePlayers();
 
-        // Adjust render speed and style based on Room Type
         if (rooms[currentRoom].dark) {
+            // Incremental fog redraw
             drawWithFog();
-            Sleep(70);   // Slower update for fog effect
         }
-        else {
-            Sleep(50);   // Faster update for lit rooms
-        }
+
+        // HUD (row 0) – safe because drawWithFog does not touch it
+        printStatsBar();
+
+        // One consistent delay per frame
+        Sleep(60);   // tweak 50–70 to taste
     }
 
     cls();
 }
+
 
 void GameManger::handleInput() {
     if (!_kbhit()) return;
@@ -495,10 +534,11 @@ void GameManger::initRooms()
 {
     // Initialize Rooms with file names, spawn points and lighting settings
     rooms[0] = Room("level1.txt", { Point(10, 4, Screen::PLAYER1), Point(7, 4, Screen::PLAYER2) }, false);
-    rooms[1] = Room("level2.txt", { Point(3, 3, Screen::PLAYER1),  Point(3, 5, Screen::PLAYER2) }, false);
+    rooms[1] = Room("level2.txt", { Point(3, 3, Screen::PLAYER1),  Point(3, 5, Screen::PLAYER2) }, true);
     rooms[2] = Room("level3.txt", { Point(35, 23, Screen::PLAYER1),  Point(36, 23, Screen::PLAYER2) }, false);
     rooms[3] = Room("levelFinal.txt", { Point(3, 3, Screen::PLAYER1), Point(3, 5, Screen::PLAYER2) }, false);
 }
+
 void GameManger::initDoors() {
     // Format: { Position, ID, SourceRoom, TargetRoom, KeysCost, IsOpen }
 
@@ -571,7 +611,17 @@ void GameManger::loadRoom(int index)
         }
     }
 
-    screen.draw();
+    // 5. Reset fog buffer for the new room
+    fogInitialized = false;
+
+    // 6. First draw for the new room
+    if (rooms[currentRoom].dark) {
+        drawWithFog();          // fog rendering for dark rooms
+    }
+    else {
+        screen.draw();          // normal full draw for bright rooms
+    }
+
     printStatsBar();
 }
 
@@ -615,7 +665,17 @@ void GameManger::handleRiddle(Player& player) {
 
     // Restore map state
     screen.restoreBackup();
-    screen.draw();
+
+    if (rooms[currentRoom].dark) {
+        // Force a fresh fog draw after the riddle screen
+        fogInitialized = false;
+        drawWithFog();
+    }
+    else {
+        screen.draw();
+    }
+
+    printStatsBar();
 
     // Release player from riddle state
     player.setInRiddle(false);

@@ -39,6 +39,12 @@ private:
     Door globalDoors[MAX_DOORS];
     Question questions[MAX_QUESTIONS];
 
+    // ===========================
+    //       Fog-of-War State
+    // ===========================
+    char fogLastFrame[Screen::MAX_Y + 1][Screen::MAX_X + 1]{};
+    bool fogInitialized = false;
+
     int numQuestions = 50;
 
     // Helper data
