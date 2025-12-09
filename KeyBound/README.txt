@@ -13,8 +13,7 @@ Students:
 - Name: יובל רוטר    ID: 322521097
 
 
-2. Project overview <--------------------------------------------------------------- is it needed????????
--------------------
+2. Project overview <----------------------------------------------------------------------------------
 KeyBound is a console-based text adventure / puzzle game implemented for Exercise 1.
 
 The game runs in an 80x25 Windows console. Two cooperative players must navigate
@@ -29,8 +28,7 @@ reach the final room.
 - Some rooms can be dark and require a torch to see around the player.
 
 
-3. Compilation & execution  <--------------------------------------------------------------- is it needed????????
---------------------------
+3. Compilation & execution  <-----------------------------------------------------------------------------------------
 Environment:
 - Visual Studio 2022 (or later)
 - Standard C++ on Windows
@@ -194,7 +192,7 @@ This section lists design decisions we made where the exercise specification lef
     or the second player leaves to a different destination, the screen switches.
 
 
-12. Use of external / AI-generated code <--------------------------------------------------------------- is it needed????????
+12. Use of external / AI-generated code <---------------------------------------------------------------
 ---------------------------------------
 We used AI assistance (ChatGPT) for some parts of the implementation, mainly for:
 

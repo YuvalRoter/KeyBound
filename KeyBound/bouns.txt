@@ -12,8 +12,8 @@ Bonus features implemented
 1. Colored output for game elements
    --------------------------------
    - We use Windows console colors to distinguish different elements:
-     - Player 1: Cyan ('@') <------------------------------------------------------------------------------------ check ?????
-     - Player 2: Red ('&') <------------------------------------------------------------------------------------ check ?????
+     - Player 1: Cyan ('@') <------------------------------------------------------------------------------------ check 
+     - Player 2: Red ('&') <------------------------------------------------------------------------------------ check 
      - Walls: Brown, drawn as filled block characters (▒ style)
      - Win tile: LightRed, using █ 
 

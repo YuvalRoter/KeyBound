@@ -96,6 +96,7 @@ public:
     void setRoom(int room) { ourRoomIndex = room; }
     void setHud(bool b) { HUD_changes = b; }
     void setInRiddle(bool state) { inRiddleMode = state;}
+    void setWin(bool wins) { won = wins; }
 
     // Actions
     void addkey() { collectedKeys++; }

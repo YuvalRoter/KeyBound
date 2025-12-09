@@ -154,7 +154,7 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex) {
 
             // Save state and trigger Riddle Mode
             screen.saveBackup();
-            screen.loadFromFileToMap("riddle1.txt"); // Consider making filename a constant
+            screen.loadFromFileToMap("riddle1.txt"); 
             screen.draw();
 
             setInRiddle(true);
@@ -179,15 +179,19 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex) {
 
             setHud(true);
         }
+        // 7. Victory Pickup
+        if (screen.isWonChar(next_pos)){
+            setWin(true);
 
+        }
         // --- D. Commit Move ---
         body = next_pos;
     }
 
-    // 4. Render
+    // Render
     body.draw();
 
-    // 5. Reset Speed (if launch ended during this frame)
+    // Reset Speed (if launch ended during this frame)
     if (!isLaunched && PlayerSpeed > DEFAULT_SPEED) {
         PlayerSpeed = DEFAULT_SPEED;
     }

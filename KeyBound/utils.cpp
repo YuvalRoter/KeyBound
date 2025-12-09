@@ -50,5 +50,3 @@ bool openFileForRead(const std::string& filename,
     return true;
 }
 
-
-
