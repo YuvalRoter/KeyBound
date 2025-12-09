@@ -69,6 +69,7 @@ Bonus features implemented
    --------------------------------
 	- the maps load from levelfiles
 	- the menu loads from menu file 
+	- and more uses
    
 5. HUD with score board 
    --------------------
