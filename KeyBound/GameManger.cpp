@@ -636,7 +636,7 @@ void GameManger::initDoors() {
 	globalDoors[3] = { initialDoorLocations[4], 3, 1, 0, 0, true }; // 0 cost, already open
 
 	// Door 4: Secret Door (Location: Left Side) -> SecretRoom
-	globalDoors[4] = { initialDoorLocations[3], 4, 1, 3, 6, false };
+	globalDoors[4] = { initialDoorLocations[3], 4, 1, 3, 9, false };
 
 
 	// ==========================================
