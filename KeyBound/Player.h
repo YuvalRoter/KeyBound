@@ -67,7 +67,6 @@ public:
     // Getters
     char getChar() const { return body.getChar(); }
     char getstaybutton() const { return keys[4]; }
-    int getKeys() { return collectedKeys; }
     bool hasWon() const { return won; }
     bool inRiddle() const { return inRiddleMode; }
     Point getPoint() const { return body; }

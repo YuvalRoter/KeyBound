@@ -193,18 +193,29 @@ void GameManger::drawWithFog() {
 // ===========================
 
 
-
 void GameManger::run() {
-	if (!showMenu()) {
-		return; // User chose EXIT
+	bool keepProgramRunning = true;
+
+	while (keepProgramRunning) {
+		// 1. Show the menu
+		if (!showMenu()) {
+			keepProgramRunning = false; // User selected Exit (9)
+			break;
+		}
+
+		// 2. User chose "Start Game" (1)
+		// RESET EVERYTHING BEFORE STARTING
+		resetGame();
+
+		// 3. Load the first room
+		loadRoom(0);
+
+		// 4. Start the game loop
+		gameLoop();
+
+		// When gameLoop returns, the while loop repeats, showing the menu again.
 	}
-
-	// Start at the first level (Room 0)
-	loadRoom(0);
-
-	gameLoop();
 }
-
 
 // ===========================
 //      Menu Helper Functions
@@ -412,23 +423,22 @@ void GameManger::printControls() {
 
 void GameManger::gameLoop()
 {
-
+	running = true;
 
 	while (running && !won) {
 
 		handleInput();
+		if (!running) break;
 		updatePlayers();
 
 		if (rooms[currentRoom].dark) {
 			// Incremental fog redraw
 			drawWithFog();
 		}
-
-		// HUD (row 0) – safe because drawWithFog does not touch it
+			
+		// HUD 
 		printStatsBar();
-
-		// One consistent delay per frame
-		Sleep(60);   // tweak 50–70 to taste
+		Sleep(60);   
 	}
 
 	cls();
@@ -448,13 +458,12 @@ void GameManger::handleInput() {
 			char next = _getch(); // consume extra chars if any
 		}
 
-		// Simple Pause/Exit menu could go here. For now, we set running false.
-		// running = false; // Uncomment to enable ESC to quit
-
-		// Your logic: ESC + H to exit
+		// logic: ESC + H to menu
 		key = _getch();
 		if (key == 'h' || key == 'H') {
-			running = false;
+			running = false;    // Stops the while loop in gameLoop
+			backToMenu = true;  // Optional: tells gameLoop we want menu
+			return;
 		}
 	}
 	else {
@@ -569,6 +578,29 @@ void GameManger::updatePlayers() {
 // ===========================
 //      Initialization
 // ===========================
+
+void GameManger::resetGame() {
+	// 1. Reset Score and Flags and Invertory
+	score = 0;
+	won = false;
+	running = true;
+	fogInitialized = false;
+	currentRoom = -1;
+	players[0].removeKeys(Player::getCollectedKeys());
+	players[1].removeKeys(Player::getCollectedKeys());
+
+	players[0].setTorch(false);
+	players[1].setTorch(false);
+
+
+	// 2. Re-initialize Rooms (Reloads maps from disk/defaults)
+	initRooms();
+
+	// 3. Re-initialize Doors (Closes them back up)
+	initDoors();
+
+
+}
 
 void GameManger::initRooms()
 {
