@@ -51,7 +51,6 @@ void Screen::draw() const {
         for (int x = 0; x <= MAX_X; ++x) {
             char c = screen[y][x];
 
-            // Use 'Color::' enum values instead of raw numbers or global macros
             if (c == WALL) {
                 setTextColor(Color::Brown);
                 std::cout << static_cast<char>(BlockType::MediumBlock);
@@ -62,14 +61,24 @@ void Screen::draw() const {
                 std::cout << static_cast<char>(BlockType::DarkBlock);
                 setTextColor(Color::LightGray); // Reset
             }
+            else if (c == PLAYER1) {
+                setTextColor(Color::Cyan);
+                std::cout << c;
+                setTextColor(Color::LightGray); // Reset
+            }
+            else if (c == PLAYER2) {
+                setTextColor(Color::Red);
+                std::cout << c;
+                setTextColor(Color::LightGray); // Reset
+            }
             else {
-                // Default handling
                 setTextColor(Color::LightGray);
                 std::cout << c;
             }
         }
     }
 }
+
 
 // ===========================
 //      Simon Says Logic
