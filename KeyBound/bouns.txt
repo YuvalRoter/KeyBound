@@ -63,6 +63,16 @@ Bonus features implemented
 
 		If you press a wrong number or wrong order:
 		The riddle fails and you wont get points added to your score.
-
-
+		
+		
+4. using files for maps menu (ex..)
+   --------------------------------
+	- the maps load from levelfiles
+	- the menu loads from menu file 
+   
+5. HUD with score board 
+   --------------------
+   - point will be added to a score on hud.
+   - if a player picks up a torch the hud will show picked. 
+   - hud displays number of keys 
 
