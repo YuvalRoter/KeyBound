@@ -1,0 +1,74 @@
+KeyBound – bonus.txt
+Exercise 1 – C++ 2026A – MTA
+
+Students:
+- Name: אריק זסלבסקי    ID: 322598350
+- Name: יובל רוטר    ID: 322521097
+
+
+Bonus features implemented
+--------------------------
+
+1. Colored output for game elements
+   --------------------------------
+   - We use Windows console colors to distinguish different elements:
+     - Player 1: Cyan ('@') <------------------------------------------------------------------------------------ check ?????
+     - Player 2: Red ('&') <------------------------------------------------------------------------------------ check ?????
+     - Walls: Brown, drawn as filled block characters (▒ style)
+     - Win tile: LightRed, using █ 
+
+2. Dark rooms + torch-based fog-of-war
+   -----------------------------------
+   - Some rooms are flagged as dark in the Room structure.
+   - In a dark room, the map is not drawn fully:
+     - Only tiles inside a visibility radius around players with a torch are shown.
+     - The rest of the room is completely dark (spaces " ").
+   - Visibility uses:
+     - radius = 0 when no torch
+     - radius = 4 (configurable) when holding a torch
+   - This makes navigation more challenging and adds atmosphere compared
+     to a fully revealed map.
+
+
+3. Riddle integration and random simon says (Exercise 1+)
+   ------------------------------------------------------
+   - The project already includes Riddle and Question classes and a mechanism
+     to display riddle screens.
+   - Certain tiles in the level ('?') are treated as riddle triggers:
+     - When a player tries to step onto such a tile, a riddle is shown.
+     - Solving the riddle correctly gives the player points.
+   - added a random chance to get a riddle type simon says:
+		You will see 4 cubes on the screen.
+
+		The game will highlight/show a sequence of cubes, one after another.
+		Example:
+		First cube 2 lights up
+		Then cube 4
+		Then cube 1
+		Your job is to memorize the order of the cubes.
+
+		When the sequence ends, you must repeat it by pressing the matching number keys:
+		Cube 1 → press 1
+		Cube 2 → press 2
+		Cube 3 → press 3
+		Cube 4 → press 4
+
+		Example: if the cubes lit in this order:
+		2 → 4 → 1
+		you must press:
+		2 4 1
+
+		If you press the correct sequence:
+		You pass the riddle and can continue the game with added score.
+
+		If you press a wrong number or wrong order:
+		The riddle fails and you wont get points added to your score.
+
+Notes  <------------------------------------------------------------------------------------ check ?????
+-----
+- All bonus features were implemented while keeping to the constraints of Exercise 1:
+  - No use of exit().
+  - No recursion for menu handling.
+  - The main logic stays in a game loop and uses flags (running, won, etc.) to
+    control flow.
+
