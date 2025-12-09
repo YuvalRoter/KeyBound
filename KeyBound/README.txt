@@ -153,6 +153,7 @@ Students:
 	- Implementation detail (for the grader):
 	  - When a torch is picked up, it stays in the player’s inventory until disposed.
 	  - When an element is disposed, it is dropped onto the floor and can be picked up again.
+	  - (The implementation of the drop torch will be significant when we will add a bomb the player wouldnt be able to hold a torch and a bomb)
 
 
 9. Springs (summary)
