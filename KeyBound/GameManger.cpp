@@ -23,7 +23,7 @@ namespace {
 
 	// Game Configuration
 	constexpr int START_X = 6;
-	constexpr int START_Y = 5; // derived from START-1
+	constexpr int START_Y = 5; 
 	constexpr int MAX_SIMON_LENGTH = 4;
 	constexpr int MIN_SIMON_LENGTH = 3;
 	constexpr int SIMON_DELAY_MS = 400;
