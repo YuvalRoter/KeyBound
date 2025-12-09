@@ -1,5 +1,5 @@
 KeyBound – bonus.txt
-Exercise 1 – C++ 2026A – MTA
+Exercise 1 – C++ – MTA
 
 Students:
 - Name: אריק זסלבסקי    ID: 322598350

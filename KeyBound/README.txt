@@ -1,11 +1,11 @@
 =========================
 KeyBound – Exercise 1
-C++ 2026A – MTA
+C++ – MTA
 =========================
 
 1. Students details
 -------------------
-Course: C++ 2026A – MTA
+Course: C++ – MTA
 Exercise: 1 – Text Adventure World (console game)
 
 Students:
