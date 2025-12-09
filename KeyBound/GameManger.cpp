@@ -606,7 +606,7 @@ void GameManger::initRooms()
 {
 	// Initialize Rooms with file names, spawn points and lighting settings
 	rooms[0] = Room("level1.txt", { Point(10, 4, Screen::PLAYER1), Point(7, 4, Screen::PLAYER2) }, false);
-	rooms[1] = Room("level2.txt", { Point(3, 3, Screen::PLAYER1),  Point(3, 5, Screen::PLAYER2) }, true);
+	rooms[1] = Room("level2.txt", { Point(3, 3, Screen::PLAYER1),  Point(3, 5, Screen::PLAYER2) }, false);
 	rooms[2] = Room("level3.txt", { Point(35, 23, Screen::PLAYER1),  Point(36, 23, Screen::PLAYER2) }, false);
 	rooms[3] = Room("levelFinal.txt", { Point(3, 3, Screen::PLAYER1), Point(3, 5, Screen::PLAYER2) }, false);
 }
