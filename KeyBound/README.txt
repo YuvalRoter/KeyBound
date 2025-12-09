@@ -9,11 +9,12 @@ Course: C++ – MTA
 Exercise: 1 – Text Adventure World (console game)
 
 Students:
-- Name: אריק זסלבסקי    ID: 322598350
+- Name: אריק זסלבסקי ID: 322598350
 - Name: יובל רוטר    ID: 322521097
 
 
-2. Project overview <----------------------------------------------------------------------------------
+2. Project overview
+-------------------
 KeyBound is a console-based text adventure / puzzle game implemented for Exercise 1.
 
 The game runs in an 80x25 Windows console. Two cooperative players must navigate
@@ -28,7 +29,8 @@ reach the final room.
 - Some rooms can be dark and require a torch to see around the player.
 
 
-3. Compilation & execution  <-----------------------------------------------------------------------------------------
+3. Compilation & execution
+--------------------------
 Environment:
 - Visual Studio 2022 (or later)
 - Standard C++ on Windows
@@ -41,7 +43,6 @@ Required libraries / APIs:
 
 Build:
 - Open the provided .sln in Visual Studio.
-- Set the project configuration to Debug or Release (as you wish).
 - Build Solution (Ctrl+Shift+B).
 
 Run:
@@ -81,9 +82,8 @@ Player 2:
 - Dispose element (drop object): O
 
 Global:
-- ESC : Pause game. In pause mode, pressing ESC resumes the game, and pressing
-          H/h EXITS.
- 
+- ESC : Pause game. In pause mode, pressing ESC resumes the game, and pressing ESC and H/h takes to menu.
+          
 
 6. Game elements implemented (Exercise 1)
 -----------------------------------------
@@ -101,10 +101,10 @@ Optional elements implemented:
 For each element:
 
 Character mapping:
-- Player 1: @
-- Player 2: &
 
 none colored:
+- Player 1: @
+- Player 2: &
 - Wall    : ▒
 - Door    : number between 1 - 9 (indicating number of keys needed)
 - Key     : K
@@ -114,6 +114,8 @@ none colored:
 - won char: ▒ 
 
 colored:
+- Player 1: @ (colored cyan)	
+- Player 2: & (colored red)
 - Wall    : ▒ (colored dark orange) 
 - Door    : number between 1 - 9 (indicating number of keys needed)
 - Key     : K
@@ -147,7 +149,7 @@ Movement rules:
 - Some rooms are marked as “dark”.
 - In a dark room, only tiles within a certain radius around a player carrying a torch
   are visible on screen (fog-of-war).
-- If no player holds a torch, the dark room is not visible (except possibly the player tile).
+- If no player holds a torch, the dark room is not visible (except the player tile).
 - Implementation detail (for the grader):
   - When a torch is picked up, it stays in the player’s inventory until disposed.
   - When an element is disposed, it is dropped onto the floor and can be picked up again.
@@ -157,24 +159,19 @@ Movement rules:
 --------------------
 - Springs consist of one or more spring characters in a straight line, adjacent at one end
   to a wall.
-- When a player moves over a spring towards the wall, the spring compresses.
+- When a player moves over a spring the spring compresses.
 - When the player stops or changes direction, the spring releases and sets the player’s
-  speed and duration according to the number of compressed chars (N):
-  - Speed = N
-  - Duration = N² game cycles
+  speed and duration according to the number of compressed charsame cycles
 - Under spring effect, all other collision rules still apply (walls, players, items).
 
 
-10. Pause behavior (ESC) <--------------------------------------------------------------- is it needed????????
+10. Pause behavior (ESC) 
 ------------------------
 - Press ESC during the game:
-  - The game enters PAUSE mode and prints:
-    "Game paused, press ESC again to continue or H to go back to the main menu"
-    (or similar text).
+  - The game enters PAUSE mode:
   - Press ESC again to resume the game.
   - Press H/h to stop the current game and return to the main menu.
-- When resuming, all motion continues as if the game was not paused (positions and
-  spring states are preserved, no “reset”).
+- When resuming, all motion continues as if the game was not paused.
 
 
 11. Self decisions and clarifications
@@ -192,15 +189,10 @@ This section lists design decisions we made where the exercise specification lef
     or the second player leaves to a different destination, the screen switches.
 
 
-12. Use of external / AI-generated code <---------------------------------------------------------------
+12. Use of external / AI-generated code
 ---------------------------------------
-We used AI assistance (ChatGPT) for some parts of the implementation, mainly for:
-
+We used AI assistance (ChatGPT) and sites like stack overflow for some parts of the implementation, mainly for:
 - Refining the fog-of-war rendering logic for dark rooms.
-- Helping design the structure of GameManger::drawWithFog() and the fog buffer
-  (fogLastFrame / fogInitialized).
-- Helping draft this readme.txt and bonus.txt.
-
-For each integrated code snippet of 5 or more lines that originated from AI or other external
-sources, we added a comment in the relevant .cpp/.h file describing the source, as required
-by the exercise instructions.
+- Riddles logic
+- added colors 
+- Helping draft this readme.txt and bonus.txt and bouns.txt

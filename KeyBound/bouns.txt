@@ -2,7 +2,7 @@ KeyBound – bonus.txt
 Exercise 1 – C++ – MTA
 
 Students:
-- Name: אריק זסלבסקי    ID: 322598350
+- Name: אריק זסלבסקי ID: 322598350
 - Name: יובל רוטר    ID: 322521097
 
 
@@ -12,8 +12,8 @@ Bonus features implemented
 1. Colored output for game elements
    --------------------------------
    - We use Windows console colors to distinguish different elements:
-     - Player 1: Cyan ('@') <------------------------------------------------------------------------------------ check 
-     - Player 2: Red ('&') <------------------------------------------------------------------------------------ check 
+     - Player 1: Cyan ('@') 
+     - Player 2: Red ('&') 
      - Walls: Brown, drawn as filled block characters (▒ style)
      - Win tile: LightRed, using █ 
 
@@ -64,11 +64,4 @@ Bonus features implemented
 		If you press a wrong number or wrong order:
 		The riddle fails and you wont get points added to your score.
 
-Notes  <------------------------------------------------------------------------------------ check ?????
------
-- All bonus features were implemented while keeping to the constraints of Exercise 1:
-  - No use of exit().
-  - No recursion for menu handling.
-  - The main logic stays in a game loop and uses flags (running, won, etc.) to
-    control flow.
 
