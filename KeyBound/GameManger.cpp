@@ -51,7 +51,7 @@ const Point GameManger::initialDoorLocations[MAX_DOORS] = {
 	Point(79, 2),   // [0] Right Side (Used for Level 1 -> Level 2)
 	Point(36, 1),   // [1] Top Side   (Used for Level 1 -> Level 3)
 	Point(38, 24),  // [2] Bottom Side (Used for Level 1 -> Final)
-	Point(36, 24),    // [3] Left Side  (Used for Level 2 Secret Door)
+	Point(77, 7),    // [3] Left Side  (Used for Level 1 Switch Door)
 	Point(0, 2),    // [4] Left Side (Used for Level 1 <- Level 2)
 	Point(36, 24)   // [5] Bottom Side (Used for Level 1 <- Level 3)
 };
@@ -627,6 +627,9 @@ void GameManger::initDoors() {
 	// Door 2: Goes to Final Level (Location: Bottom Side)
 	globalDoors[2] = { initialDoorLocations[2], 2, 0, 3, 5, false };
 
+	// Door 4: Switch Door Goes to level 3
+	globalDoors[4] = { initialDoorLocations[3], 4, 0, 2, 8, false };
+
 
 	// ==========================================
 	//              LEVEL 2 DOORS
@@ -635,8 +638,7 @@ void GameManger::initDoors() {
 	// Door 3: Back to Level 1 (Location: Right Side - SAME AS ENTERING)
 	globalDoors[3] = { initialDoorLocations[4], 3, 1, 0, 0, true }; // 0 cost, already open
 
-	// Door 4: Secret Door (Location: Left Side) -> SecretRoom
-	globalDoors[4] = { initialDoorLocations[3], 4, 1, 3, 9, false };
+
 
 
 	// ==========================================
