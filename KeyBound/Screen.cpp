@@ -56,6 +56,11 @@ void Screen::draw() const {
                 std::cout << static_cast<char>(BlockType::MediumBlock);
                 setTextColor(Color::LightGray); // Reset
             }
+            else if (c == OBSTACLE) {
+				setTextColor(Color::DarkGray);
+				std::cout << c;
+				setTextColor(Color::LightGray); // Reset
+            }
             else if (c == WONCHAR) {
                 setTextColor(Color::LightRed);
                 std::cout << static_cast<char>(BlockType::DarkBlock);
