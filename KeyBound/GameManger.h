@@ -93,5 +93,5 @@ private:
 
     // Utilities
     int NumbersInput();
-    void increaseScore(int points);
+    void increaseScore(int points, const std::string& message);
 };

@@ -787,9 +787,10 @@ void GameManger::handleSimon(Riddle& riddle, Player& player)
 			return;
 		}
 	}
+	
 
 	// Success
-	increaseScore(WIN_POINTS);
+	increaseScore(WIN_POINTS,"SIMON SAYS WINS!");
 }
 
 void GameManger::handleMulti(Riddle& riddle, Player& player)
@@ -832,31 +833,83 @@ void GameManger::handleMulti(Riddle& riddle, Player& player)
 	else {
 		cls();
 		gotoxy(consoleWidth / 2 - 5, Screen::MAX_Y / 2);
-		std::cout << "CORRECT!";
+		increaseScore(10, "CORRECT ANSWER!");
 		Sleep(700);
 		// Note: You might want to add score here too
 	}
 }
-
-void GameManger::increaseScore(int Points)
+void GameManger::increaseScore(int points, const std::string& message)
 {
 	cls();
-	score += Points;
+	score += points;
+
+	// --- 1. Calculate Dimensions ---
 	int cx = Screen::MAX_X / 2;
 	int cy = Screen::MAX_Y / 2;
 
-	// Flash Colors
+	std::string scoreLine = "SCORE + " + std::to_string(points);
+
+	// Determine the widest content (either the message or the score)
+	size_t contentLen = (std::max)(message.length(), scoreLine.length());
+
+	// Ensure the box is at least 20 chars wide for aesthetics
+	int minWidth = 22;
+	int boxWidth = (std::max)((int)contentLen + 6, minWidth); // +6 for padding (3 spaces each side)
+
+	// Calculate the top-left starting position to center the box
+	int startX = cx - (boxWidth / 2);
+
+	// Create the border string dynamically
+	std::string border(boxWidth, '#');
+
+	// --- 2. Animation Loop ---
 	Screen::Color colors[] = { Screen::Color::Yellow, Screen::Color::LightGreen, Screen::Color::LightCyan };
 
 	for (int i = 0; i < 6; ++i) {
 		setTextColor(colors[i % 3]);
 
-		// Draw Box
-		gotoxy(cx - 10, cy - 2); std::cout << "#####################";
-		gotoxy(cx - 10, cy - 1); std::cout << "#  SIMON SAYS WIN!  #";
-		gotoxy(cx - 10, cy);     std::cout << "#                   #";
-		gotoxy(cx - 10, cy + 1); std::cout << "#    SCORE + " << Points << "     #";
-		gotoxy(cx - 10, cy + 2); std::cout << "#####################";
+		// DRAW: Top Border
+		gotoxy(startX, cy - 2);
+		std::cout << border;
+
+		// DRAW: Message Line
+		gotoxy(startX, cy - 1);
+		std::cout << "#";
+
+		// Calculate dynamic padding for Message
+		int totalSpacesMsg = boxWidth - 2 - (int)message.length();
+		int padLeftMsg = totalSpacesMsg / 2;
+		int padRightMsg = totalSpacesMsg - padLeftMsg; // Handles odd numbers safely
+
+		// Print: [Spaces] + [Message] + [Spaces]
+		for (int k = 0; k < padLeftMsg; k++) std::cout << " ";
+		std::cout << message;
+		for (int k = 0; k < padRightMsg; k++) std::cout << " ";
+		std::cout << "#";
+
+		// DRAW: Spacer Line (Empty middle row)
+		gotoxy(startX, cy);
+		std::cout << "#";
+		for (int k = 0; k < boxWidth - 2; k++) std::cout << " ";
+		std::cout << "#";
+
+		// DRAW: Score Line
+		gotoxy(startX, cy + 1);
+		std::cout << "#";
+
+		// Calculate dynamic padding for Score
+		int totalSpacesScore = boxWidth - 2 - (int)scoreLine.length();
+		int padLeftScore = totalSpacesScore / 2;
+		int padRightScore = totalSpacesScore - padLeftScore;
+
+		for (int k = 0; k < padLeftScore; k++) std::cout << " ";
+		std::cout << scoreLine;
+		for (int k = 0; k < padRightScore; k++) std::cout << " ";
+		std::cout << "#";
+
+		// DRAW: Bottom Border
+		gotoxy(startX, cy + 2);
+		std::cout << border;
 
 		if (i < 3) Beep(400 + (i * 100), 50);
 		Sleep(150);
