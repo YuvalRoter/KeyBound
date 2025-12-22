@@ -110,10 +110,11 @@ public:
         targetRoomIndex = -1;
     }
  
-    void move(Door* doors, int maxDoors, int currentRoomIndex);
+    void move(Door* doors, int maxDoors, int currentRoomIndex, Player* otherPlayer = nullptr, bool redrawMapNow = true);
+
 
     void startSpringLaunch();
     void keyPressed(char ch);
     bool tryToOpenDoor(int requiredKeys);
     void dropTorch();
-};
+}; 

@@ -19,6 +19,9 @@ void Point::draw(char c) const {
         // Optional: make the torch stand out
         setTextColor(Screen::Color::Yellow);
     }
+    else if (c == Screen::OBSTACLE) {
+		setTextColor(Screen::Color::DarkGray);
+    }
     else {
         setTextColor(Screen::Color::LightGray);
     }
