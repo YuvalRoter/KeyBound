@@ -2,7 +2,7 @@
 
 #include <string>
 #include "Point.h"
-
+#include <cctype>
 
 // Forward declaration to reduce dependencies
 class Room;
@@ -32,6 +32,8 @@ public:
     static constexpr char WONCHAR = '%';
     static constexpr char HEARTCHAR = '$';
     static constexpr char TORCH = 'T';
+    static constexpr char OBSTACLE = 'O';
+   
 
     // Color Codes (Console Specific)
     enum Color {
@@ -128,10 +130,9 @@ public:
     bool isSpring(const Point& p) const { return charAt(p) == SPRING; }
     bool isKey(const Point& p) const { return charAt(p) == KEY; }
     bool isTorch(const Point& p) const { return charAt(p) == TORCH; }
-
     // Checks if the character is a digit (representing a door ID)
     bool isDoor(const Point& p) const { return isdigit(charAt(p)); }
-
+	bool isObstacle(const Point& p) const { return charAt(p) == OBSTACLE; }
     // ===========================
     //       Rendering
     // ===========================

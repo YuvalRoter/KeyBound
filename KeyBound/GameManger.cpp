@@ -160,6 +160,10 @@ void GameManger::drawWithFog() {
 				displayChar = static_cast<char>(Screen::BlockType::MediumBlock);
 				color = Screen::Color::Brown;
 			}
+			else if (raw == Screen::OBSTACLE) {
+				displayChar = raw;
+				color = Screen::Color::DarkGray;
+			}
 			else if (raw == Screen::WONCHAR) {
 				displayChar = static_cast<char>(Screen::BlockType::DarkBlock);
 				color = Screen::Color::LightRed;
@@ -495,7 +499,7 @@ void GameManger::updatePlayers() {
 	for (auto& player : players) {
 		// 1. Move logic
 		if (!player.isFinished()) {
-			player.move(globalDoors, MAX_DOORS, currentRoom);
+			player.move(globalDoors, MAX_DOORS, currentRoom,(&player == &players[0]) ? &players[1] : &players[0],!rooms[currentRoom].dark);
 
 			// Check if HUD update is requested (e.g., key collected)
 			if (player.getHUD()) {

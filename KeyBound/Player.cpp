@@ -19,6 +19,104 @@ namespace {
     // Offsets for dropping items (Left, Right, Up, Down relative logic)
     // We will use logic to pick specific ones, but 2 is the max neighbors we check
     constexpr int MAX_NEIGHBOR_CHECKS = 2;
+
+    bool inBounds(int x, int y) {
+        return x >= 0 && x <= Screen::MAX_X && y >= 0 && y <= Screen::MAX_Y;
+    }
+
+    // Collect all connected obstacle tiles (4-direction only)
+    // Collect only the obstacle "slice" along the push axis:
+// - pushing LEFT/RIGHT -> collect contiguous obstacles in the same ROW
+// - pushing UP/DOWN    -> collect contiguous obstacles in the same COLUMN
+// Collect only the obstacle "slice" along the push axis:
+// - pushing LEFT/RIGHT -> collect contiguous obstacles in the same ROW
+// - pushing UP/DOWN    -> collect contiguous obstacles in the same COLUMN
+// Collect only the obstacle "slice" along the push axis:
+// - pushing LEFT/RIGHT -> collect contiguous obstacles in the same ROW
+// - pushing UP/DOWN    -> collect contiguous obstacles in the same COLUMN
+// Collect only the obstacle "slice" along the push axis:
+// - pushing LEFT/RIGHT -> contiguous obstacles in the same ROW
+// - pushing UP/DOWN    -> contiguous obstacles in the same COLUMN
+    
+    int sgn(int v) { return (v > 0) - (v < 0); }
+
+    // Collect only the obstacle "slice" along the push axis, based on actual screen delta (dx,dy)
+    std::vector<Point> collectObstacleCells(Screen& screen, const Point& start, int dx, int dy) {
+        std::vector<Point> cells;
+
+        if (!inBounds(start.getX(), start.getY())) return cells;
+        if (screen.getCharAt(start.getY(), start.getX()) != Screen::OBSTACLE) return cells;
+
+        dx = sgn(dx);
+        dy = sgn(dy);
+
+        // No diagonal pushing
+        if (dx != 0 && dy != 0) return cells;
+        if (dx == 0 && dy == 0) return cells;
+
+        // Move to the beginning of the contiguous slice in the negative axis direction
+        int x = start.getX();
+        int y = start.getY();
+        while (inBounds(x - dx, y - dy) &&
+            screen.getCharAt(y - dy, x - dx) == Screen::OBSTACLE) {
+            x -= dx;
+            y -= dy;
+        }
+
+        // Collect contiguous cells forward on that axis
+        while (inBounds(x, y) && screen.getCharAt(y, x) == Screen::OBSTACLE) {
+            cells.emplace_back(x, y);
+            x += dx;
+            y += dy;
+        }
+
+        return cells;
+    }
+
+    bool canPushObstacle(Screen& screen, const std::vector<Point>& cells, int dx, int dy) {
+        dx = sgn(dx);
+        dy = sgn(dy);
+
+        bool inGroup[Screen::MAX_Y + 1][Screen::MAX_X + 1] = { false };
+        for (const auto& p : cells) {
+            inGroup[p.getY()][p.getX()] = true;
+        }
+
+        for (const auto& p : cells) {
+            int nx = p.getX() + dx;
+            int ny = p.getY() + dy;
+
+            if (!inBounds(nx, ny)) return false;
+
+            // Moving into itself is fine
+            if (inGroup[ny][nx]) continue;
+
+            // Only push into empty space
+            if (screen.getCharAt(ny, nx) != EMPTY_TILE) return false;
+        }
+
+        return true;
+    }
+
+    void pushObstacleOneStep(Screen& screen, const std::vector<Point>& cells, int dx, int dy, bool redrawNow) {
+        dx = sgn(dx);
+        dy = sgn(dy);
+
+        // Clear old cells
+        for (const auto& p : cells) {
+            screen.setCell(p.getY(), p.getX(), EMPTY_TILE);
+            if (redrawNow) Point(p.getX(), p.getY()).draw(EMPTY_TILE);
+        }
+
+        // Place new cells
+        for (const auto& p : cells) {
+            int nx = p.getX() + dx;
+            int ny = p.getY() + dy;
+            screen.setCell(ny, nx, Screen::OBSTACLE);
+            if (redrawNow) Point(nx, ny).draw(Screen::OBSTACLE);
+        }
+    }
+
 }
 
 // Initialize static member
@@ -27,7 +125,7 @@ int Player::collectedKeys = 0;
 // ===========================
 //      Movement Logic
 // ===========================
-void Player::move(Door* doors, int maxDoors, int currentRoomIndex) {
+void Player::move(Door* doors, int maxDoors, int currentRoomIndex, Player* otherPlayer, bool redrawMapNow) {
 
     // 1. Visual Cleanup
     // If we are on a spring, draw the spring char so we don't "erase" it visually.
@@ -93,6 +191,87 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex) {
             if (!isLaunched) dir = Direction::directions[Direction::STAY];
             break; // Stop movement loop
         }
+
+        // 1.5 Player Collision (treat the other player as solid)
+        if (otherPlayer != nullptr && next_pos == otherPlayer->body) {
+            if (!isLaunched) dir = Direction::directions[Direction::STAY];
+            break;
+        }
+
+        // 1.6 Obstacle Interaction (pushable blocks)
+        if (screen.isObstacle(next_pos)) {
+
+            // Compute push delta in REAL screen coordinates
+            int pushDx = next_pos.getX() - body.getX();
+            int pushDy = next_pos.getY() - body.getY();
+            pushDx = sgn(pushDx);
+            pushDy = sgn(pushDy);
+
+            // No diagonal pushing
+            if (pushDx != 0 && pushDy != 0) {
+                if (!isLaunched) dir = Direction::directions[Direction::STAY];
+                break;
+            }
+
+            // Base force
+            int totalForce = isLaunched ? PlayerSpeed : 1;
+
+            // Add force from the other player if he is directly behind us and moving same direction
+            if (otherPlayer != nullptr) {
+
+                // Compute the other player's effective movement direction (same logic as your move)
+                Direction otherMoveDir;
+                if (otherPlayer->isLaunched) {
+                    otherMoveDir = otherPlayer->launchDir;
+
+                    if (otherPlayer->dir.getDirX() != 0 && otherPlayer->launchDir.getDirY() != 0)
+                        otherMoveDir = Direction(otherMoveDir.getDirX() + otherPlayer->dir.getDirX(), otherMoveDir.getDirY());
+
+                    if (otherPlayer->dir.getDirY() != 0 && otherPlayer->launchDir.getDirX() != 0)
+                        otherMoveDir = Direction(otherMoveDir.getDirX(), otherMoveDir.getDirY() + otherPlayer->dir.getDirY());
+                }
+                else {
+                    otherMoveDir = otherPlayer->dir;
+                }
+
+                // Convert other player's intent into REAL screen delta
+                Point otherNext = otherPlayer->body + otherMoveDir;
+                int otherDx = sgn(otherNext.getX() - otherPlayer->body.getX());
+                int otherDy = sgn(otherNext.getY() - otherPlayer->body.getY());
+
+                bool sameDir = (otherDx == pushDx && otherDy == pushDy);
+
+                if (sameDir) {
+                    Point behind(body.getX() - pushDx, body.getY() - pushDy);
+                    if (otherPlayer->body == behind) {
+                        int otherForce = otherPlayer->isLaunched ? otherPlayer->PlayerSpeed : 1;
+                        totalForce += otherForce;
+                    }
+                }
+            }
+
+            // Collect only the slice along the push axis
+            std::vector<Point> obstacleCells = collectObstacleCells(screen, next_pos, pushDx, pushDy);
+            int requiredForce = (int)obstacleCells.size();
+
+            if (requiredForce > 0 &&
+                totalForce >= requiredForce &&
+                canPushObstacle(screen, obstacleCells, pushDx, pushDy)) {
+
+                pushObstacleOneStep(screen, obstacleCells, pushDx, pushDy, redrawMapNow);
+
+                // Move player into the obstacle's previous tile
+                body = next_pos;
+                continue;
+            }
+            else {
+                if (!isLaunched) dir = Direction::directions[Direction::STAY];
+                break;
+            }
+        }
+
+        
+
 
         // 2. Spring Interaction
         if (screen.isSpring(next_pos)) {
