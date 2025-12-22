@@ -121,19 +121,28 @@ namespace {
 
 // Initialize static member
 int Player::collectedKeys = 0;
+int Player::AmountOfSwitches = 0;
 
 // ===========================
 //      Movement Logic
 // ===========================
 void Player::move(Door* doors, int maxDoors, int currentRoomIndex, Player* otherPlayer, bool redrawMapNow) {
 
-    // 1. Visual Cleanup
-    // If we are on a spring, draw the spring char so we don't "erase" it visually.
-    // Otherwise, erase the player's old position.
-    if (screen.isSpring(body))
-        body.draw(Screen::SPRING);
-    else
+    // ===========================
+     // 1. Visual Cleanup
+     // ===========================
+     // We look at the map to see what we are currently standing on.
+     // This handles Springs, Switches, and Empty Tiles automatically.
+    char objectUnderPlayer = screen.getCharAt(body.getY(), body.getX());
+
+    // If the map data says "Player" is here, we treat it as empty floor underneath.
+    if (objectUnderPlayer == Screen::PLAYER1 || objectUnderPlayer == Screen::PLAYER2) {
         body.draw(EMPTY_TILE);
+    }
+    else {
+        // Restore the object (Switch ON/OFF, Spring, etc.)
+        body.draw(objectUnderPlayer);
+    }
 
     // 2. Handle Spring Physics (Launch State)
     if (isLaunched) {
@@ -299,24 +308,44 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex, Player* other
                 if (doors[k].sourceRoomIndex == currentRoomIndex) {
                     if (doors[k].position == next_pos) {
 
-                        // Case: Door Open -> Win/Exit
+                        // Case: Door Open -> Exit
                         if (doors[k].isOpen) {
                             finishedLevel = true;
                             targetRoomIndex = doors[k].targetRoomIndex;
                             doorHandled = true;
                         }
-                        // Case: Door Closed -> Try Keys
-                        else if (tryToOpenDoor(doors[k].KeysToOpen)) {
+                        // Case: Switchs on?   
+                        // 8 - indicator for switch door
+                        if (doors[k].KeysToOpen == SWITCH_ID)
+                        {
+                            // Only open if the switch count matches the target
+                            if (AmountOfSwitches >= SwitchsToTurn)
+                            {
+                                doors[k].isOpen = true;
+                                finishedLevel = true;
+                                targetRoomIndex = doors[k].targetRoomIndex;
+                                doorHandled = true;
+                            }
+                            else
+                            {
+                                // Switch count not met; door remains closed (collision happens)
+                                doorHandled = true;
+                            }
+                        }
+                        // If not a switch door, try standard key opening
+                        else if (tryToOpenDoor(doors[k].KeysToOpen))
+                        {
                             doors[k].isOpen = true;
                             finishedLevel = true;
                             targetRoomIndex = doors[k].targetRoomIndex;
                             doorHandled = true;
                         }
-                        // Case: Door Locked -> Block movement
-                        else {
-                            doorHandled = true; // Handled, but failed to enter
+                        // Door is locked and we have no keys
+                        else
+                        {
+                            doorHandled = true;
                         }
-                        break; // Found the matching door object
+                        break;
                     }
                 }
             }
@@ -363,9 +392,22 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex, Player* other
             setWin(true);
 
         }
+        // 8. Switch Logic
+        if (screen.isSwitchOff(next_pos)) {
+            screen.setCell(next_pos.getY(), next_pos.getX(), Screen::SWITCH_ON);
+            AmountOfSwitches++;
+
+        }
+        else if (screen.isSwitchOn(next_pos)) {
+            screen.setCell(next_pos.getY(), next_pos.getX(), Screen::SWITCH_OFF);
+            AmountOfSwitches--;
+        }
+       
+
         // --- D. Commit Move ---
         body = next_pos;
     }
+   
 
     // Render
     body.draw();

@@ -11,6 +11,10 @@ class Player {
 
     static constexpr size_t NUM_KEYS = 5;
 
+    static constexpr size_t SwitchsToTurn = 3;
+
+    static constexpr size_t SWITCH_ID = 8;
+
     Point body;
     char keys[NUM_KEYS];
     Direction dir;
@@ -18,6 +22,7 @@ class Player {
 
     // Game State
     int PlayerSpeed = 1;
+    static int AmountOfSwitches;
     bool won = false;
     bool inRiddleMode = false;
     bool finishedLevel = false;
