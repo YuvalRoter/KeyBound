@@ -346,6 +346,7 @@ void GameManger::printInstructions() {
 	gotoxy(leftAlign, startY + 5); std::cout << "2. Navigate through the maze rooms.";
 	gotoxy(leftAlign, startY + 7); std::cout << "3. Collect KEYS to open DOORS.";
 	gotoxy(leftAlign, startY + 9); std::cout << "4. Solve Riddles (Simon Says & Math) to progress.";
+	gotoxy(leftAlign, startY + 9); std::cout << "5. Turn on Switches -> / To open doors with the number 8";
 
 
 
