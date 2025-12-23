@@ -202,7 +202,7 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex, Player* other
         }
 
         // 1.5 Player Collision (treat the other player as solid)
-        if (otherPlayer != nullptr && next_pos == otherPlayer->body) {
+        if (otherPlayer != nullptr && !otherPlayer->isFinished() && next_pos == otherPlayer->body) {
             if (!isLaunched) dir = Direction::directions[Direction::STAY];
             break;
         }
