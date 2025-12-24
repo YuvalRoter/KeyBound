@@ -775,6 +775,13 @@ void GameManger::handleSimon(Riddle& riddle, Player& player)
 		Sleep(150);
 	}
 
+	// This loop consumes any keystrokes stored while the pattern was 
+	// playing, ensuring the next _getch() waits for NEW input.
+	while (_kbhit()) {
+		(void)_getch();
+	}
+
+
 	// 2. User Input
 	for (std::size_t i = 0; i < pattern.size(); ++i) {
 		int digit = NumbersInput();
