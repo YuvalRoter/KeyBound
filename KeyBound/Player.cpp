@@ -294,7 +294,7 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex, Player* other
         }
         else {
             // We stepped OFF a spring. Reset compression.
-            if (!isLaunched && springCompressedCount > 0 && !screen.isSpring(next_pos)) {
+            if (!isLaunched && springCompressedCount > 0) {
                 springCompressedCount = 0;
             }
         }
