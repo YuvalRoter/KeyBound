@@ -752,6 +752,9 @@ void GameManger::handleRiddle(Player& player) {
 	}
 	else {
 		screen.draw();
+
+		players[0].getPoint().draw(players[0].getChar());
+		players[1].getPoint().draw(players[1].getChar());
 	}
 
 	printStatsBar();
