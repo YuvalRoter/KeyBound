@@ -628,7 +628,7 @@ void GameManger::initRooms()
 	rooms[1] = Room("level2.txt", { Point(3, 3, Screen::PLAYER1),  Point(3, 5, Screen::PLAYER2) }, true);
 	rooms[2] = Room("level3.txt", { Point(35, 23, Screen::PLAYER1),  Point(36, 23, Screen::PLAYER2) }, false);
 	rooms[3] = Room("levelFinal.txt", { Point(3, 3, Screen::PLAYER1), Point(3, 5, Screen::PLAYER2) }, false);
-	rooms[4] = Room("level4.txt", { Point(23, 5, Screen::PLAYER1), Point(22, 7, Screen::PLAYER2) }, false);
+	rooms[4] = Room("level4.txt", { Point(23, 3, Screen::PLAYER1), Point(22, 3, Screen::PLAYER2) }, false);
 }
 
 void GameManger::initDoors() {
@@ -1091,17 +1091,59 @@ void GameManger::explodeBomb(const Point& center) {
 	int cy = center.getY();
 
 	// ==========================================
+	//    HELPER: Line of Sight 
+	// ==========================================
+	// Returns true if there is a clear path from center to target.
+	// Returns false if a wall blocks the way.
+	auto hasClearPath = [&](Point target) {
+		int x0 = cx;
+		int y0 = cy;
+		int x1 = target.getX();
+		int y1 = target.getY();
+
+		int dx = std::abs(x1 - x0);
+		int dy = -std::abs(y1 - y0);
+		int sx = x0 < x1 ? 1 : -1;
+		int sy = y0 < y1 ? 1 : -1;
+		int err = dx + dy, e2;
+
+		while (true) {
+			// 1. Reached the target? Path is clear.
+			if (x0 == x1 && y0 == y1) return true;
+
+			// 2. Check current tile for wall (skip the start point/bomb itself)
+			if (x0 != cx || y0 != cy) {
+				if (screen.isWall(Point(x0, y0)) || screen.isDoor(Point(x0, y0))) return false;
+			}
+
+			// 3. Move to next tile in the line
+			e2 = 2 * err;
+			if (e2 >= dy) { err += dy; x0 += sx; }
+			if (e2 <= dx) { err += dx; y0 += sy; }
+		}
+		};
+
+	// ==========================================
 	//       VISUAL ANIMATION (Square Fix)
 	// ==========================================
 
-	// Helper: Draws a 5x3 box. 
-	// Console characters are tall, so 5 wide x 3 tall looks like a Square.
+	// Helper: Draws a box, respecting walls AND line-of-sight shadows.
 	auto drawBlastZone = [&](char c, Screen::Color color) {
 		setTextColor(color);
-		for (int y = cy - 1; y <= cy + 1; ++y) {
-			// X-Range: cx-2 to cx+2 (Width 5)
-			for (int x = cx - 3; x <= cx + 3; ++x) {
+		for (int y = cy - 2; y <= cy + 2; ++y) {
+			// X-Range: cx-3 to cx+3
+			for (int x = cx - 4; x <= cx + 4; ++x) {
+				// Boundary Check
 				if (y < 0 || y > Screen::MAX_Y || x < 0 || x > Screen::MAX_X) continue;
+
+				Point target(x, y);
+
+				// Wall Check: Don't draw ON a wall
+				if (screen.isWall(target)|| screen.isDoor(target)) continue;
+
+				// LOS Check: Don't draw BEHIND a wall
+				if (!hasClearPath(target)) continue;
+
 				gotoxy(x, y);
 				std::cout << c;
 			}
@@ -1115,18 +1157,16 @@ void GameManger::explodeBomb(const Point& center) {
 	Beep(600, 50);
 	Sleep(100);
 
-	// 2. Expansion (Red 5x3 Square)
+	// 2. Expansion (Red Box)
 	drawBlastZone(static_cast<char>(Screen::BlockType::MediumBlock), Screen::Color::Red);
 	Beep(400, 100);
 	Sleep(100);
 
-	// 3. Heat (Yellow 5x3 Square)
+	// 3. Heat (Yellow Box)
 	drawBlastZone(static_cast<char>(Screen::BlockType::LightBlock), Screen::Color::Yellow);
 	Sleep(100);
 
-	// 4. CLEANUP VISUALS (Crucial Step)
-	// Instead of drawing dots, we explicitly WIPE the visual area with spaces.
-	// This ensures no artifacts remain before we update the logic.
+	// 4. CLEANUP VISUALS
 	drawBlastZone(' ', Screen::Color::LightGray);
 
 	// Reset color
@@ -1138,17 +1178,22 @@ void GameManger::explodeBomb(const Point& center) {
 
 	// 1. Clear Center Data
 	screen.setCell(cy, cx, ' ');
-	// (Visual center is already cleared by step 4 above)
 
-	// 2. Radius 2 Logic (Items/Objects)
-	// We keep the logic radius large (distance 2) for gameplay balance
-	for (int y = cy - 1; y <= cy + 1; ++y) {
-		for (int x = cx - 3; x <= cx + 3; ++x) {
+	// 2. Radius Logic (Items/Objects)
+	for (int y = cy - 2; y <= cy + 2; ++y) {
+		for (int x = cx - 4; x <= cx + 4; ++x) {
+			// Bounds check
 			if (y < 0 || y > Screen::MAX_Y || x < 0 || x > Screen::MAX_X) continue;
 			if (x == cx && y == cy) continue;
 
+			Point target(x, y);
+
+			// LOS Check: Explosion physically blocked by wall?
+			if (!hasClearPath(target)) continue;
+
 			char c = screen.getCharAt(y, x);
-	
+
+			// Destroy objects
 			if (c == Screen::OBSTACLE || c == Screen::KEY ||
 				c == Screen::TORCH || c == Screen::BOMB || c == Screen::SPRING ||
 				c == Screen::RIDDEL || c == Screen::BOMB_ACTIVE) {
@@ -1156,7 +1201,8 @@ void GameManger::explodeBomb(const Point& center) {
 				screen.setCell(y, x, ' ');
 				Point(x, y).draw(' ');
 			}
-			// TODO: HP
+
+			// Handle Player Damage
 			for (auto& p : players) {
 				if (p.getX() == x && p.getY() == y) {
 					loadRoom(currentRoom);
@@ -1166,5 +1212,4 @@ void GameManger::explodeBomb(const Point& center) {
 			}
 		}
 	}
-	
 }

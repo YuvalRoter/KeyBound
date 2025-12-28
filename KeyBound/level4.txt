@@ -1,23 +1,23 @@
                                                                                 
-################################################################################                                                                             #
-#B  B  B                                                         ++#O         B#
-#                                                                ++#O   ########
-#B  B  B                                                         ++#O   #     K#
-#                                                                ++#O   #    K #
-#B  B  B                                                         ++#O   #    K #
-#                                                                ++#O   #     K#
-############################################OOO#################################
-################# ######################################OO######################
-#B                   ##                                                  #### K#
-#                   O##                                                    O#  #
-#B                  O##                                                  #######
-##############OOOOO############################OOOOOO###########################
-#########   ####################################################################
-#B                                                ###                      ## K#
-#                                                  #O                    OOO#  #
-#B                                                ##O                    #######
-################################################################################
-#####OOOOO############    ######################################################
+################################################################################                                                                             O
+#B  B  B  B   B                                                  OOOO         B#
+#                                                                OOOO   OOOOOOO#
+#B  B  B  B   B                                                  OOOO   O     K#
+#                                                                OOOO   O    K #
+#B  B  B  B   B                                                  OOOO   O    K #
+#OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO   O     K#
+#OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO#
+#OOOOOOOOOOOOOOOO OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO#
+#B                   OO                                                  OOOO K#
+#                   OOO                                                    OO  #
+#BOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO#
+#OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO#
+#OOOOOOOO   OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO#
+#B                                                OOO                      OO K#
+#                                                  OO                    OOOO  #
+#BOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO#
+#OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO#
+#OOOOOOOOOOOOOOOOOOOOO    OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO#
 #                                                                              #
 #                                                                              #
 #                                                                              #
