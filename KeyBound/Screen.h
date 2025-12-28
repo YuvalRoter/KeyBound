@@ -30,11 +30,12 @@ public:
     static constexpr char PLAYER1 = '@';
     static constexpr char PLAYER2 = '&';
     static constexpr char WONCHAR = '%';
-    static constexpr char HEARTCHAR = '$';
+    static constexpr char HEARTCHAR = '$';  
     static constexpr char TORCH = 'T';
     static constexpr char OBSTACLE = 'O';
     static constexpr char SWITCH_ON = '/';
     static constexpr char SWITCH_OFF = '\\';
+    static constexpr char BOMB_ACTIVE = '!';
 
 
     // Color Codes (Console Specific)

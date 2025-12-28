@@ -1,4 +1,4 @@
-#include "GameManger.h"
+﻿#include "GameManger.h"
 #include <windows.h>
 #include <conio.h>
 #include <iostream>
@@ -435,6 +435,7 @@ void GameManger::gameLoop()
 		handleInput();
 		if (!running) break;
 		updatePlayers();
+		updateBombs();
 
 		if (rooms[currentRoom].dark) {
 			// Incremental fog redraw
@@ -474,11 +475,23 @@ void GameManger::handleInput() {
 	else {
 		// Handle Action Keys
 		if (key == P1_DROP_KEY || key == std::toupper(P1_DROP_KEY)) {
-			players[0].dropTorch();
+			char type = ' ';
+			Point p = players[0].dropActiveItem(type);	
+
+			if (type == Screen::BOMB && p.getX() != -1) {
+				screen.setCell(p.getY(), p.getX(), Screen::BOMB_ACTIVE);
+				activeBombs.push_back({ p, 100 });
+			}
 			printStatsBar();
 		}
 		else if (key == P2_DROP_KEY || key == std::toupper(P2_DROP_KEY)) {
-			players[1].dropTorch();
+			char type = ' ';
+			Point p = players[1].dropActiveItem(type);
+
+			if (type == Screen::BOMB && p.getX() != -1) {
+				screen.setCell(p.getY(), p.getX(), Screen::BOMB_ACTIVE);
+				activeBombs.push_back({ p, 100 });
+			}
 			printStatsBar();
 		}
 		else {
@@ -948,9 +961,8 @@ void GameManger::printStatsBar() {
 
 	// Build Inventory String
 	std::string inventory = "";
-	if (players[0].hasTorch() || players[1].hasTorch()) {
-		inventory += "[TORCH] ";
-	}
+	if (players[0].hasTorch() || players[1].hasTorch()) inventory += "[TORCH] ";
+	if (players[0].hasBomb() || players[1].hasBomb())   inventory += "[BOMB] "; // New
 	if (inventory.empty()) inventory = "[EMPTY]";
 
 	gotoxy(0, 0);
@@ -1003,4 +1015,155 @@ bool GameManger::loadQuestionsFromFile(const std::string& filename)
 
 	numQuestions = i; // Update actual count
 	return true;
+}
+
+// bomb functions
+void GameManger::updateBombs() {
+	if (activeBombs.empty()) return;
+
+	auto it = activeBombs.begin();
+	while (it != activeBombs.end()) {
+
+		// --- 1. Calculate Blink Speed based on Timer ---
+		// As timer gets smaller (closer to 0), blinkSpeed gets smaller (faster blinking)
+		int blinkSpeed;
+		if (it->timer > 60) blinkSpeed = 15;      // Slow: every 15 frames (~1 sec)
+		else if (it->timer > 30) blinkSpeed = 8;  // Medium: every 8 frames
+		else blinkSpeed = 1;                      // Fast: every 1 frames
+
+		// --- 2. Determine Visual Character ---
+		char displayChar = Screen::BOMB; // Default 'B'
+		Screen::Color displayColor = Screen::Color::LightRed; // Normal Color
+
+		// Toggle state every 'blinkSpeed' frames
+		if ((it->timer / blinkSpeed) % 2 == 0) {
+			// State A: "Lit"
+			displayColor = Screen::Color::Red; // Bright Red
+			// Optional: You could use '*' or 'O' here if you want shape change too
+		}
+		else {
+			// State B: "Dim"
+			displayColor = Screen::Color::DarkGray;
+		}
+
+		// --- 3. Draw the Bomb ---
+		// We only update the visual, we DO NOT change the map data (it stays 'B')
+		gotoxy(it->position.getX(), it->position.getY());
+		setTextColor(displayColor);
+		std::cout << displayChar;
+		setTextColor(Screen::Color::LightGray); // Reset
+
+		// --- 4. Decrement Timer ---
+		it->timer--;
+
+		// --- 5. Check Explosion ---
+		if (it->timer <= 0) {
+			// Optional: Small "Explosion" Animation Frame before clearing
+			gotoxy(it->position.getX(), it->position.getY());
+			setTextColor(Screen::Color::Yellow);
+			std::cout << '*';
+			Sleep(50); // Tiny pause for impact
+
+			explodeBomb(it->position);
+			it = activeBombs.erase(it);
+		}
+		else {
+			++it;
+		}
+	}
+}
+
+void GameManger::explodeBomb(const Point& center) {
+	int cx = center.getX();
+	int cy = center.getY();
+
+	// ==========================================
+	//       VISUAL ANIMATION (Square Fix)
+	// ==========================================
+
+	// Helper: Draws a 5x3 box. 
+	// Console characters are tall, so 5 wide x 3 tall looks like a Square.
+	auto drawBlastZone = [&](char c, Screen::Color color) {
+		setTextColor(color);
+		for (int y = cy - 1; y <= cy + 1; ++y) {
+			// X-Range: cx-2 to cx+2 (Width 5)
+			for (int x = cx - 2; x <= cx + 2; ++x) {
+				if (y < 0 || y > Screen::MAX_Y || x < 0 || x > Screen::MAX_X) continue;
+				gotoxy(x, y);
+				std::cout << c;
+			}
+		}
+		};
+
+	// 1. Ignition (Center)
+	setTextColor(Screen::Color::White);
+	gotoxy(cx, cy);
+	std::cout << static_cast<char>(Screen::BlockType::FullBlock);
+	Beep(600, 50);
+	Sleep(100);
+
+	// 2. Expansion (Red 5x3 Square)
+	drawBlastZone(static_cast<char>(Screen::BlockType::MediumBlock), Screen::Color::Red);
+	Beep(400, 100);
+	Sleep(100);
+
+	// 3. Heat (Yellow 5x3 Square)
+	drawBlastZone(static_cast<char>(Screen::BlockType::LightBlock), Screen::Color::Yellow);
+	Sleep(100);
+
+	// 4. CLEANUP VISUALS (Crucial Step)
+	// Instead of drawing dots, we explicitly WIPE the visual area with spaces.
+	// This ensures no artifacts remain before we update the logic.
+	drawBlastZone(' ', Screen::Color::LightGray);
+
+	// Reset color
+	setTextColor(Screen::Color::LightGray);
+
+	// ==========================================
+	//       LOGICAL DESTRUCTION
+	// ==========================================
+
+	// 1. Clear Center Data
+	screen.setCell(cy, cx, ' ');
+	// (Visual center is already cleared by step 4 above)
+
+	// 2. Radius 3 Logic (Items/Objects)
+	// We keep the logic radius large (distance 3) for gameplay balance
+	for (int y = cy - 3; y <= cy + 3; ++y) {
+		for (int x = cx - 3; x <= cx + 3; ++x) {
+			if (y < 0 || y > Screen::MAX_Y || x < 0 || x > Screen::MAX_X) continue;
+			if (x == cx && y == cy) continue;
+
+			char c = screen.getCharAt(y, x);
+
+			if (c == Screen::OBSTACLE || c == Screen::KEY ||
+				c == Screen::TORCH || c == Screen::BOMB || c == Screen::SPRING ||
+				c == Screen::RIDDEL || c == Screen::BOMB_ACTIVE) {
+
+				screen.setCell(y, x, ' ');
+				Point(x, y).draw(' ');
+			}
+
+			for (auto& p : players) {
+				if (p.getX() == x && p.getY() == y) {
+					loadRoom(currentRoom);
+					for (auto& pl : players) pl.resetLevelData();
+					return;
+				}
+			}
+		}
+	}
+
+	// 3. Radius 1 Logic (Walls)
+	// Destroys walls adjacent to the center
+	for (int y = cy - 1; y <= cy + 1; ++y) {
+		for (int x = cx - 2; x <= cx + 2; ++x) {
+			if (y < 0 || y > Screen::MAX_Y || x < 0 || x > Screen::MAX_X) continue;
+
+			if (screen.isWall(Point(x, y))) {
+				screen.setCell(y, x, ' ');
+				Point(x, y).draw(' ');
+			}
+		}
+	}
 }

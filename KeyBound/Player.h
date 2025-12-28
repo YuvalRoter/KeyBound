@@ -51,6 +51,7 @@ class Player {
     static int collectedKeys;
     bool hasTorchFlag = false;
     bool HUD_changes = false;
+    bool hasBombFlag = false;
 
 public:
     struct Controls {
@@ -86,6 +87,7 @@ public:
     Point getPendingSpawn() const { return pendingSpawnPoint; }
     int getRoom() const { return ourRoomIndex; }
     bool getHUD() const { return HUD_changes; }
+    bool hasBomb() const { return hasBombFlag; }
 
     // Setters
     void setFinished(bool state) { finishedLevel = state; }
@@ -101,6 +103,7 @@ public:
     void setHud(bool b) { HUD_changes = b; }
     void setInRiddle(bool state) { inRiddleMode = state;}
     void setWin(bool wins) { won = wins; }
+    void setBomb(bool v) { hasBombFlag = v; }   
 
     // Actions
     void addkey() { collectedKeys++; }
@@ -109,7 +112,7 @@ public:
         finishedLevel = false;
         targetRoomIndex = -1;
     }
- 
+    Point dropActiveItem(char& droppedType);
     void move(Door* doors, int maxDoors, int currentRoomIndex, Player* otherPlayer = nullptr, bool redrawMapNow = true);
 
 

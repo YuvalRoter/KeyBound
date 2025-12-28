@@ -369,13 +369,23 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex, Player* other
             return;
         }
 
-        // 5. Torch Pickup
-        if (screen.isTorch(next_pos)) {
-            setTorch(true);
+        // 5. Item Pickup Logic
 
-            // Remove torch from map
-            screen.setCell(next_pos.getY(), next_pos.getX(), EMPTY_TILE);
-            setHud(true); // Request HUD update
+        char item = screen.getCharAt(next_pos.getY(), next_pos.getX());
+
+        if (item == Screen::TORCH) {
+            if (!hasBombFlag) { // Restriction: Cannot hold Bomb + Torch
+                setTorch(true);
+                screen.setCell(next_pos.getY(), next_pos.getX(), ' ');
+                setHud(true);
+            }
+        }
+        else if (item == Screen::BOMB) {
+            if (!hasTorchFlag) { // Restriction: Cannot hold Bomb + Torch
+                setBomb(true);
+                screen.setCell(next_pos.getY(), next_pos.getX(), ' ');
+                setHud(true);
+            }
         }
 
         // 6. Key Pickup
@@ -476,59 +486,51 @@ bool Player::tryToOpenDoor(int requiredKeys) {
     return false;
 }
 
-void Player::dropTorch() {
-    if (!hasTorchFlag) {
-        return;
-    }
+Point Player::dropActiveItem(char& droppedType) {
+    droppedType = ' ';
 
+    // 1. Check Inventory
+    if (hasTorchFlag) droppedType = Screen::TORCH;
+    else if (hasBombFlag) droppedType = Screen::BOMB; // Ensure Screen::BOMB is defined as 'B'
+    else return Point(-1, -1); // Holding nothing
+
+    // 2. Find a free spot
     int px = body.getX();
     int py = body.getY();
-    int dx = dir.getDirX();
-    int dy = dir.getDirY();
-
-    // Calculate drop candidates (perpendicular to facing direction)
-    // If facing Horizontal (X!=0), drop Up/Down.
-    // If facing Vertical (Y!=0), drop Left/Right.
     struct Offset { int x, y; };
-    Offset candidates[MAX_NEIGHBOR_CHECKS];
+    Offset candidates[] = { {0, -1}, {0, 1}, {-1, 0}, {1, 0} }; // Check Up, Down, Left, Right
 
-    if (dx != 0) { // Horizontal movement
-        candidates[0] = { 0, -1 }; // Up
-        candidates[1] = { 0, 1 };  // Down
-    }
-    else { // Vertical movement or Stay
-        candidates[0] = { -1, 0 }; // Left
-        candidates[1] = { 1, 0 };  // Right
-    }
-
-    // Find a valid spot
     int targetX = -1;
     int targetY = -1;
 
-    for (int i = 0; i < MAX_NEIGHBOR_CHECKS; ++i) {
-        int nx = px + candidates[i].x;
-        int ny = py + candidates[i].y;
+    for (const auto& off : candidates) {
+        int nx = px + off.x;
+        int ny = py + off.y;
 
-        // Boundary Check
-        if (nx < 0 || nx > Screen::MAX_X || ny < 0 || ny > Screen::MAX_Y) {
-            continue;
-        }
+        // Ensure we are inside the screen
+        if (nx < 0 || nx > Screen::MAX_X || ny < 0 || ny > Screen::MAX_Y) continue;
 
-        // Logic Check: Is the tile empty?
-        if (screen.getCharAt(ny, nx) == EMPTY_TILE) {
+        // Check if the tile is empty space
+        // Make sure your floor tiles are actually spaces ' ' and not something else
+        if (screen.getCharAt(ny, nx) == ' ') {
             targetX = nx;
             targetY = ny;
-            break;
+            break; // Found a spot!
         }
     }
 
-    // Perform Drop
+    // 3. Drop the item
     if (targetX != -1) {
-        screen.setCell(targetY, targetX, Screen::TORCH);
+        screen.setCell(targetY, targetX, droppedType);
+        Point(targetX, targetY, droppedType).draw();
 
-        Point torchPoint(targetX, targetY, Screen::TORCH);
-        torchPoint.draw(); // Immediate visual update
+        if (droppedType == Screen::TORCH) hasTorchFlag = false;
+        if (droppedType == Screen::BOMB) hasBombFlag = false;
 
-        hasTorchFlag = false;
+        setHud(true);
+        return Point(targetX, targetY, droppedType);
     }
+
+    // If we reach here, we are surrounded by walls/objects and cannot drop.
+    return Point(-1, -1);
 }

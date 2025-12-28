@@ -51,6 +51,17 @@ private:
     // Helper data
     static const Point initialDoorLocations[MAX_DOORS];
 
+    // ===========================
+    //       Bomb Struct
+    // ===========================
+
+    struct ActiveBomb {
+        Point position;
+        int timer; // Counts down game cycles (frames)
+    };
+
+    std::vector<ActiveBomb> activeBombs;
+
 public:
     // ===========================
     //       Public API
@@ -94,4 +105,9 @@ private:
     // Utilities
     int NumbersInput();
     void increaseScore(int points, const std::string& message);
+
+
+    //Bomb
+    void updateBombs();
+    void explodeBomb(const Point& center);
 };
