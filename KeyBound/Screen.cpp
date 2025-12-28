@@ -76,6 +76,16 @@ void Screen::draw() const {
                 std::cout << c;
                 setTextColor(Color::LightGray); // Reset
             }
+            else if (c == SWITCH_ON) {
+                setTextColor(Color::Green);
+                std::cout << c;
+                setTextColor(Color::LightGray);
+            }
+            else if (c == SWITCH_OFF) {
+                setTextColor(Color::Red);
+                std::cout << c;
+                setTextColor(Color::LightGray);
+            }
             else {
                 setTextColor(Color::LightGray);
                 std::cout << c;

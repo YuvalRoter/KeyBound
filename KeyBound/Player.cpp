@@ -394,6 +394,7 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex, Player* other
         }
         // 8. Switch Logic
         if (screen.isSwitchOff(next_pos)) {
+
             screen.setCell(next_pos.getY(), next_pos.getX(), Screen::SWITCH_ON);
             AmountOfSwitches++;
 

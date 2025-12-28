@@ -22,6 +22,12 @@ void Point::draw(char c) const {
     else if (c == Screen::OBSTACLE) {
 		setTextColor(Screen::Color::DarkGray);
     }
+    else if (c == Screen::SWITCH_ON) {  // If switch is ON (/), make it Green
+        setTextColor(Screen::Color::Green);
+    }
+    else if (c == Screen::SWITCH_OFF) { // If switch is OFF (\), make it Red    
+        setTextColor(Screen::Color::Red);
+    }
     else {
         setTextColor(Screen::Color::LightGray);
     }
