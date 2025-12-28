@@ -1100,7 +1100,7 @@ void GameManger::explodeBomb(const Point& center) {
 		setTextColor(color);
 		for (int y = cy - 1; y <= cy + 1; ++y) {
 			// X-Range: cx-2 to cx+2 (Width 5)
-			for (int x = cx - 2; x <= cx + 2; ++x) {
+			for (int x = cx - 3; x <= cx + 3; ++x) {
 				if (y < 0 || y > Screen::MAX_Y || x < 0 || x > Screen::MAX_X) continue;
 				gotoxy(x, y);
 				std::cout << c;
@@ -1140,15 +1140,15 @@ void GameManger::explodeBomb(const Point& center) {
 	screen.setCell(cy, cx, ' ');
 	// (Visual center is already cleared by step 4 above)
 
-	// 2. Radius 3 Logic (Items/Objects)
-	// We keep the logic radius large (distance 3) for gameplay balance
-	for (int y = cy - 3; y <= cy + 3; ++y) {
+	// 2. Radius 2 Logic (Items/Objects)
+	// We keep the logic radius large (distance 2) for gameplay balance
+	for (int y = cy - 1; y <= cy + 1; ++y) {
 		for (int x = cx - 3; x <= cx + 3; ++x) {
 			if (y < 0 || y > Screen::MAX_Y || x < 0 || x > Screen::MAX_X) continue;
 			if (x == cx && y == cy) continue;
 
 			char c = screen.getCharAt(y, x);
-
+	
 			if (c == Screen::OBSTACLE || c == Screen::KEY ||
 				c == Screen::TORCH || c == Screen::BOMB || c == Screen::SPRING ||
 				c == Screen::RIDDEL || c == Screen::BOMB_ACTIVE) {
@@ -1156,7 +1156,7 @@ void GameManger::explodeBomb(const Point& center) {
 				screen.setCell(y, x, ' ');
 				Point(x, y).draw(' ');
 			}
-
+			// TODO: HP
 			for (auto& p : players) {
 				if (p.getX() == x && p.getY() == y) {
 					loadRoom(currentRoom);
@@ -1166,17 +1166,5 @@ void GameManger::explodeBomb(const Point& center) {
 			}
 		}
 	}
-
-	// 3. Radius 1 Logic (Walls)
-	// Destroys walls adjacent to the center
-	for (int y = cy - 1; y <= cy + 1; ++y) {
-		for (int x = cx - 2; x <= cx + 2; ++x) {
-			if (y < 0 || y > Screen::MAX_Y || x < 0 || x > Screen::MAX_X) continue;
-
-			if (screen.isWall(Point(x, y))) {
-				screen.setCell(y, x, ' ');
-				Point(x, y).draw(' ');
-			}
-		}
-	}
+	
 }
