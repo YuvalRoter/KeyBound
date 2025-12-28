@@ -51,9 +51,10 @@ const Point GameManger::initialDoorLocations[MAX_DOORS] = {
 	Point(79, 2),   // [0] Right Side (Used for Level 1 -> Level 2)
 	Point(36, 1),   // [1] Top Side   (Used for Level 1 -> Level 3)
 	Point(38, 24),  // [2] Bottom Side (Used for Level 1 -> Final)
-	Point(77, 7),    // [3] Left Side  (Used for Level 1 Switch Door)
+	Point(77, 7),    // [3] Switch Door Location (Lvl 1 -> Lvl 4)
 	Point(0, 2),    // [4] Left Side (Used for Level 1 <- Level 2)
-	Point(36, 24)   // [5] Bottom Side (Used for Level 1 <- Level 3)
+	Point(36, 24),   // [5] Bottom Side (Used for Level 1 <- Level 3)
+	Point(10, 2)    // [6] Upper Side (Lvl 4 -> Lvl 1)
 };
 
 // Helper for random numbers
@@ -627,6 +628,7 @@ void GameManger::initRooms()
 	rooms[1] = Room("level2.txt", { Point(3, 3, Screen::PLAYER1),  Point(3, 5, Screen::PLAYER2) }, true);
 	rooms[2] = Room("level3.txt", { Point(35, 23, Screen::PLAYER1),  Point(36, 23, Screen::PLAYER2) }, false);
 	rooms[3] = Room("levelFinal.txt", { Point(3, 3, Screen::PLAYER1), Point(3, 5, Screen::PLAYER2) }, false);
+	rooms[4] = Room("level4.txt", { Point(23, 5, Screen::PLAYER1), Point(22, 7, Screen::PLAYER2) }, false);
 }
 
 void GameManger::initDoors() {
@@ -646,7 +648,7 @@ void GameManger::initDoors() {
 	globalDoors[2] = { initialDoorLocations[2], 2, 0, 3, 5, false };
 
 	// Door 4: Switch Door Goes to level 3
-	globalDoors[4] = { initialDoorLocations[3], 4, 0, 2, 8, false };
+	globalDoors[4] = { initialDoorLocations[3], 4, 0, 4, 8, false };
 
 
 	// ==========================================
@@ -665,6 +667,17 @@ void GameManger::initDoors() {
 
 	// Door 5: Back to Level 1 (Location: Top Side - SAME AS ENTERING)
 	globalDoors[5] = { initialDoorLocations[5], 5, 2, 0, 0, true }; // 0 cost, already open
+
+	// ==========================================
+		//              LEVEL 4 DOORS
+    // ==========================================
+
+		// Door 6: Back to Level 1 (Location: Upper part of Level 4)
+		// ID: 6
+		// Source Room: 4 (Level 4)
+		// Target Room: 0 (Level 1)
+		// Cost: 0 keys (Open)
+	globalDoors[6] = { initialDoorLocations[6], 6, 4, 0, 0, true };
 }
 
 void GameManger::loadRoom(int index)

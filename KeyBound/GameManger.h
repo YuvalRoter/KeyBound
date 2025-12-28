@@ -16,8 +16,8 @@ private:
     // ===========================
     static constexpr char ESC = 27;
     static constexpr std::size_t NUMBER_OF_PLAYERS = 2;
-    static constexpr std::size_t NUMBER_OF_ROOMS = 4;
-    static const int MAX_DOORS = 6;
+    static constexpr std::size_t NUMBER_OF_ROOMS = 5;
+    static const int MAX_DOORS = 7;
     static const int MAX_QUESTIONS = 100;
 
     // ===========================
