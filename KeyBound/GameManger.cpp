@@ -436,13 +436,13 @@ void GameManger::gameLoop()
 		handleInput();
 		if (!running) break;
 		updatePlayers();
-		updateBombs();
+		
 
 		if (rooms[currentRoom].dark) {
 			// Incremental fog redraw
 			drawWithFog();
 		}
-			
+		updateBombs();	
 		// HUD 
 		printStatsBar();
 		Sleep(60);   
@@ -1041,57 +1041,130 @@ bool GameManger::loadQuestionsFromFile(const std::string& filename)
 void GameManger::updateBombs() {
 	if (activeBombs.empty()) return;
 
+	// Use a standard iterator so we can erase items safely
 	auto it = activeBombs.begin();
 	while (it != activeBombs.end()) {
 
-		// --- 1. Calculate Blink Speed based on Timer ---
-		// As timer gets smaller (closer to 0), blinkSpeed gets smaller (faster blinking)
-		int blinkSpeed;
-		if (it->timer > 60) blinkSpeed = 15;      // Slow: every 15 frames (~1 sec)
-		else if (it->timer > 30) blinkSpeed = 8;  // Medium: every 8 frames
-		else blinkSpeed = 1;                      // Fast: every 1 frames
+		// ===========================
+		// STATE: FUSE (Ticking down)
+		// ===========================
+		if (it->state == BombState::FUSE) {
+			// 1. Blink Logic 
+			int blinkSpeed = (it->timer > 60) ? 15 : (it->timer > 30 ? 8 : 1);
 
-		// --- 2. Determine Visual Character ---
-		char displayChar = Screen::BOMB; // Default 'B'
-		Screen::Color displayColor = Screen::Color::LightRed; // Normal Color
+			Screen::Color displayColor = (it->timer / blinkSpeed) % 2 == 0
+				? Screen::Color::Red
+				: Screen::Color::DarkGray;
 
-		// Toggle state every 'blinkSpeed' frames
-		if ((it->timer / blinkSpeed) % 2 == 0) {
-			// State A: "Lit"
-			displayColor = Screen::Color::Red; // Bright Red
-			// Optional: You could use '*' or 'O' here if you want shape change too
-		}
-		else {
-			// State B: "Dim"
-			displayColor = Screen::Color::DarkGray;
-		}
-
-		// --- 3. Draw the Bomb ---
-		// We only update the visual, we DO NOT change the map data (it stays 'B')
-		gotoxy(it->position.getX(), it->position.getY());
-		setTextColor(displayColor);
-		std::cout << displayChar;
-		setTextColor(Screen::Color::LightGray); // Reset
-
-		// --- 4. Decrement Timer ---
-		it->timer--;
-
-		// --- 5. Check Explosion ---
-		if (it->timer <= 0) {
 			gotoxy(it->position.getX(), it->position.getY());
-			setTextColor(Screen::Color::Yellow);
-			std::cout << '*';
-			Sleep(50); // Tiny pause for impact
+			setTextColor(displayColor);
+			std::cout << Screen::BOMB; // Draw 'B'
+			setTextColor(Screen::Color::LightGray);
 
-			explodeBomb(it->position);
-			it = activeBombs.erase(it);
-		}
-		else {
+			// 2. Decrement Fuse
+			it->timer--;
+
+			// 3. Transition if Fuse ends
+			if (it->timer <= 0) {
+				// Move to Ignition phase
+				it->state = BombState::IGNITION;
+				it->timer = 2; // Run this frame for 2 game cycles (~120ms)
+
+				Beep(600, 50);
+			}
 			++it;
+		}
+		// ===========================
+		// STATE: ANIMATION SEQUENCES
+		// ===========================
+		else if (it->state == BombState::IGNITION) {
+			drawExplosionFrame(it->position, 1); // Draw White Center
+			it->timer--;
+			if (it->timer <= 0) {
+				it->state = BombState::EXPANSION;
+				it->timer = 2; // Next frame duration
+				Beep(400, 50);
+			}
+			++it;
+		}
+		else if (it->state == BombState::EXPANSION) {
+			drawExplosionFrame(it->position, 2); // Draw Red Box
+			it->timer--;
+			if (it->timer <= 0) {
+				it->state = BombState::HEAT;
+				it->timer = 2; // Next frame duration
+			}
+			++it;
+		}
+		else if (it->state == BombState::HEAT) {
+			drawExplosionFrame(it->position, 3); // Draw Yellow Box
+			it->timer--;
+			if (it->timer <= 0) {
+				// Animation done, perform actual destruction logic
+				explodeBomb(it->position);
+				it->state = BombState::FINISHED;
+			}
+			++it;
+		}
+		// ===========================
+		// STATE: FINISHED
+		// ===========================
+		else {
+			// Remove from vector
+			it = activeBombs.erase(it);
 		}
 	}
 }
+void GameManger::drawExplosionFrame(const Point& center, int stage) {
+	int cx = center.getX();
+	int cy = center.getY();
 
+	// Define colors and chars for stages
+	char drawChar = ' ';
+	Screen::Color color = Screen::Color::LightGray;
+
+	if (stage == 1) { // IGNITION
+		drawChar = static_cast<char>(Screen::BlockType::FullBlock);
+		color = Screen::Color::White;
+	}
+	else if (stage == 2) { // EXPANSION
+		drawChar = static_cast<char>(Screen::BlockType::MediumBlock);
+		color = Screen::Color::Red;
+	}
+	else if (stage == 3) { // HEAT
+		drawChar = static_cast<char>(Screen::BlockType::LightBlock);
+		color = Screen::Color::Yellow;
+	}
+
+	// Reuse your Line-of-Sight logic here (copied from your original code)
+	// Note: ideally, encapsulate 'hasClearPath' so it can be reused, 
+	// but for now we will assume simple drawing for the animation frame.
+
+	setTextColor(color);
+
+	// Stage 1 is just the center
+	if (stage == 1) {
+		gotoxy(cx, cy);
+		std::cout << drawChar;
+		return;
+	}
+
+	// Stages 2 and 3 are the 5x5 box (radius 2)
+	for (int y = cy - 2; y <= cy + 2; ++y) {
+		for (int x = cx - 4; x <= cx + 4; ++x) {
+			// Check bounds
+			if (y < 0 || y > Screen::MAX_Y || x < 0 || x > Screen::MAX_X) continue;
+
+			// Optional: Insert your hasClearPath(Point(x,y)) check here 
+			// if you want the visual to respect walls like before.
+			if (screen.isWall(Point(x, y)) || screen.isDoor(Point(x, y))) continue;
+
+			gotoxy(x, y);
+			std::cout << drawChar;
+		}
+	}
+	setTextColor(Screen::Color::LightGray);
+}
 void GameManger::explodeBomb(const Point& center) {
 	int cx = center.getX();
 	int cy = center.getY();

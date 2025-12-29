@@ -54,9 +54,18 @@ private:
     //       Bomb Struct
     // ===========================
 
+    enum class BombState {
+        FUSE,       // Ticking down (blinking 'B')
+        IGNITION,   // Center white block
+        EXPANSION,  // Red expanding box
+        HEAT,       // Yellow heat box
+        FINISHED    // Ready to be removed
+    };
+
     struct ActiveBomb {
         Point position;
-        int timer; // Counts down game cycles (frames)
+        int timer;        // Used for both fuse countdown AND animation frame duration
+        BombState state;  // Current stage of the bomb
     };
 
     std::vector<ActiveBomb> activeBombs;
@@ -109,4 +118,6 @@ private:
     //Bomb
     void updateBombs();
     void explodeBomb(const Point& center);
-};
+    void drawExplosionFrame(const Point& center, int stage);
+
+     };
