@@ -611,6 +611,7 @@ void GameManger::resetGame() {
 	running = true;
 	fogInitialized = false;
 	currentRoom = -1;
+	Health = 3;
 	players[0].removeKeys(Player::getCollectedKeys());
 	players[1].removeKeys(Player::getCollectedKeys());
 	players[0].setBomb(false);
@@ -990,6 +991,7 @@ void GameManger::printStatsBar() {
 
 	std::cout << "LEVEL: " << (currentRoom + 1)
 		<< " | SCORE: " << score
+		<< " | HP: " << Health
 		<< " | KEYS: " << totalKeys
 		<< " | INV: " << inventory;
 
@@ -1284,11 +1286,28 @@ void GameManger::explodeBomb(const Point& center) {
 			// Handle Player Damage
 			for (auto& p : players) {
 				if (p.getX() == x && p.getY() == y) {
-					loadRoom(currentRoom);
-					for (auto& pl : players) pl.resetLevelData();
-					return;
+					// Decrease health
+					Health--;
+					printStatsBar();
+					if (Health <= 0) {
+						// Game over logic
+						cls();
+						gotoxy(Screen::MAX_X / 2 - 5, Screen::MAX_Y / 2);
+						std::cout << "GAME OVER!";
+						Sleep(2000);
+						running = false;
+						won = false;
+						return;
+					}
+					else {
+						// Reset level if not dead
+						loadRoom(currentRoom);
+						for (auto& pl : players) pl.resetLevelData();
+						return;
+					}
 				}
 			}
 		}
 	}
+	
 }
