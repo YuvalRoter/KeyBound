@@ -631,7 +631,7 @@ void GameManger::resetGame() {
 void GameManger::initRooms()
 {
 	// Initialize Rooms with file names, spawn points and lighting settings
-	rooms[0] = Room("level1.txt", { Point(10, 4, Screen::PLAYER1), Point(7, 4, Screen::PLAYER2) }, false);
+	rooms[0] = Room("level1.txt", { Point(6, 4, Screen::PLAYER1), Point(6, 3, Screen::PLAYER2) }, false);
 	rooms[1] = Room("level2.txt", { Point(3, 3, Screen::PLAYER1),  Point(3, 5, Screen::PLAYER2) }, true);
 	rooms[2] = Room("level3.txt", { Point(35, 23, Screen::PLAYER1),  Point(36, 23, Screen::PLAYER2) }, false);
 	rooms[3] = Room("levelFinal.txt", { Point(3, 3, Screen::PLAYER1), Point(3, 5, Screen::PLAYER2) }, false);
@@ -1204,6 +1204,7 @@ bool GameManger::hasClearPath(const Point& start, const Point& target) {
 void GameManger::explodeBomb(const Point& center) {
 	int cx = center.getX();
 	int cy = center.getY();
+	bool hit = false;
 	// 1. Clear Center Data
 	screen.setCell(cy, cx, ' ');
 
@@ -1216,7 +1217,6 @@ void GameManger::explodeBomb(const Point& center) {
 		for (int x = cx - 4; x <= cx + 4; ++x) {
 			// Bounds check
 			if (y < 0 || y > Screen::MAX_Y || x < 0 || x > Screen::MAX_X) continue;
-			if (x == cx && y == cy) continue; // Skip center
 
 			Point target(x, y);
 
@@ -1237,29 +1237,33 @@ void GameManger::explodeBomb(const Point& center) {
 
 			// Handle Player Damage
 			for (auto& p : players) {
-				if (p.getX() == x && p.getY() == y) {
+				int px = p.getX();
+				int py = p.getY();
+
+				if (px == x && py == y) {
 					// Decrease health
 					Health--;
+					hit = true;
 					printStatsBar();
-					if (Health <= 0) {
-						// Game over logic
-						cls();
-						gotoxy(Screen::MAX_X / 2 - 5, Screen::MAX_Y / 2);
-						std::cout << "GAME OVER!";
-						Sleep(2000);
-						running = false;
-						won = false;
-						return;
-					}
-					else {
-						// Reset level if not dead
-						loadRoom(currentRoom);
-						for (auto& pl : players) pl.resetLevelData();
-						return;
-					}
 				}
 			}
 		}
 	}
-	
+	// We wait for the bomb destruction then check if player died during explosion
+	if (Health <= 0) {
+		// Game over logic
+		cls();
+		gotoxy(Screen::MAX_X / 2 - 5, Screen::MAX_Y / 2);
+		std::cout << "GAME OVER!";
+		Sleep(2000);
+		running = false;
+		won = false;
+		return;
+	}
+	else if (hit) {
+		// Reset level if not dead
+		loadRoom(currentRoom);
+		for (auto& pl : players) pl.resetLevelData();
+		return;
+	}
 }
