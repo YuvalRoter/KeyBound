@@ -122,5 +122,5 @@ private:
     void updateBombs();
     void explodeBomb(const Point& center);
     void drawExplosionFrame(const Point& center, int stage);
-
+    bool hasClearPath(const Point& start, const Point& target);
      };

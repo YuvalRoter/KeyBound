@@ -535,7 +535,7 @@ void GameManger::updatePlayers() {
 		}
 		// 3. Trap Logic
 		if (player.getTrapState() == true) {
-			activeBombs.push_back({ player.getTrapLocation(), 40});
+			activeBombs.push_back({ player.getTrapLocation(), 7});
 			player.setTrapState(false);
 		}
 
@@ -1117,15 +1117,16 @@ void GameManger::updateBombs() {
 		}
 	}
 }
+
 void GameManger::drawExplosionFrame(const Point& center, int stage) {
 	int cx = center.getX();
 	int cy = center.getY();
 
-	// Define colors and chars for stages
+	// 1. Setup Style
 	char drawChar = ' ';
 	Screen::Color color = Screen::Color::LightGray;
 
-	if (stage == 1) { // IGNITION
+	if (stage == 1) {      // IGNITION
 		drawChar = static_cast<char>(Screen::BlockType::FullBlock);
 		color = Screen::Color::White;
 	}
@@ -1138,139 +1139,89 @@ void GameManger::drawExplosionFrame(const Point& center, int stage) {
 		color = Screen::Color::Yellow;
 	}
 
-	// Reuse your Line-of-Sight logic here (copied from your original code)
-	// Note: ideally, encapsulate 'hasClearPath' so it can be reused, 
-	// but for now we will assume simple drawing for the animation frame.
-
 	setTextColor(color);
 
-	// Stage 1 is just the center
+	// 2. Draw
 	if (stage == 1) {
 		gotoxy(cx, cy);
 		std::cout << drawChar;
-		return;
 	}
-
-	// Stages 2 and 3 are the 5x5 box (radius 2)
-	for (int y = cy - 2; y <= cy + 2; ++y) {
-		for (int x = cx - 4; x <= cx + 4; ++x) {
-			// Check bounds
-			if (y < 0 || y > Screen::MAX_Y || x < 0 || x > Screen::MAX_X) continue;
-
-			// Optional: Insert your hasClearPath(Point(x,y)) check here 
-			// if you want the visual to respect walls like before.
-			if (screen.isWall(Point(x, y)) || screen.isDoor(Point(x, y))) continue;
-
-			gotoxy(x, y);
-			std::cout << drawChar;
-		}
-	}
-	setTextColor(Screen::Color::LightGray);
-}
-void GameManger::explodeBomb(const Point& center) {
-	int cx = center.getX();
-	int cy = center.getY();
-
-	// ==========================================
-	//    HELPER: Line of Sight 
-	// ==========================================
-	// Returns true if there is a clear path from center to target.
-	// Returns false if a wall blocks the way.
-	auto hasClearPath = [&](Point target) {
-		int x0 = cx;
-		int y0 = cy;
-		int x1 = target.getX();
-		int y1 = target.getY();
-
-		int dx = std::abs(x1 - x0);
-		int dy = -std::abs(y1 - y0);
-		int sx = x0 < x1 ? 1 : -1;
-		int sy = y0 < y1 ? 1 : -1;
-		int err = dx + dy, e2;
-
-		while (true) {
-			// 1. Reached the target? Path is clear.
-			if (x0 == x1 && y0 == y1) return true;
-
-			// 2. Check current tile for wall (skip the start point/bomb itself)
-			if (x0 != cx || y0 != cy) {
-				if (screen.isWall(Point(x0, y0)) || screen.isDoor(Point(x0, y0))) return false;
-			}
-
-			// 3. Move to next tile in the line
-			e2 = 2 * err;
-			if (e2 >= dy) { err += dy; x0 += sx; }
-			if (e2 <= dx) { err += dx; y0 += sy; }
-		}
-		};
-
-	// ==========================================
-	//       VISUAL ANIMATION (Square Fix)
-	// ==========================================
-
-	// Helper: Draws a box, respecting walls AND line-of-sight shadows.
-	auto drawBlastZone = [&](char c, Screen::Color color) {
-		setTextColor(color);
+	else {
+		// Stages 2 & 3 (5x5 box)
 		for (int y = cy - 2; y <= cy + 2; ++y) {
-			// X-Range: cx-3 to cx+3
 			for (int x = cx - 4; x <= cx + 4; ++x) {
-				// Boundary Check
+				// Bounds Check
 				if (y < 0 || y > Screen::MAX_Y || x < 0 || x > Screen::MAX_X) continue;
 
 				Point target(x, y);
 
-				// Wall Check: Don't draw ON a wall
-				if (screen.isWall(target)|| screen.isDoor(target)) continue;
+				// Don't draw ON walls
+				if (screen.isWall(target) || screen.isDoor(target)) continue;
 
-				// LOS Check: Don't draw BEHIND a wall
-				if (!hasClearPath(target)) continue;
-
-				gotoxy(x, y);
-				std::cout << c;
+				// SHARED LOGIC: Only draw if we have Line of Sight
+				if (hasClearPath(center, target)) {
+					gotoxy(x, y);
+					std::cout << drawChar;
+				}
 			}
 		}
-		};
-
-	// 1. Ignition (Center)
-	setTextColor(Screen::Color::White);
-	gotoxy(cx, cy);
-	std::cout << static_cast<char>(Screen::BlockType::FullBlock);
-	Beep(600, 50);
-	Sleep(100);
-
-	// 2. Expansion (Red Box)
-	drawBlastZone(static_cast<char>(Screen::BlockType::MediumBlock), Screen::Color::Red);
-	Beep(400, 100);
-	Sleep(100);
-
-	// 3. Heat (Yellow Box)
-	drawBlastZone(static_cast<char>(Screen::BlockType::LightBlock), Screen::Color::Yellow);
-	Sleep(100);
-
-	// 4. CLEANUP VISUALS
-	drawBlastZone(' ', Screen::Color::LightGray);
-
-	// Reset color
+	}
 	setTextColor(Screen::Color::LightGray);
+}
 
-	// ==========================================
-	//       LOGICAL DESTRUCTION
-	// ==========================================
+bool GameManger::hasClearPath(const Point& start, const Point& target) {
+	int x0 = start.getX();
+	int y0 = start.getY();
+	int x1 = target.getX();
+	int y1 = target.getY();
 
+	int dx = std::abs(x1 - x0);
+	int dy = -std::abs(y1 - y0);
+	int sx = x0 < x1 ? 1 : -1;
+	int sy = y0 < y1 ? 1 : -1;
+	int err = dx + dy, e2;
+
+	while (true) {
+		// 1. Reached the target? Path is clear.
+		if (x0 == x1 && y0 == y1) return true;
+
+		// 2. Check current tile for wall (skip the start point itself)
+		if (x0 != start.getX() || y0 != start.getY()) {
+			Point p(x0, y0);
+			// If we hit a wall or a door, the path is blocked
+			if (screen.isWall(p) || screen.isDoor(p)) {
+				return false;
+			}
+		}
+
+		// 3. Move to next tile in the line
+		e2 = 2 * err;
+		if (e2 >= dy) { err += dy; x0 += sx; }
+		if (e2 <= dx) { err += dx; y0 += sy; }
+	}
+}
+
+void GameManger::explodeBomb(const Point& center) {
+	int cx = center.getX();
+	int cy = center.getY();
 	// 1. Clear Center Data
 	screen.setCell(cy, cx, ' ');
 
-	// 2. Radius Logic (Items/Objects)
+	// 2. Cleanup Visuals (optional, just to be safe)
+	drawExplosionFrame(center, 0); // Assuming 0 or a clear helper clears it, 
+	// or relies on the next frame redraw.
+
+// 3. Radius Logic (Items/Objects)
 	for (int y = cy - 2; y <= cy + 2; ++y) {
 		for (int x = cx - 4; x <= cx + 4; ++x) {
 			// Bounds check
 			if (y < 0 || y > Screen::MAX_Y || x < 0 || x > Screen::MAX_X) continue;
-			if (x == cx && y == cy) continue;
+			if (x == cx && y == cy) continue; // Skip center
 
 			Point target(x, y);
 
-			// LOS Check: Explosion physically blocked by wall?
-			if (!hasClearPath(target)) continue;
+			// SHARED LOGIC: Physical explosion blocked by wall?
+			if (!hasClearPath(center, target)) continue;
 
 			char c = screen.getCharAt(y, x);
 
@@ -1280,6 +1231,7 @@ void GameManger::explodeBomb(const Point& center) {
 				c == Screen::RIDDEL || c == Screen::BOMB_ACTIVE) {
 
 				screen.setCell(y, x, ' ');
+				// Visual update for the map data (not the animation)
 				Point(x, y).draw(' ');
 			}
 
