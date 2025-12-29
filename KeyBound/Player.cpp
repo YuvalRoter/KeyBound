@@ -374,14 +374,14 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex, Player* other
         char item = screen.getCharAt(next_pos.getY(), next_pos.getX());
 
         if (item == Screen::TORCH) {
-            if (!hasBombFlag) { // Restriction: Cannot hold Bomb + Torch
+            if (!hasBombFlag && !hasTorchFlag) { // Restriction: Cannot hold more then one item
                 setTorch(true);
                 screen.setCell(next_pos.getY(), next_pos.getX(), ' ');
                 setHud(true);
             }
         }
         else if (item == Screen::BOMB) {
-            if (!hasTorchFlag) { // Restriction: Cannot hold Bomb + Torch
+            if (!hasTorchFlag && !hasBombFlag) { // Restriction: Cannot hold more then one item
                 setBomb(true);
                 screen.setCell(next_pos.getY(), next_pos.getX(), ' ');
                 setHud(true);
@@ -412,6 +412,12 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex, Player* other
         else if (screen.isSwitchOn(next_pos)) {
             screen.setCell(next_pos.getY(), next_pos.getX(), Screen::SWITCH_OFF);
             AmountOfSwitches--;
+        }
+        // 9. Trap Logic
+        if (screen.isTrap(next_pos)){
+            screen.setCell(next_pos.getY(), next_pos.getX(), Screen::BOMB_ACTIVE);
+            trapLocation = next_pos;
+            TrapActive = true;
         }
        
 

@@ -32,6 +32,9 @@ class Player {
     int pendingTargetRoom = -1;
     Point pendingSpawnPoint = Point(2, 3);
 
+    bool TrapActive = false;
+    Point trapLocation;
+
     // Spring / Launch Variables
     int springCompressed = 0;
     bool springCompressing = false;
@@ -88,6 +91,9 @@ public:
     int getRoom() const { return ourRoomIndex; }
     bool getHUD() const { return HUD_changes; }
     bool hasBomb() const { return hasBombFlag; }
+    bool getTrapState() const { return TrapActive; }
+    Point getTrapLocation() const { return trapLocation; }
+
 
     // Setters
     void setFinished(bool state) { finishedLevel = state; }
@@ -103,7 +109,8 @@ public:
     void setHud(bool b) { HUD_changes = b; }
     void setInRiddle(bool state) { inRiddleMode = state;}
     void setWin(bool wins) { won = wins; }
-    void setBomb(bool v) { hasBombFlag = v; }   
+    void setBomb(bool v) { hasBombFlag = v; }  
+    void setTrapState(bool s) { TrapActive = s; }
 
     // Actions
     void addkey() { collectedKeys++; }
@@ -119,5 +126,4 @@ public:
     void startSpringLaunch();
     void keyPressed(char ch);
     bool tryToOpenDoor(int requiredKeys);
-    void dropTorch();
 }; 
