@@ -35,7 +35,8 @@ public:
     static constexpr char OBSTACLE = 'O';
     static constexpr char SWITCH_ON = '/';
     static constexpr char SWITCH_OFF = '\\';
-    static constexpr char BOMB_ACTIVE = '!';
+    static constexpr char TRAP = '!';
+    static constexpr char BOMB_ACTIVE = '`';
 
 
     // Color Codes (Console Specific)
@@ -139,6 +140,7 @@ public:
     // Checks if the character is a digit (representing a door ID)
     bool isDoor(const Point& p) const { return isdigit(charAt(p)); }
 	  bool isObstacle(const Point& p) const { return charAt(p) == OBSTACLE; }
+	  bool isTrap(const Point& p) const { return charAt(p) == TRAP; }
     // ===========================
     //       Rendering
     // ===========================

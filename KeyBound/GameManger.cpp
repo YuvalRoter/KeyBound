@@ -40,7 +40,7 @@ namespace {
 	constexpr Player::Controls P1_KEYS = { 'w', 'd', 's', 'a', ' ' };
 	constexpr Player::Controls P2_KEYS = { 'i', 'l', 'k', 'j', 'm' };
 	constexpr char P1_DROP_KEY = 'e';
-	constexpr char P2_DROP_KEY = 'O';
+	constexpr char P2_DROP_KEY = 'o';
 }
 
 // ===========================
@@ -469,7 +469,6 @@ void GameManger::handleInput() {
 		key = _getch();
 		if (key == 'h' || key == 'H') {
 			running = false;    // Stops the while loop in gameLoop
-			backToMenu = true;  // Optional: tells gameLoop we want menu
 			return;
 		}
 	}
@@ -534,6 +533,13 @@ void GameManger::updatePlayers() {
 			handleRiddle(player);
 			printStatsBar();
 		}
+		// 3. Trap Logic
+		if (player.getTrapState() == true) {
+			activeBombs.push_back({ player.getTrapLocation(), 40});
+			player.setTrapState(false);
+		}
+
+		// 4. Victory
 		if (player.hasWon()) {
 			won = true; 
 			cls();      // Clear the maze
@@ -607,10 +613,10 @@ void GameManger::resetGame() {
 	currentRoom = -1;
 	players[0].removeKeys(Player::getCollectedKeys());
 	players[1].removeKeys(Player::getCollectedKeys());
-
+	players[0].setBomb(false);
+	players[1].setBomb(false);
 	players[0].setTorch(false);
 	players[1].setTorch(false);
-
 
 	// 2. Re-initialize Rooms (Reloads maps from disk/defaults)
 	initRooms();
@@ -878,6 +884,7 @@ void GameManger::handleMulti(Riddle& riddle, Player& player)
 		// Note: You might want to add score here too
 	}
 }
+
 void GameManger::increaseScore(int points, const std::string& message)
 {
 	cls();
@@ -975,7 +982,7 @@ void GameManger::printStatsBar() {
 	// Build Inventory String
 	std::string inventory = "";
 	if (players[0].hasTorch() || players[1].hasTorch()) inventory += "[TORCH] ";
-	if (players[0].hasBomb() || players[1].hasBomb())   inventory += "[BOMB] "; // New
+	if (players[0].hasBomb() || players[1].hasBomb())   inventory += "[BOMB] ";
 	if (inventory.empty()) inventory = "[EMPTY]";
 
 	gotoxy(0, 0);
@@ -1071,7 +1078,6 @@ void GameManger::updateBombs() {
 
 		// --- 5. Check Explosion ---
 		if (it->timer <= 0) {
-			// Optional: Small "Explosion" Animation Frame before clearing
 			gotoxy(it->position.getX(), it->position.getY());
 			setTextColor(Screen::Color::Yellow);
 			std::cout << '*';

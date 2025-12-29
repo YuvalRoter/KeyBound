@@ -27,7 +27,6 @@ private:
     bool won = false;
     int currentRoom = 0;
     int score = 0;
-    bool backToMenu = false;
 
     // ===========================
     //       Objects
