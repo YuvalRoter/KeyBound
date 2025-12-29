@@ -1143,7 +1143,7 @@ void GameManger::drawExplosionFrame(const Point& center, int stage) {
 
 	// 2. Draw
 	if (stage == 1) {
-		gotoxy(cx, cy);
+		gotoxy(cx, cy); 
 		std::cout << drawChar;
 	}
 	else {
@@ -1156,7 +1156,7 @@ void GameManger::drawExplosionFrame(const Point& center, int stage) {
 				Point target(x, y);
 
 				// Don't draw ON walls
-				if (screen.isWall(target) || screen.isDoor(target)) continue;
+				if (screen.isWall(target) || screen.isDoor(target) || screen.isSwitchOn(target) || screen.isSwitchOff(target))continue;
 
 				// SHARED LOGIC: Only draw if we have Line of Sight
 				if (hasClearPath(center, target)) {
@@ -1228,7 +1228,7 @@ void GameManger::explodeBomb(const Point& center) {
 			// Destroy objects
 			if (c == Screen::OBSTACLE || c == Screen::KEY ||
 				c == Screen::TORCH || c == Screen::BOMB || c == Screen::SPRING ||
-				c == Screen::RIDDEL || c == Screen::BOMB_ACTIVE) {
+				c == Screen::RIDDEL || c == Screen::TRAP) {
 
 				screen.setCell(y, x, ' ');
 				// Visual update for the map data (not the animation)

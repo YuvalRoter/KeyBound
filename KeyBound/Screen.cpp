@@ -86,6 +86,21 @@ void Screen::draw() const {
                 std::cout << c;
                 setTextColor(Color::LightGray);
             }
+            else if (c == TORCH) {
+                setTextColor(Color::Yellow);
+                std::cout << c;
+                setTextColor(Color::LightGray);
+            }
+            else if (c == KEY) {
+                setTextColor(Color::LightCyan);
+                std::cout << c;
+                setTextColor(Color::LightGray);
+            }
+            else if (c == '8') {
+                setTextColor(Color::Red);
+                std::cout << c;
+                setTextColor(Color::LightGray);
+            }
             else {
                 setTextColor(Color::LightGray);
                 std::cout << c;
