@@ -27,6 +27,7 @@ private:
     bool won = false;
     int currentRoom = 0;
     int score = 0;
+    int Health = 3;
     bool backToMenu = false;
 
     // ===========================
