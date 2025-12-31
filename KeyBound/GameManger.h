@@ -118,6 +118,12 @@ private:
     void increaseScore(int points, const std::string& message);
 
 
+    // Save & Load
+    void saveGame(const std::string& filename);
+    bool loadGame(const std::string& filename);
+    void showLoadGameMenu();
+    void askAndSaveGame();
+
     //Bomb
     void updateBombs();
     void explodeBomb(const Point& center);

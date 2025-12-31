@@ -36,8 +36,10 @@ namespace {
 
 	// Menu Options 
 	constexpr int MENU_OPT_START = 1;      // Starts game
-	constexpr int MENU_OPT_SETTINGS = 3;   // Opens sub-menu
-	constexpr int MENU_OPT_GUIDE = 4;      // Opens guide
+	constexpr int MENU_OPT_LOAD = 2;       // Load game
+	constexpr int MENU_OPT_INSTRUCTIONS = 3;
+	constexpr int MENU_OPT_SETTINGS = 4;
+	constexpr int MENU_OPT_GUIDE = 5;
 
 	// Player Configuration
 	constexpr Player::Controls P1_KEYS = { 'w', 'd', 's', 'a', ' ' };
@@ -276,6 +278,9 @@ void GameManger::drawSettingsMenu() {
 }
 
 bool GameManger::showMenu() {
+	// Reset currentRoom indicator to ensure we know if we loaded a game or not
+	currentRoom = -1;
+
 	while (true) {
 		screen.loadFromFileToMap("menu.txt");
 		screen.draw();
@@ -284,7 +289,7 @@ bool GameManger::showMenu() {
 		int choice = NumbersInput();
 
 		switch (choice) {
-		case 1:
+		case MENU_OPT_START:
 		{// Check if files exist
 			auto levels = getLevelDefs();
 			bool missingFiles = false;
@@ -314,15 +319,22 @@ bool GameManger::showMenu() {
 				break; // Return to menu loop without starting
 			}
 		}
-			cls();
-			return true;
+		cls();
+		return true;
 
-		case 2:
-			printInstructions();
-
+		case MENU_OPT_LOAD:
+			showLoadGameMenu();
+			// If load successful, currentRoom will be >= 0
+			if (currentRoom != -1) {
+				return true;
+			}
 			break;
 
-		case 3:
+		case MENU_OPT_INSTRUCTIONS:
+			printInstructions();
+			break;
+
+		case MENU_OPT_SETTINGS:
 			while (true) {
 				drawSettingsMenu();
 				int subChoice = NumbersInput();
@@ -339,7 +351,7 @@ bool GameManger::showMenu() {
 			}
 			break;
 
-		case 4:
+		case MENU_OPT_GUIDE:
 			printControls();
 			break;
 
@@ -371,10 +383,11 @@ void GameManger::printMainMenu() {
 	int optX = cx - 10;
 
 	gotoxy(optX, cy + 5); std::cout << "1. Start a New Game";
-	gotoxy(optX, cy + 7); std::cout << "2. Instructions (Rules)";
-	gotoxy(optX, cy + 9); std::cout << "3. Choose Color Mode";
-	gotoxy(optX, cy + 11); std::cout << "4. Controls Guide";
-	gotoxy(optX, cy + 14); std::cout << "9. Exit Game";
+	gotoxy(optX, cy + 7); std::cout << "2. Load Game";
+	gotoxy(optX, cy + 9); std::cout << "3. Instructions (Rules)";
+	gotoxy(optX, cy + 11); std::cout << "4. Choose Color Mode";
+	gotoxy(optX, cy + 13); std::cout << "5. Controls Guide";
+	gotoxy(optX, cy + 16); std::cout << "9. Exit Game";
 
 	// 4. Footer
 	if (g_colorsEnabled) setTextColor(Screen::Color::DarkGray);
@@ -509,24 +522,44 @@ void GameManger::handleInput() {
 
 	// Handle Global Keys (ESC)
 	if (key == 27) { // ASCII for ESC
-		// Check for double ESC or specific exit sequence if needed, 
-		// for now, strict ESC exit:
-		if (_kbhit()) {
-			char next = _getch(); // consume extra chars if any
-		}
+		// We are now "paused". Clear HUD area or show pause message.
+		gotoxy(0, 0);
+		std::cout << "PAUSED: (ESC) Resume | (S) Save Game | (H) Exit to Menu    ";
 
-		// logic: ESC + H to menu
-		key = _getch();
-		if (key == 'h' || key == 'H') {
-			running = false;    // Stops the while loop in gameLoop
-			return;
+		while (true) {
+			// Wait for a key
+			char cmd = _getch();
+
+			if (cmd == 27) {
+				// Resume game
+				// Redraw stats bar to clear pause message
+				printStatsBar();
+				break;
+			}
+			else if (cmd == 'h' || cmd == 'H') {
+				running = false; // Exit game loop
+				break;
+			}
+			else if (cmd == 's' || cmd == 'S') {
+				askAndSaveGame();
+				// After saving, redraw map and stats
+				if (rooms[currentRoom].dark) {
+					fogInitialized = false; // Force redraw
+					drawWithFog();
+				}
+				else {
+					screen.draw();
+				}
+				printStatsBar();
+				break; // Resume game after save
+			}
 		}
 	}
 	else {
 		// Handle Action Keys
 		if (key == P1_DROP_KEY || key == std::toupper(P1_DROP_KEY)) {
 			char type = ' ';
-			Point p = players[0].dropActiveItem(type);	
+			Point p = players[0].dropActiveItem(type);
 
 			if (type == Screen::BOMB && p.getX() != -1) {
 				screen.setCell(p.getY(), p.getX(), Screen::BOMB_ACTIVE);
@@ -1056,7 +1089,8 @@ void GameManger::printStatsBar() {
 		<< " | KEYS: " << totalKeys
 		<< " | INV: " << inv1 << inv2;
 
-	
+	int currentLen = 75;
+	for (int i = 0; i < (Screen::MAX_X - currentLen); i++) std::cout << " ";
 
 	setTextColor(Screen::Color::LightGray);
 }
@@ -1325,4 +1359,202 @@ void GameManger::explodeBomb(const Point& center) {
 		for (auto& pl : players) pl.resetLevelData();
 		return;
 	}
+}
+
+// ===========================
+//      Save & Load Logic
+// ===========================
+
+void GameManger::askAndSaveGame() {
+	cls();
+	gotoxy(Screen::MAX_X / 2 - 10, Screen::MAX_Y / 2 - 2);
+	std::cout << "=== SAVE GAME ===";
+	gotoxy(Screen::MAX_X / 2 - 15, Screen::MAX_Y / 2);
+	std::cout << "Enter save name: ";
+
+	std::string name;
+	std::cin >> name;
+
+	if (name.empty()) name = "savegame";
+	// Append extension if user didn't provide one
+	if (name.find(".sav") == std::string::npos) {
+		name += ".sav";
+	}
+
+	saveGame(name);
+
+	gotoxy(Screen::MAX_X / 2 - 15, Screen::MAX_Y / 2 + 2);
+	std::cout << "Game Saved Successfully!";
+	Sleep(1000);
+}
+
+void GameManger::saveGame(const std::string& filename) {
+	std::ofstream file(filename);
+	if (!file) return;
+
+	// 1. Commit current room screen to memory before saving
+	if (currentRoom >= 0 && currentRoom < NUMBER_OF_ROOMS) {
+		screen.saveScreenToRoom(rooms[currentRoom]);
+	}
+
+	// 2. Global State
+	file << currentRoom << "\n";
+	file << score << "\n";
+	file << Health << "\n";
+	file << Player::collectedKeys << "\n";
+	file << Player::AmountOfSwitches << "\n";
+
+	// 3. Player State
+	file << NUMBER_OF_PLAYERS << "\n";
+	for (int i = 0; i < NUMBER_OF_PLAYERS; ++i) {
+		const auto& p = players[i];
+		Point pos = p.getPoint();
+		file << pos.getX() << " " << pos.getY() << " " << pos.getChar() << "\n"; // Position
+		file << p.dir.getDirX() << " " << p.dir.getDirY() << "\n";               // Direction
+		file << p.hasTorchFlag << " " << p.hasBombFlag << " " << p.won << " " << p.finishedLevel << "\n";
+		file << p.ourRoomIndex << " " << p.targetRoomIndex << "\n";
+	}
+
+	// 4. Doors
+	file << MAX_DOORS << "\n";
+	for (int i = 0; i < MAX_DOORS; ++i) {
+		file << globalDoors[i].isOpen << "\n";
+	}
+
+	// 5. Rooms (Map state)
+	file << NUMBER_OF_ROOMS << "\n";
+	for (int i = 0; i < NUMBER_OF_ROOMS; ++i) {
+		file << rooms[i].isVisited << "\n";
+		if (rooms[i].isVisited) {
+			size_t rows = rooms[i].savedMapState.size();
+			file << rows << "\n";
+			for (const auto& line : rooms[i].savedMapState) {
+				file << line << "\n";
+			}
+		}
+	}
+}
+
+void GameManger::showLoadGameMenu() {
+	cls();
+	int cx = Screen::MAX_X / 2;
+	int cy = 5;
+
+	gotoxy(cx - 10, cy); std::cout << "=== LOAD GAME ===";
+
+	// List files
+	std::vector<std::string> saves;
+	try {
+		for (const auto& entry : fs::directory_iterator(".")) {
+			if (entry.path().extension() == ".sav") {
+				saves.push_back(entry.path().string());
+			}
+		}
+	}
+	catch (...) {}
+
+	if (saves.empty()) {
+		gotoxy(cx - 15, cy + 2); std::cout << "No save files found!";
+		Sleep(1500);
+		return;
+	}
+
+	int row = cy + 2;
+	for (size_t i = 0; i < saves.size(); ++i) {
+		// Remove "./" prefix for display
+		std::string name = saves[i];
+		if (name.find(".\\") == 0) name = name.substr(2);
+
+		gotoxy(cx - 15, row++);
+		std::cout << (i + 1) << ". " << name;
+	}
+
+	gotoxy(cx - 20, row + 1); std::cout << "Enter number to load (0 to cancel): ";
+	int choice = NumbersInput();
+
+	if (choice > 0 && choice <= (int)saves.size()) {
+		std::string selectedFile = saves[choice - 1];
+		if (loadGame(selectedFile)) {
+			gotoxy(cx - 10, row + 3); std::cout << "Loaded!";
+			Sleep(1000);
+		}
+		else {
+			gotoxy(cx - 10, row + 3); std::cout << "Failed to load!";
+			Sleep(1000);
+		}
+	}
+}
+
+bool GameManger::loadGame(const std::string& filename) {
+	std::ifstream file(filename);
+	if (!file) return false;
+
+	// Temp variables
+	int tempVal;
+
+	// 1. Global State
+	if (!(file >> currentRoom >> score >> Health >> Player::collectedKeys >> Player::AmountOfSwitches)) return false;
+
+	// 2. Player State
+	int numP;
+	file >> numP;
+	for (int i = 0; i < NUMBER_OF_PLAYERS; ++i) {
+		int x, y, dx, dy, roomIdx, tRoom;
+		char ch;
+		bool hasT, hasB, w, fin;
+
+		file >> x >> y >> ch;
+		file >> dx >> dy;
+		file >> hasT >> hasB >> w >> fin;
+		file >> roomIdx >> tRoom;
+
+		players[i].setPosition(Point(x, y, ch));
+		players[i].setDirection(Direction(dx, dy));
+		players[i].setTorch(hasT);
+		players[i].setBomb(hasB);
+		players[i].setWin(w);
+		players[i].setFinished(fin);
+		players[i].setRoom(roomIdx);
+		players[i].targetRoomIndex = tRoom;
+	}
+
+	// 3. Doors
+	int maxD;
+	file >> maxD;
+	for (int i = 0; i < MAX_DOORS; ++i) {
+		bool open;
+		file >> open;
+		globalDoors[i].isOpen = open;
+	}
+
+	// 4. Rooms
+	int numR;
+	file >> numR;
+	// Handle potential mismatch in number of rooms (just in case code changed)
+	int limit = (numR < NUMBER_OF_ROOMS) ? numR : NUMBER_OF_ROOMS;
+
+	for (int i = 0; i < limit; ++i) {
+		bool vis;
+		file >> vis;
+		rooms[i].isVisited = vis;
+		rooms[i].savedMapState.clear();
+
+		if (vis) {
+			size_t rows;
+			file >> rows;
+			std::string line;
+			// Consume newline after the count
+			std::getline(file, line);
+
+			for (size_t r = 0; r < rows; ++r) {
+				std::getline(file, line);
+				rooms[i].savedMapState.push_back(line);
+			}
+		}
+	}
+
+	// 5. Restore screen
+	loadRoom(currentRoom);
+
+	return true;
 }

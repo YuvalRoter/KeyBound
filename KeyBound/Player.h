@@ -5,10 +5,11 @@
 #include "Direction.h"
 
 
+ 
 class Door;
 
 class Player {
-
+    friend class GameManger;
     static constexpr size_t NUM_KEYS = 5;
 
     static constexpr size_t SwitchsToTurn = 3;
