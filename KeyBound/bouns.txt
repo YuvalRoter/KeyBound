@@ -1,5 +1,5 @@
 KeyBound – bonus.txt
-Exercise 1 – C++ – MTA
+Exercise 2 – C++ – MTA
 
 Students:
 - Name: אריק זסלבסקי ID: 322598350
@@ -8,6 +8,8 @@ Students:
 
 Bonus features implemented
 --------------------------
+
+ 1 2 3 are all from previous Exercise but still a bonus 
 
 1. Colored output for game elements
    --------------------------------
@@ -30,7 +32,7 @@ Bonus features implemented
      to a fully revealed map.
 
 
-3. Riddle integration and random simon says (Exercise 1+)
+3. random simon says (Exercise 2+)
    ------------------------------------------------------
    - The project already includes Riddle and Question classes and a mechanism
      to display riddle screens.
@@ -65,15 +67,14 @@ Bonus features implemented
 		The riddle fails and you wont get points added to your score.
 		
 		
-4. using files for maps menu (ex..)
-   --------------------------------
-	- the maps load from levelfiles
-	- the menu loads from menu file 
-	- and more uses
-   
-5. HUD with score board 
-   --------------------
-   - point will be added to a score on hud.
-   - if a player picks up a torch the hud will show picked. 
-   - hud displays number of keys 
+
+3. Traps !!!
+   ------------------------------------------------------
+	
+	If a player steps on a -> ! a bomb will be placed that explodes in 1 second.
+	1 HP will be removed upon being hit
+	Player will be sent into the start of the level
+	If HP reaches 0 then game is over and we go back to menu
+
+
 

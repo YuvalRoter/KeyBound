@@ -8,15 +8,18 @@
 #include <cstdlib>
 #include <fstream>
 #include <sstream>
-
+#include <filesystem>
 #include "utils.h"
 #include "Riddle.h"
 #include "Room.h"
 #include "Screen.h"
 
+
+
 // ===========================
 //      Internal Constants
 // ===========================
+namespace fs = std::filesystem;
 namespace {
 	// Random Number Generator setup
 	std::mt19937 rng(std::random_device{}());
@@ -43,6 +46,23 @@ namespace {
 	constexpr char P2_DROP_KEY = 'o';
 }
 
+// helper struct
+struct LevelMetadata {
+	std::string filename;
+	Point spawnP1;
+	Point spawnP2;
+	bool isDark;
+};
+std::vector<LevelMetadata> getLevelDefs() {
+	return {
+		{"level1.txt",     Point(6, 4, Screen::PLAYER1),   Point(6, 3, Screen::PLAYER2),   false},
+		{"level2.txt",     Point(3, 3, Screen::PLAYER1),   Point(3, 5, Screen::PLAYER2),   true},
+		{"level3.txt",     Point(35, 23, Screen::PLAYER1), Point(36, 23, Screen::PLAYER2), false},
+		{"levelFinal.txt", Point(3, 3, Screen::PLAYER1),   Point(3, 5, Screen::PLAYER2),   false},
+		{"level4.txt",     Point(23, 3, Screen::PLAYER1),  Point(22, 3, Screen::PLAYER2),  false}
+	};
+}
+
 // ===========================
 //    Static Door Locations
 // ===========================
@@ -54,7 +74,7 @@ const Point GameManger::initialDoorLocations[MAX_DOORS] = {
 	Point(77, 7),    // [3] Switch Door Location (Lvl 1 -> Lvl 4)
 	Point(0, 2),    // [4] Left Side (Used for Level 1 <- Level 2)
 	Point(36, 24),   // [5] Bottom Side (Used for Level 1 <- Level 3)
-	Point(10, 2)    // [6] Upper Side (Lvl 4 -> Lvl 1)
+	Point(10, 1)    // [6] Upper Side (Lvl 4 -> Lvl 1)
 };
 
 // Helper for random numbers
@@ -265,6 +285,35 @@ bool GameManger::showMenu() {
 
 		switch (choice) {
 		case 1:
+		{// Check if files exist
+			auto levels = getLevelDefs();
+			bool missingFiles = false;
+			std::string missingName;
+
+			for (const auto& level : levels) {
+				if (!fs::exists(level.filename)) {
+					missingFiles = true;
+					missingName = level.filename;
+					break;
+				}
+			}
+
+			if (missingFiles) {
+				cls();
+				int cx = Screen::MAX_X / 2;
+				int cy = Screen::MAX_Y / 2;
+
+				if (g_colorsEnabled) setTextColor(Screen::Color::Red);
+				gotoxy(cx - 15, cy - 2); std::cout << "ERROR: MISSING FILES";
+				if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
+
+				gotoxy(cx - 20, cy);     std::cout << "Cannot find required map file: " << missingName;
+				gotoxy(cx - 20, cy + 2); std::cout << "Game cannot start.";
+				gotoxy(cx - 20, cy + 4); std::cout << "Press any key to return to menu...";
+				(void)_getch();
+				break; // Return to menu loop without starting
+			}
+		}
 			cls();
 			return true;
 
@@ -351,7 +400,8 @@ void GameManger::printInstructions() {
 	gotoxy(leftAlign, startY + 5); std::cout << "2. Navigate through the maze rooms.";
 	gotoxy(leftAlign, startY + 7); std::cout << "3. Collect KEYS to open DOORS.";
 	gotoxy(leftAlign, startY + 9); std::cout << "4. Solve Riddles (Simon Says & Math) to progress.";
-	gotoxy(leftAlign, startY + 9); std::cout << "5. Turn on Switches -> / To open doors with the number 8";
+	gotoxy(leftAlign, startY + 11); std::cout << "5. Turn on Switches -> / To open doors with the number 8";
+	gotoxy(leftAlign, startY + 13); std::cout << "6. Watch out for traps -> ! <- you got 3 lives!";
 
 
 
@@ -630,12 +680,20 @@ void GameManger::resetGame() {
 
 void GameManger::initRooms()
 {
-	// Initialize Rooms with file names, spawn points and lighting settings
-	rooms[0] = Room("level1.txt", { Point(6, 4, Screen::PLAYER1), Point(6, 3, Screen::PLAYER2) }, false);
-	rooms[1] = Room("level2.txt", { Point(3, 3, Screen::PLAYER1),  Point(3, 5, Screen::PLAYER2) }, true);
-	rooms[2] = Room("level3.txt", { Point(35, 23, Screen::PLAYER1),  Point(36, 23, Screen::PLAYER2) }, false);
-	rooms[3] = Room("levelFinal.txt", { Point(3, 3, Screen::PLAYER1), Point(3, 5, Screen::PLAYER2) }, false);
-	rooms[4] = Room("level4.txt", { Point(23, 3, Screen::PLAYER1), Point(22, 3, Screen::PLAYER2) }, false);
+	// 1. Get definitions
+	std::vector<LevelMetadata> levels = getLevelDefs();
+
+	// 2. SORT Lexicographically
+	// Order becomes: level1, level2, level3, level4, levelFinal
+	std::sort(levels.begin(), levels.end(), [](const LevelMetadata& a, const LevelMetadata& b) {
+		return a.filename < b.filename;
+		});
+
+	// 3. Initialize Rooms from sorted data
+	for (size_t i = 0; i < levels.size() && i < NUMBER_OF_ROOMS; ++i) {
+		std::vector<Point> starts = { levels[i].spawnP1, levels[i].spawnP2 };
+		rooms[i] = Room(levels[i].filename, starts, levels[i].isDark);
+	}
 }
 
 void GameManger::initDoors() {
@@ -652,10 +710,10 @@ void GameManger::initDoors() {
 	globalDoors[1] = { initialDoorLocations[1], 1, 0, 2, 1, false };
 
 	// Door 2: Goes to Final Level (Location: Bottom Side)
-	globalDoors[2] = { initialDoorLocations[2], 2, 0, 3, 5, false };
+	globalDoors[2] = { initialDoorLocations[2], 2, 0, 4, 6, false };
 
 	// Door 4: Switch Door Goes to level 3
-	globalDoors[4] = { initialDoorLocations[3], 4, 0, 4, 8, false };
+	globalDoors[4] = { initialDoorLocations[3], 4, 0, 3, 8, false };
 
 
 	// ==========================================
@@ -684,7 +742,7 @@ void GameManger::initDoors() {
 		// Source Room: 4 (Level 4)
 		// Target Room: 0 (Level 1)
 		// Cost: 0 keys (Open)
-	globalDoors[6] = { initialDoorLocations[6], 6, 4, 0, 0, true };
+	globalDoors[6] = { initialDoorLocations[6], 6, 3, 0, 0, true };
 }
 
 void GameManger::loadRoom(int index)
@@ -980,12 +1038,15 @@ int GameManger::NumbersInput()
 void GameManger::printStatsBar() {
 	int totalKeys = Player::getCollectedKeys();
 
-	// Build Inventory String
-	std::string inventory = "";
-	if (players[0].hasTorch() || players[1].hasTorch()) inventory += "[TORCH] ";
-	if (players[0].hasBomb() || players[1].hasBomb())   inventory += "[BOMB] ";
-	if (inventory.empty()) inventory = "[EMPTY]";
+	// Player 1 Status
+	std::string inv1 = "P1:";
+	if (players[0].hasTorch()) inv1 += " [T] ";
+	if (players[0].hasBomb())  inv1 += " [B] ";
 
+	// Player 2 Status
+	std::string inv2 = "P2:";
+	if (players[1].hasTorch()) inv2 += " [T]";
+	if (players[1].hasBomb())  inv2 += " [B]";
 	gotoxy(0, 0);
 	setTextColor(Screen::Color::Cyan);
 
@@ -993,11 +1054,9 @@ void GameManger::printStatsBar() {
 		<< " | SCORE: " << score
 		<< " | HP: " << Health
 		<< " | KEYS: " << totalKeys
-		<< " | INV: " << inventory;
+		<< " | INV: " << inv1 << inv2;
 
-	// Clear remainder of line
-	int currentLen = 50;
-	for (int i = 0; i < (Screen::MAX_X - currentLen); i++) std::cout << " ";
+	
 
 	setTextColor(Screen::Color::LightGray);
 }
