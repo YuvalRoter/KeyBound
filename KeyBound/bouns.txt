@@ -11,16 +11,21 @@ Bonus features implemented
 
  1 2 3 are all from previous Exercise but still a bonus 
 
-1. Colored output for game elements
+1. Colored output for game elements + ( added things other then EX1)
    --------------------------------
-   - We use Windows console colors to distinguish different elements:
-     - Player 1: Cyan ('@') 
-     - Player 2: Red ('&') 
-     - Walls: Brown, drawn as filled block characters (▒ style)
-     - Win tile: LightRed, using █ 
+   - The game supports an optional Colored Mode.
+	 - When Colored Mode is enabled, different game elements are visually distinguished:
+		- Player 1: Cyan (@)
+		- Player 2: Red (&)
+		- Walls: Brown, drawn using filled block characters (▒)
+		- Win tile: Light Red, drawn using solid block characters (█)
+	 - Colored Mode is used not only for static elements but also for dynamic visual feedback:
+		- When a player solves a riddle correctly, a brief flickering score animation is displayed, emphasizing the added score.
+		- Upon reaching the win screen, the game presents a fireworks-style color animation, celebrating successful completion of the game.
+	 - Colored Mode can be enabled or disabled from the main menu, allowing compatibility with both simple and enhanced console displays.
 
-2. Dark rooms + torch-based fog-of-war
-   -----------------------------------
+2. Dark rooms
+   ----------
    - Some rooms are flagged as dark in the Room structure.
    - In a dark room, the map is not drawn fully:
      - Only tiles inside a visibility radius around players with a torch are shown.
@@ -31,9 +36,8 @@ Bonus features implemented
    - This makes navigation more challenging and adds atmosphere compared
      to a fully revealed map.
 
-
-3. random simon says (Exercise 2+)
-   ------------------------------------------------------
+3. random simon says 
+   -----------------
    - The project already includes Riddle and Question classes and a mechanism
      to display riddle screens.
    - Certain tiles in the level ('?') are treated as riddle triggers:
@@ -66,15 +70,29 @@ Bonus features implemented
 		If you press a wrong number or wrong order:
 		The riddle fails and you wont get points added to your score.
 		
-		
+4. Traps/Mines
+   -----------
+	- When a player steps on a trap tile (!), an armed explosive is immediately placed at that location.
+		- The explosive detonates after a short, fixed delay of 1 second, giving a brief reaction window but not enough time to escape carelessly.
+		- Upon explosion:
+			- The player loses 1 health point (HP).
+			- The player is forcibly returned to the starting position of the current room.
+		- Trap damage contributes to the global health system:
+			- If a player’s HP reaches 0, the game ends and control returns to the main menu.
+	- In addition to their danger, traps can occasionally be used strategically.
+		By deliberately triggering a mine near obstacles, players may destroy blocking objects and open new paths through the room
 
-3. Traps !!!
-   ------------------------------------------------------
-	
-	If a player steps on a -> ! a bomb will be placed that explodes in 1 second.
-	1 HP will be removed upon being hit
-	Player will be sent into the start of the level
-	If HP reaches 0 then game is over and we go back to menu
-
-
-
+5. Score System
+   ------------
+	- Players earn points by answering riddles correctly when interacting with riddle tiles.
+	- Each correctly solved riddle grants a fixed score bonus, reinforcing careful thinking rather than trial-and-error.
+	- When a riddle is solved correctly and colored mode is enabled, the screen displays a brief flickering visual effect highlighting the score increase, 
+	  providing immediate and satisfying feedback to the player.
+	  
+6. Pause Menu and HUD Interaction
+   ------------------------------
+   - Pressing ESC during gameplay pauses the game and switches the HUD into Pause Mode.
+		- The pause HUD presents the player with the following options:
+			- Resume Game – continue playing from the exact paused state.
+			- Save Game – save the current game progress. --------------------------------------------------------------------------------------------------( in progress ) 
+			- Exit to Menu – terminate the current session and return to the main menu.

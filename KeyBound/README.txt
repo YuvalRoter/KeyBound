@@ -1,12 +1,12 @@
 =========================
-KeyBound – Exercise 1
+KeyBound – Exercise 2
 C++ – MTA
 =========================
 
 1. Students details
 -------------------
 Course: C++ – MTA
-Exercise: 1 – Text Adventure World (console game)
+– Text Adventure World (console game)
 
 Students:
 	- Name: אריק זסלבסקי ID: 322598350
@@ -24,7 +24,7 @@ Students:
 	- 2 player characters, controlled from the same keyboard.
 	- Multiple rooms (at least 2 challenge rooms + a final “end”).
 	- Movement is continuous in the chosen direction until either:
-	  - The player hits a wall / blocking object, or
+	  - The player hits a wall / blocking obstacle, or
 	  - The player presses the STAY key.
 	- Some rooms can be dark and require a torch to see around the player.
 
@@ -55,9 +55,10 @@ Students:
 	The main menu follows the spec of Exercise 1:
 
 		(1) Start a new game
-		(2) Present instructions
-		(3) choose color mode
-		(4) controls guide
+		(2) Load Game
+		(3) Present instructions
+		(4) choose color mode
+		(5) controls guide
 		(9) EXIT
  
  
@@ -71,7 +72,7 @@ Students:
 		- LEFT  : A
 		- UP    : W
 		- STAY  : " " (SPACE KEY)
-		- Dispose element (drop object): E
+		- Dispose element (drop obstacle): E
 
 	Player 2:
 		- RIGHT : L
@@ -79,26 +80,26 @@ Students:
 		- LEFT  : J
 		- UP    : I
 		- STAY  : M
-		- Dispose element (drop object): O
+		- Dispose element (drop obstacle): O
 
 	Global:
 		- ESC : Pause game. In pause mode, pressing ESC resumes the game, and pressing ESC and H/h takes to menu.
 			  
 
-6. Game elements implemented (Exercise 1)
+6. Game elements implemented 
 -----------------------------------------
-	Mandatory elements (required by Exercise 1):
+	Mandatory elements:
 		- Two players
 		- Walls
 		- Keys
-		- Doors
-
-	Optional elements implemented:
 		- Torch (with dark rooms)
-		- Riddle (with simon says - will be explaned in bouns file)
+		- Riddle (with simon says - will be explaned in bonus file)
 		- Spring
-
-	For each element:
+		- bomb
+		-switches
+		- Doors
+		- obstacle/ Obstacles
+		- health
 
 	Character mapping:
 
@@ -111,6 +112,10 @@ Students:
 		- Spring  : +
 		- Torch   : T
 		- Riddle  : ?
+		- Bomb    : B
+		- Mine    : ! 
+		- Switch  : on / off \
+		- Obstacles: O
 		- won char: ▒ 
 
 	colored:
@@ -122,6 +127,10 @@ Students:
 		- Spring  : +
 		- Torch   : T
 		- Riddle  : ?
+		- Bomb    : B
+		- Mine    : !
+		- Switch  : on GREEN off RED
+		- Obstacles: O
 		- won char: ▒ (bright red)
 
 7. Room structure and flow
@@ -165,17 +174,49 @@ Students:
 	  speed and duration according to the number of compressed charsame cycles
 	- Under spring effect, all other collision rules still apply (walls, players, items).
 
+10. Health/ Lives Implementation
+-------------------------------
+	- The players start with 3 lives ; if the health /lives counter becomes 0, the player loses the game.
+		- If one of the players dies (by a mine or a bomb), the room restarts (up to 3 times).
+		- If a player dies, the players start the room again (the restarted room doesn't reset the items and the obstacles that have been picked up or destroyed ).
+		- If they die 3 times, the game displays GAME OVER, and the player needs to start over the entire game.
 
-10. Pause behavior (ESC) 
+11. Bomb / Mines
+--------------
+	- The player can pick up a bomb by moving over it .
+		- The player won't be able to pick up the bomb if he has a bomb or a torch in his inventory.
+		- The bomb destroys obstacles and items in its radius after a set amount of time.
+		- The bomb can kill a player if he is in the radius of the explosion .
+	- The mine works in the same radius as the bomb but with key differences:
+		- The mine is set in a specific place on the map.
+		- If a player "steps" on it, a fast timer starts and then it explodes.
+		- In the levels, the mines can kill the player ( adding a challenge) or help open a way if obstacles can't be moved.
+
+12. obstacles
+-------------
+	- Each obstacle has a required force equal to its size, defined as the number of characters that make up the obstacle.
+		- A player normally applies a force of 1.
+		- If a player's movement is affected by a spring reaction, the force applied is set according to the player's current speed.
+		- All tiles the obstacle would move into are within the map bounds.
+		- Obstacles can be destroyed by explosions (such as bombs or mines).
+
+13. Pause behavior (ESC) 
 ------------------------
 	- Press ESC during the game:
 	  - The game enters PAUSE mode:
 	  - Press ESC again to resume the game.
 	  - Press H/h to stop the current game and return to the main menu.
 	- When resuming, all motion continues as if the game was not paused.
+	
+14. On / Off Switches
+---------------------
+	- Switches are interactive tiles that can be toggled ON or OFF when a player steps on them.
+		- Stepping on a switch changes its current state (ON ↔ OFF).
+		- Each switch has a visual indication of its state (for example, different characters or colors).
+		- Switches open a secret door numbered 8.
+			- All linked switches must be ON only then the door is Open.
 
-
-11. Self decisions and clarifications
+15. Self decisions and clarifications
 -------------------------------------
 	This section lists design decisions we made where the exercise specification left freedom:
 
@@ -190,10 +231,11 @@ Students:
 		or the second player leaves to a different destination, the screen switches.
 
 
-12. Use of external / AI-generated code
+16. Use of external / AI-generated code
 ---------------------------------------
-	We used AI assistance (ChatGPT) and sites like stack overflow for some parts of the implementation, mainly for:
+	We used AI assistance (ChatGPT and Gemini) and sites like stack overflow for some parts of the implementation, mainly for:
 	- Refining the fog-of-war rendering logic for dark rooms.
 	- Riddles logic
+	- obstacle logic 
 	- added colors 
-	- Helping draft this readme.txt and bonus.txt and bouns.txt
+	- Helping draft this readme.txt and bonus.txt and bonus.txt
