@@ -96,7 +96,7 @@ Students:
 		- Riddle (with simon says - will be explaned in bonus file)
 		- Spring
 		- bomb
-		-switches
+		- switches
 		- Doors
 		- obstacle/ Obstacles
 		- health
