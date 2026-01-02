@@ -96,13 +96,13 @@ private:
 
     // UI & Rendering
     bool showMenu();
-    void printStatsBar();
+    void printStatsBar() const; // added const
     void drawWithFog();
     void loadRoom(int index);
 
 
     // MENU
-    void printMainMenu() ;
+    void printMainMenu() const; // added const
     void printInstructions() ;
     void printControls() ;
     void drawSettingsMenu() ; 
@@ -114,7 +114,7 @@ private:
     Riddle generateRandomRiddle();
 
     // Utilities
-    int NumbersInput();
+    int NumbersInput() const;  // added const
     void increaseScore(int points, const std::string& message);
 
 
@@ -127,6 +127,6 @@ private:
     //Bomb
     void updateBombs();
     void explodeBomb(const Point& center);
-    void drawExplosionFrame(const Point& center, int stage);
-    bool hasClearPath(const Point& start, const Point& target);
+    void drawExplosionFrame(const Point& center, int stage) const;
+    bool hasClearPath(const Point& start, const Point& target) const;
      };
