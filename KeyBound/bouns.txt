@@ -81,7 +81,7 @@ Bonus features implemented
 			- If a player’s HP reaches 0, the game ends and control returns to the main menu.
 	- In addition to their danger, traps can occasionally be used strategically.
 		By deliberately triggering a mine near obstacles, players may destroy blocking objects and open new paths through the room
-
+	- shielded by wall : if there is a wall betwen a player and a bomb the explosion wont hit the player.
 5. Score System
    ------------
 	- Players earn points by answering riddles correctly when interacting with riddle tiles.
@@ -96,3 +96,14 @@ Bonus features implemented
 			- Resume Game – continue playing from the exact paused state.
 			- Save Game – save the current game progress. --------------------------------------------------------------------------------------------------( in progress ) 
 			- Exit to Menu – terminate the current session and return to the main menu.
+
+7. Puzzle/level-design
+   -------------------
+   - Puzzle/level-design bonus 
+   - The game was designed to provide a progressive, cooperative challenge rather than a linear path from start to finish
+		- Obstacles that require sufficient force.
+		- Riddles placed in critical paths.
+		- Bombs and traps, which can act both as hazards and as tools to destroy obstacles and open alternative paths.
+		- Choosing between pushing obstacles cooperatively or destroying them with explosives.
+		- Deciding when to risk triggering a trap in order to open a new route.
+		- in dark rooms the visibility system creates a fog-of-war effect, dynamically updating as players move. 

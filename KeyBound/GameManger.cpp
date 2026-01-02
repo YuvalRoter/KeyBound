@@ -366,7 +366,7 @@ bool GameManger::showMenu() {
 	}
 }
 
-void GameManger::printMainMenu() {
+void GameManger::printMainMenu() const { // added const
 	// 1. Draw the global frame first
 
 	int cx = Screen::MAX_X / 2;
@@ -394,7 +394,7 @@ void GameManger::printMainMenu() {
 	gotoxy(optX - 5, Screen::MAX_Y - 3);
 	std::cout << "Select an option using number keys...";
 	if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
-}
+} 
 
 void GameManger::printInstructions() {
 
@@ -1058,7 +1058,7 @@ void GameManger::increaseScore(int points, const std::string& message)
 	Sleep(600);
 }
 
-int GameManger::NumbersInput()
+int GameManger::NumbersInput()const
 {
 	char choice = 0;
 	while (true) {
@@ -1066,9 +1066,9 @@ int GameManger::NumbersInput()
 		if (std::isdigit(choice))
 			return choice - '0';
 	}
-}
+} // added const
 
-void GameManger::printStatsBar() {
+void GameManger::printStatsBar() const  { // added const
 	int totalKeys = Player::getCollectedKeys();
 
 	// Player 1 Status
@@ -1211,7 +1211,7 @@ void GameManger::updateBombs() {
 	}
 }
 
-void GameManger::drawExplosionFrame(const Point& center, int stage) {
+void GameManger::drawExplosionFrame(const Point& center, int stage) const { // added const
 	int cx = center.getX();
 	int cy = center.getY();
 
@@ -1262,7 +1262,7 @@ void GameManger::drawExplosionFrame(const Point& center, int stage) {
 	setTextColor(Screen::Color::LightGray);
 }
 
-bool GameManger::hasClearPath(const Point& start, const Point& target) {
+bool GameManger::hasClearPath(const Point& start, const Point& target) const {
 	int x0 = start.getX();
 	int y0 = start.getY();
 	int x1 = target.getX();
@@ -1292,7 +1292,7 @@ bool GameManger::hasClearPath(const Point& start, const Point& target) {
 		if (e2 >= dy) { err += dy; x0 += sx; }
 		if (e2 <= dx) { err += dx; y0 += sy; }
 	}
-}
+} // added const
 
 void GameManger::explodeBomb(const Point& center) {
 	int cx = center.getX();
