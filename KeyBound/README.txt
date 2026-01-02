@@ -90,16 +90,21 @@ Students:
 -----------------------------------------
 	Mandatory elements:
 		- Two players
-		- Walls
-		- Keys
+		- Spring (one char or more)
 		- Torch (with dark rooms)
-		- Riddle (with simon says - will be explaned in bonus file)
-		- Spring
-		- bomb
-		- switches
+		- Keys
+		- Obstacle (one char or more)
+		- On/Off Switches
+		- Bomb 
 		- Doors
-		- obstacle/ Obstacles
-		- health
+		- Riddle
+		- Health
+		- Walls
+	
+	Bonus elements: (will be explaned in a bonus file)
+		- Dark rooms
+		- Mines
+		- Simon says
 
 	Character mapping:
 
