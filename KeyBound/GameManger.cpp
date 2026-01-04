@@ -743,7 +743,7 @@ void GameManger::initDoors() {
 	globalDoors[1] = { initialDoorLocations[1], 1, 0, 2, 1, false };
 
 	// Door 2: Goes to Final Level (Location: Bottom Side)
-	globalDoors[2] = { initialDoorLocations[2], 2, 0, 4, 6, false };
+	globalDoors[2] = { initialDoorLocations[2], 2, 0, 4, 7, false };
 
 	// Door 4: Switch Door Goes to level 3
 	globalDoors[4] = { initialDoorLocations[3], 4, 0, 3, 8, false };

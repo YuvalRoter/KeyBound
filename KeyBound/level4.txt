@@ -1,25 +1,25 @@
                                                                                 
 ################################################################################                                                                             O
-#B  B  B  B   B                                                  OOOO         B#
-#                                                                OOOO   OOOOOOO#
-#B  B  B  B   B                                                  OOOO   O     K#
-#                                                                OOOO   O    K #
-#B  B  B  B   B                                                  OOOO   O    K #
-#OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO   O     K#
-#OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO#
-#OOOOOOOOOOOOOOOO OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO#
-#B                   OO                                                  OOOO K#
-#                   OOO                                                    OO  #
-#BOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO#
-#OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO#
-#OOOOOOOO   OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO#
-#B                                                OOO                      OO K#
-#                                                  OO                    OOOO  #
-#BOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO#
-#OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO#
-#OOOOOOOOOOOOOOOOOOOOO    OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO#
+#B  B  B  B   B                                    #+#           OOOO         B#
+#                                                  #+#           OOOO   OOOOOOO#
+#B  B  B  B   B                                    #+#           OOOO   O     K#
+#                                                  #+#           OOOO   O      #
+#B  B  B  B   B                                    # #           OOOO   O      #
+#OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO   OOOOOOOOOOOOOOO   O     K#
+#OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO OOOOOOOOOOOOOOOOOOOOOOOOOO#
+#OOOOOOOOOOOOOOOO OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO#!#OOOOOOOOOOOOOOOOOOOOOOOOO#
+#B                   OO                            # #                   OOOO K#
+#                   OOO                            # #                     OO  #
+#BOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO#!#OOOOOOOOOOOOOOOOOOOOOOOOO#
+#OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO# #OOOOOOOOOOOOOOOOOOOOOOOOO#
+#OOOOOOOO   OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO# #OOOOOOOOOOOOOOOOOOOOOOOOO#
+#B                                                O#!#                     OO K#
+#                                                  # #                   OOOO  #
+#BOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO#!#OOOOOOOOOOOOOOOOOOOOOOOOO#
+#OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO# #OOOOOOOOOOOOOOOOOOOOOOOOO#
+#OOOOOOOOOOOOOOOOOOOOO    OOOOOOOOOOOOOOOOOOOOOOOOO#!#OOOOOOOOOOOOOOOOOOOOOOOOO#
+#                                                  # #                         #
+#                                                  # #                         #
 #                                                                              #
-#                                                                              #
-#                                                                              #
-#  B B B B B B B B B B B B B B B B B B B B B B B B B B B B B B B B B B  B  B B #
+#  B B B B B B B B B B B B B B B B B B B B B B B B     B B B B B B B B  B  B B #
 ################################################################################
