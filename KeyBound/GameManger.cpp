@@ -74,7 +74,7 @@ const Point GameManger::initialDoorLocations[MAX_DOORS] = {
 	Point(36, 1),   // [1] Top Side   (Used for Level 1 -> Level 3)
 	Point(38, 24),  // [2] Bottom Side (Used for Level 1 -> Final)
 	Point(77, 7),    // [3] Switch Door Location (Lvl 1 -> Lvl 4)
-	Point(0, 2),    // [4] Left Side (Used for Level 1 <- Level 2)
+	Point(0, 4),    // [4] Left Side (Used for Level 1 <- Level 2)
 	Point(36, 24),   // [5] Bottom Side (Used for Level 1 <- Level 3)
 	Point(10, 1)    // [6] Upper Side (Lvl 4 -> Lvl 1)
 };

@@ -3,7 +3,7 @@
 #B  B  B  B   B                                    #+#           OOOO         B#
 #                                                  #+#           OOOO   OOOOOOO#
 #B  B  B  B   B                                    #+#           OOOO   O     K#
-#                                                  #+#           OOOO   O      #
+#                                                  # #           OOOO   O      #
 #B  B  B  B   B                                    # #           OOOO   O      #
 #OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO   OOOOOOOOOOOOOOO   O     K#
 #OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO OOOOOOOOOOOOOOOOOOOOOOOOOO#
@@ -11,14 +11,14 @@
 #B                   OO                            # #                   OOOO K#
 #                   OOO                            # #                     OO  #
 #BOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO#!#OOOOOOOOOOOOOOOOOOOOOOOOO#
-#OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO# #OOOOOOOOOOOOOOOOOOOOOOOOO#
+#OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO   OOOOOOOOOOOOOOOOOOOOOOOOO#
 #OOOOOOOO   OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO# #OOOOOOOOOOOOOOOOOOOOOOOOO#
 #B                                                O#!#                     OO K#
 #                                                  # #                   OOOO  #
 #BOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO#!#OOOOOOOOOOOOOOOOOOOOOOOOO#
-#OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO# #OOOOOOOOOOOOOOOOOOOOOOOOO#
-#OOOOOOOOOOOOOOOOOOOOO    OOOOOOOOOOOOOOOOOOOOOOOOO#!#OOOOOOOOOOOOOOOOOOOOOOOOO#
-#                                                  # #                         #
+#OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO   OOOOOOOOOOOOOOOOOOOOOOOOO#
+#OOOOOOOOOOOOOOOOOOOOO    OOOOOOOOOOOOOOOOOOOOOOOOO# #OOOOOOOOOOOOOOOOOOOOOOOOO#
+#                                                  #!#                         #
 #                                                  # #                         #
 #                                                                              #
 #  B B B B B B B B B B B B B B B B B B B B B B B B     B B B B B B B B  B  B B #
