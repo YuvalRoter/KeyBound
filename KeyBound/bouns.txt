@@ -82,6 +82,7 @@ Bonus features implemented
 	- In addition to their danger, traps can occasionally be used strategically.
 		By deliberately triggering a mine near obstacles, players may destroy blocking objects and open new paths through the room
 	- shielded by wall : if there is a wall betwen a player and a bomb the explosion wont hit the player.
+	
 5. Score System
    ------------
 	- Players earn points by answering riddles correctly when interacting with riddle tiles.
@@ -94,7 +95,7 @@ Bonus features implemented
    - Pressing ESC during gameplay pauses the game and switches the HUD into Pause Mode.
 		- The pause HUD presents the player with the following options:
 			- Resume Game – continue playing from the exact paused state.
-			- Save Game – save the current game progress. --------------------------------------------------------------------------------------------------( in progress ) 
+			- Save Game – save the current game progress. (still in progress, not part of the game yet)
 			- Exit to Menu – terminate the current session and return to the main menu.
 
 7. Puzzle/level-design
@@ -107,3 +108,9 @@ Bonus features implemented
 		- Choosing between pushing obstacles cooperatively or destroying them with explosives.
 		- Deciding when to risk triggering a trap in order to open a new route.
 		- in dark rooms the visibility system creates a fog-of-war effect, dynamically updating as players move. 
+		
+8. Added sound effects
+---------------------
+	- Bomb explosions now emit sound to provide immediate feedback.
+	- The "Simon Says" challenge now includes sound cues.
+	- Sound effects were added when the score is updated.
