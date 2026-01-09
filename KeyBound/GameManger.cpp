@@ -229,13 +229,15 @@ void GameManger::run() {
 			keepProgramRunning = false; // User selected Exit (9)
 			break;
 		}
-
-		// 2. User chose "Start Game" (1)
-		// RESET EVERYTHING BEFORE STARTING
-		resetGame();
-
-		// 3. Load the first room
-		loadRoom(0);
+		if (currentRoom == -1) {
+			// 2. User chose "Start Game" (1)
+			resetGame();
+			// 3. Load the first room
+			loadRoom(0);
+		}
+		
+	
+	
 
 		// 4. Start the game loop
 		gameLoop();
@@ -1477,6 +1479,24 @@ void GameManger::showLoadGameMenu() {
 		if (loadGame(selectedFile)) {
 			gotoxy(cx - 10, row + 3); std::cout << "Loaded!";
 			Sleep(1000);
+
+			// Redraw the screen to wipe the "Loaded!" message
+			if (rooms[currentRoom].dark) {
+				// If the room is dark, reset fog logic and redraw
+				fogInitialized = false;
+				drawWithFog();
+			}
+			else {
+				// If the room is light, redraw the map
+				screen.draw();
+				// Draw players immediately so they don't flicker in
+				for (const auto& p : players) {
+					p.getPoint().draw(p.getChar());
+				}
+			}
+			// Restore the HUD
+			printStatsBar();
+			
 		}
 		else {
 			gotoxy(cx - 10, row + 3); std::cout << "Failed to load!";
@@ -1489,61 +1509,87 @@ bool GameManger::loadGame(const std::string& filename) {
 	std::ifstream file(filename);
 	if (!file) return false;
 
-	// Temp variables
-	int tempVal;
+	// ===========================
+	// 1. Read Global State
+	// ===========================
 
-	// 1. Global State
-	if (!(file >> currentRoom >> score >> Health >> Player::collectedKeys >> Player::AmountOfSwitches)) return false;
+	int loadedRoomIndex = 0;
 
-	// 2. Player State
-	int numP;
-	file >> numP;
+	if (!(file >> loadedRoomIndex >> score >> Health >> Player::collectedKeys >> Player::AmountOfSwitches)) {
+		return false;
+	}
+
+	// Force currentRoom to -1. This ensures that when we call loadRoom() later,
+	currentRoom = -1;
+
+	// ===========================
+	// 2. Read Player State (Buffered)
+	// ===========================
+
+	struct TempPlayerData {
+		Point pos;
+		Direction dir;
+		bool hasTorch;
+		bool hasBomb;
+		bool hasWon;
+		bool isFinished;
+		int currentRoomIdx;
+		int targetRoomIdx;
+	};
+
+	std::vector<TempPlayerData> tempPlayers(NUMBER_OF_PLAYERS);
+	int numPlayersFromFile;
+	file >> numPlayersFromFile;
+
 	for (int i = 0; i < NUMBER_OF_PLAYERS; ++i) {
-		int x, y, dx, dy, roomIdx, tRoom;
+		int x, y, dx, dy;
 		char ch;
-		bool hasT, hasB, w, fin;
 
 		file >> x >> y >> ch;
 		file >> dx >> dy;
-		file >> hasT >> hasB >> w >> fin;
-		file >> roomIdx >> tRoom;
+		file >> tempPlayers[i].hasTorch
+			>> tempPlayers[i].hasBomb
+			>> tempPlayers[i].hasWon
+			>> tempPlayers[i].isFinished;
+		file >> tempPlayers[i].currentRoomIdx
+			>> tempPlayers[i].targetRoomIdx;
 
-		players[i].setPosition(Point(x, y, ch));
-		players[i].setDirection(Direction(dx, dy));
-		players[i].setTorch(hasT);
-		players[i].setBomb(hasB);
-		players[i].setWin(w);
-		players[i].setFinished(fin);
-		players[i].setRoom(roomIdx);
-		players[i].targetRoomIndex = tRoom;
+		tempPlayers[i].pos = Point(x, y, ch);
+		tempPlayers[i].dir = Direction(dx, dy);
 	}
 
-	// 3. Doors
-	int maxD;
-	file >> maxD;
+	// ===========================
+	// 3. Read Doors
+	// ===========================
+	int maxDoorsFromFile;
+	file >> maxDoorsFromFile;
 	for (int i = 0; i < MAX_DOORS; ++i) {
-		bool open;
-		file >> open;
-		globalDoors[i].isOpen = open;
+		bool isOpen;
+		file >> isOpen;
+		globalDoors[i].isOpen = isOpen;
 	}
 
-	// 4. Rooms
-	int numR;
-	file >> numR;
-	// Handle potential mismatch in number of rooms (just in case code changed)
-	int limit = (numR < NUMBER_OF_ROOMS) ? numR : NUMBER_OF_ROOMS;
+	// ===========================
+	// 4. Read Room Maps (Visited State)
+	// ===========================
+	int numRoomsFromFile;
+	file >> numRoomsFromFile;
 
-	for (int i = 0; i < limit; ++i) {
-		bool vis;
-		file >> vis;
-		rooms[i].isVisited = vis;
+	// Protect against mismatch if NUMBER_OF_ROOMS changed
+	int loopLimit = (numRoomsFromFile < NUMBER_OF_ROOMS) ? numRoomsFromFile : NUMBER_OF_ROOMS;
+
+	for (int i = 0; i < loopLimit; ++i) {
+		bool isVisited;
+		file >> isVisited;
+		rooms[i].isVisited = isVisited;
 		rooms[i].savedMapState.clear();
 
-		if (vis) {
+		if (isVisited) {
 			size_t rows;
 			file >> rows;
+
+			// Consume the newline character left after reading 'rows'
 			std::string line;
-			// Consume newline after the count
 			std::getline(file, line);
 
 			for (size_t r = 0; r < rows; ++r) {
@@ -1553,8 +1599,25 @@ bool GameManger::loadGame(const std::string& filename) {
 		}
 	}
 
-	// 5. Restore screen
-	loadRoom(currentRoom);
+	// ===========================
+	// 5. Apply State
+	// ===========================
+
+	// Now call loadRoom. Because currentRoom is -1, it won't save over our data.
+	// It will simply load the map for 'loadedRoomIndex'.
+	loadRoom(loadedRoomIndex);
+
+	// Finally, overwrite the default spawn positions with our saved player data.
+	for (int i = 0; i < NUMBER_OF_PLAYERS; ++i) {
+		players[i].setPosition(tempPlayers[i].pos);
+		players[i].setDirection(tempPlayers[i].dir);
+		players[i].setTorch(tempPlayers[i].hasTorch);
+		players[i].setBomb(tempPlayers[i].hasBomb);
+		players[i].setWin(tempPlayers[i].hasWon);
+		players[i].setFinished(tempPlayers[i].isFinished);
+		players[i].setRoom(tempPlayers[i].currentRoomIdx);
+		players[i].targetRoomIndex = tempPlayers[i].targetRoomIdx;
+	}
 
 	return true;
-}
+}	
