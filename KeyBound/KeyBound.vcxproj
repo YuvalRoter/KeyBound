@@ -28,6 +28,7 @@
     <ClInclude Include="Riddle.h" />
     <ClInclude Include="Room.h" />
     <ClInclude Include="Screen.h" />
+    <ClInclude Include="steps.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>
