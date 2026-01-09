@@ -10,7 +10,7 @@ bool Steps::saveFile(const std::string& filename) const {
     outfile << "\n";
 
     for (const auto& s : recordedSteps) {
-        outfile << s.time << " " << s.data << "\n";
+        outfile << s.time << " " << s.input << "\n";
     }
     return true;
 }
@@ -45,7 +45,7 @@ int Steps::popEventAtTime(long currentTime) {
     if (playbackIndex >= recordedSteps.size()) return 0;
 
     if (recordedSteps[playbackIndex].time == currentTime) {
-        return recordedSteps[playbackIndex++].data;
+        return recordedSteps[playbackIndex++].input;
     }
     return 0;
 }
