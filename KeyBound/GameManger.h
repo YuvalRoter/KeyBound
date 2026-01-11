@@ -101,13 +101,13 @@ private:
 
     // UI & Rendering
     bool showMenu();
-    void printStatsBar() const; // added const
+    void printStatsBar() const; 
     void drawWithFog();
     void loadRoom(int index);
 
 
     // MENU
-    void printMainMenu() const; // added const
+    void printMainMenu() const; 
     void printInstructions() ;
     void printControls() ;
     void drawSettingsMenu() ; 
@@ -119,7 +119,7 @@ private:
     Riddle generateRandomRiddle();
 
     // Utilities
-    int NumbersInput() const;  // added const
+    int NumbersInput() ; 
     void increaseScore(int points, const std::string& message);
 
 

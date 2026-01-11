@@ -530,10 +530,17 @@ void GameManger::gameLoop()
 void GameManger::handleInput() {
 	if (!_kbhit()) return;
 
-	// Get input from our polymorphic handler (could be file or keyboard)
-	char key = stepsHandler->getInput(gameCycle);
+	// 1. USE STEPS HANDLER
+	// This records the key OR gets the key from the file
+	int keyInt = stepsHandler->getInput(gameCycle);
+	char key = (char)keyInt;
 
 	if (key == 0) return;
+
+	// 2. LOG THE DETAILED BUTTON PRESS
+	std::string logMsg = "Button pressed ";
+	logMsg += (char)std::toupper(key);
+	stepsHandler->handleResult(gameCycle, Steps::ResultType::Input, logMsg);
 
 	// Handle Global Keys (ESC)
 	if (key == 27) { // ASCII for ESC
@@ -543,7 +550,8 @@ void GameManger::handleInput() {
 
 		while (true) {
 			// Wait for a key
-			char cmd = _getch();
+			int cmdInt = stepsHandler->getInput(gameCycle);
+			char cmd = (char)cmdInt;
 
 			if (cmd == 27) {
 				// Resume game
@@ -840,7 +848,8 @@ void GameManger::loadRoom(int index)
 	else {
 		screen.draw();          // normal full draw for bright rooms
 	}
-	stepsHandler->handleResult(gameCycle, Steps::ResultType::ScreenChange, std::to_string(index));
+	std::string msg = "Entered lvl " + std::to_string(index + 1) + "!";
+	stepsHandler->handleResult(gameCycle, Steps::ResultType::ScreenChange, msg);
 	printStatsBar();
 }
 
@@ -910,18 +919,21 @@ void GameManger::handleSimon(Riddle& riddle, Player& player)
 
 	// 1. Show Pattern
 	for (int idx : pattern) {
-		screen.drawSimon(-1); // Clear
-		Sleep(150);
-		screen.drawSimon(idx); // Flash
-		Sleep(flashDelayMs);
-		screen.drawSimon(-1); // Clear
-		Sleep(150);
+		screen.drawSimon(-1);
+		//Only sleep if NOT silent
+		if (!stepsHandler->isSilent()) Sleep(150);
+
+		screen.drawSimon(idx);
+		if (!stepsHandler->isSilent()) Sleep(flashDelayMs);
+
+		screen.drawSimon(-1);
+		if (!stepsHandler->isSilent()) Sleep(150);
 	}
 
 	// This loop consumes any keystrokes stored while the pattern was 
 	// playing, ensuring the next _getch() waits for NEW input.
-	while (_kbhit()) {
-		(void)_getch();
+	while (stepsHandler->getInput(gameCycle) != 0) {
+		// Just consume
 	}
 
 
@@ -1074,15 +1086,16 @@ void GameManger::increaseScore(int points, const std::string& message)
 	Sleep(600);
 }
 
-int GameManger::NumbersInput()const
+int GameManger::NumbersInput()
 {
-	char choice = 0;
+	int choice = 0;
 	while (true) {
-		choice = _getch();
-		if (std::isdigit(choice))
-			return choice - '0';
+		int input = stepsHandler->getInput(gameCycle);
+
+		if (input != 0 && std::isdigit(input))
+			return input - '0';
 	}
-} // added const
+} 
 
 void GameManger::printStatsBar() const  { // added const
 	int totalKeys = Player::getCollectedKeys();
@@ -1354,7 +1367,12 @@ void GameManger::explodeBomb(const Point& center) {
 					Health--;
 					hit = true;
 					printStatsBar();
-					stepsHandler->handleResult(gameCycle, Steps::ResultType::LifeLost, std::to_string(Health));
+					if (Health <= 0) {
+						stepsHandler->handleResult(gameCycle, Steps::ResultType::LifeLost, "Bomb death!");
+					}
+					else {
+						stepsHandler->handleResult(gameCycle, Steps::ResultType::LifeLost, std::to_string(Health));
+					}
 				}
 			}
 		}

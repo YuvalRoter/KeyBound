@@ -12,10 +12,8 @@ struct Step {
 class Steps {
 protected:
     unsigned int randomSeed;
-    std::vector<std::string> mapFiles; // To verify we are playing the correct level set
+    std::vector<std::string> mapFiles;
     std::vector<Step> recordedSteps;
-
-    // Iterator index for O(1) access during playback
     size_t playbackIndex = 0;
 
 public:
@@ -23,8 +21,9 @@ public:
 
     Steps() : randomSeed(0), playbackIndex(0) {}
 
-    enum class ResultType { ScreenChange, LifeLost, Riddle, GameEnd, BombTick };
-    
+    // ADDED: Input generic type
+    enum class ResultType { ScreenChange, LifeLost, Riddle, GameEnd, BombTick, Input };
+
     virtual int getInput(long gameCycle) = 0;
     virtual void handleResult(long gameCycle, ResultType type, const std::string& data) = 0;
 
@@ -39,7 +38,6 @@ public:
     // ===========================
     //       Recording API
     // ===========================
-    // Call this in -save mode whenever the user presses a key
     void addStep(long time, int data) {
         recordedSteps.push_back({ time, data });
     }
@@ -47,11 +45,7 @@ public:
     // ===========================
     //       Playback API
     // ===========================
-    // Call this in -load mode every game loop cycle.
-    // Returns 0 if no input happened at this specific time.
     virtual int popEventAtTime(long currentTime);
-
-    // Resets the playback iterator to the beginning (for restarting)
     void resetPlayback() { playbackIndex = 0; }
 
     // ===========================
