@@ -8,6 +8,7 @@
 #include "Room.h"
 #include "Door.h"       
 #include "Question.h"  
+#include "Steps.h"
 
 class GameManger {
 private:
@@ -73,12 +74,20 @@ private:
 
     std::vector<ActiveBomb> activeBombs;
 
+    // ===========================
+    //       Steps / Recording
+    // ===========================
+    Steps* steps_log = nullptr; // Pointer to handle recording/playback
+    bool is_save_mode = false;
+    bool is_load_mode = false;
+    long currTick = 0;          // Cycle counter for timing inputs
+
 public:
     // ===========================
     //       Public API
     // ===========================
     GameManger();
-    void run();
+    void run(int argc, char* argv[]);
 
 private:
     // ===========================
