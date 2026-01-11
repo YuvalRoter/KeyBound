@@ -2,6 +2,8 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <algorithm> 
+#include <cctype>
 
 StepsPlayer::StepsPlayer(bool isSilentMode)
     : silent(isSilentMode), resultIndex(0), testFailed(false) {
@@ -9,7 +11,7 @@ StepsPlayer::StepsPlayer(bool isSilentMode)
 
 // --- INPUT PLAYBACK ---
 int StepsPlayer::getInput(long gameCycle) {
-
+    // Delegates to the base class to retrieve the step recorded for this time
     return popEventAtTime(gameCycle);
 }
 
@@ -43,7 +45,9 @@ bool StepsPlayer::loadResultsFile(const std::string& filename) {
     std::ifstream infile(filename);
     if (!infile) return false;
 
+    // Clear previous data
     expectedResults.clear();
+
     int count;
     if (!(infile >> count)) return false;
 
@@ -52,22 +56,38 @@ bool StepsPlayer::loadResultsFile(const std::string& filename) {
         int typeInt;
         std::string d;
 
-        // 1. Read Time and Type
         if (!(infile >> t >> typeInt)) break;
 
-        // 2. Consume the space separator explicitly
-        char c = infile.get();
-
-        // 3. Read the rest of the line (The Data) using getline
-        // This allows us to read "Button pressed W" as a single string
+        char c = infile.get(); // consume space
         std::getline(infile, d);
 
-        // 4. Cleanup: Remove potential carriage return (\r) if on Windows
         if (!d.empty() && d.back() == '\r') {
             d.pop_back();
         }
 
-        expectedResults.push_back({ t, static_cast<Steps::ResultType>(typeInt), d });
+        Steps::ResultType typeEnum = static_cast<Steps::ResultType>(typeInt);
+        expectedResults.push_back({ t, typeEnum, d });
+
+        // PARSE & ADD INPUTS FROM RESULT FILE
+        if (typeEnum == Steps::ResultType::Input && !d.empty()) {
+            char key = d.back();
+            if (std::isalpha(key)) {
+                key = std::tolower(key);
+            }
+            addStep(t, key);
+        }
     }
+
+    // SORT & DEDUPLICATE
+    // Ensure events are in order and we don't have duplicates from loading both files
+    std::sort(recordedSteps.begin(), recordedSteps.end(), [](const Step& a, const Step& b) {
+        return a.time < b.time;
+        });
+
+    auto last = std::unique(recordedSteps.begin(), recordedSteps.end(), [](const Step& a, const Step& b) {
+        return a.time == b.time && a.input == b.input;
+        });
+    recordedSteps.erase(last, recordedSteps.end());
+
     return true;
 }
