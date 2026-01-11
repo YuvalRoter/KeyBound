@@ -8,9 +8,14 @@
 #include "Room.h"
 #include "Door.h"       
 #include "Question.h"  
+class Steps;
 
 class GameManger {
 private:
+
+    long gameCycle = 0;
+    Steps* stepsHandler = nullptr;
+
     // ===========================
     //       Constants
     // ===========================
@@ -77,7 +82,7 @@ public:
     // ===========================
     //       Public API
     // ===========================
-    GameManger();
+    GameManger(Steps* handler);
     void run();
 
 private:

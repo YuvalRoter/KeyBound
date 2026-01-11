@@ -13,6 +13,7 @@
 #include "Riddle.h"
 #include "Room.h"
 #include "Screen.h"
+#include "Steps.h"
 
 
 
@@ -88,21 +89,25 @@ static int randomInt(int min, int max) {
 // ===========================
 //      Constructor
 // ===========================
-GameManger::GameManger() :
-	currentRoom(-1),
-	players{
-		Player(Point(START_X, START_Y, Screen::PLAYER1), Direction::directions[Direction::STAY], P1_KEYS, screen),
-		Player(Point(START_X - 2, START_Y, Screen::PLAYER2), Direction::directions[Direction::STAY], P2_KEYS, screen)
+GameManger::GameManger(Steps* handler)
+	: stepsHandler(handler)
+	, currentRoom(-1)
+	, players{
+		Player(Point(START_X, START_Y, Screen::PLAYER1),
+			   Direction::directions[Direction::STAY], P1_KEYS, screen),
+		Player(Point(START_X - 2, START_Y, Screen::PLAYER2),
+			   Direction::directions[Direction::STAY], P2_KEYS, screen)
 	}
 {
-	hideCursor();
-	cls();
+	rng.seed(stepsHandler->getRandomSeed());
 	initRooms();
 	initDoors();
 
-	// Attempt to load questions, handle error if missing
+	hideCursor();
+	cls();
+
 	if (!loadQuestionsFromFile("questions.txt")) {
-		// Optional: Log error here if you had a logger
+		// optional: handle missing file
 	}
 }
 
@@ -497,30 +502,38 @@ void GameManger::gameLoop()
 	running = true;
 
 	while (running && !won) {
+		gameCycle++; // Track the "time point"
 
 		handleInput();
 		if (!running) break;
-		updatePlayers();
-		
 
-		if (rooms[currentRoom].dark) {
-			// Incremental fog redraw
-			drawWithFog();
+		updatePlayers();
+		updateBombs();
+
+		if (!stepsHandler->isSilent()) {
+			if (rooms[currentRoom].dark) {
+				drawWithFog();
+			}
+			printStatsBar();
+
+			Sleep(60);
 		}
-		updateBombs();	
-		// HUD 
-		printStatsBar();
-		Sleep(60);   
+		// If it IS silent, the loop repeats instantly, 
+		// making the test run instantly
 	}
 
-	cls();
+	if (!stepsHandler->isSilent()) {
+		cls();
+	}
 }
-
 
 void GameManger::handleInput() {
 	if (!_kbhit()) return;
 
-	char key = _getch();
+	// Get input from our polymorphic handler (could be file or keyboard)
+	char key = stepsHandler->getInput(gameCycle);
+
+	if (key == 0) return;
 
 	// Handle Global Keys (ESC)
 	if (key == 27) { // ASCII for ESC
@@ -795,6 +808,7 @@ void GameManger::loadRoom(int index)
 	}
 	else {
 		screen.loadFromFileToMap(rooms[currentRoom].mapFile);
+
 	}
 
 	// 3. Render Doors
@@ -826,7 +840,7 @@ void GameManger::loadRoom(int index)
 	else {
 		screen.draw();          // normal full draw for bright rooms
 	}
-
+	stepsHandler->handleResult(gameCycle, Steps::ResultType::ScreenChange, std::to_string(index));
 	printStatsBar();
 }
 
@@ -1340,6 +1354,7 @@ void GameManger::explodeBomb(const Point& center) {
 					Health--;
 					hit = true;
 					printStatsBar();
+					stepsHandler->handleResult(gameCycle, Steps::ResultType::LifeLost, std::to_string(Health));
 				}
 			}
 		}
@@ -1353,6 +1368,7 @@ void GameManger::explodeBomb(const Point& center) {
 		Sleep(2000);
 		running = false;
 		won = false;
+		stepsHandler->handleResult(gameCycle, Steps::ResultType::GameEnd, std::to_string(score));
 		return;
 	}
 	else if (hit) {

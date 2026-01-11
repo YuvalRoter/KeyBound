@@ -29,6 +29,8 @@
     <ClInclude Include="Room.h" />
     <ClInclude Include="Screen.h" />
     <ClInclude Include="steps.h" />
+    <ClInclude Include="StepsPlayer.h" />
+    <ClInclude Include="StepsSimple.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>
@@ -40,6 +42,7 @@
     <ClCompile Include="Riddle.cpp" />
     <ClCompile Include="Screen.cpp" />
     <ClCompile Include="Steps.cpp" />
+    <ClCompile Include="StepsPlayer.cpp" />
     <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
