@@ -119,7 +119,7 @@ private:
     Riddle generateRandomRiddle();
 
     // Utilities
-    int NumbersInput() const;  // added const
+    int NumbersInput() ;  // added const
     void increaseScore(int points, const std::string& message);
 
 

@@ -31,9 +31,7 @@ void StepsRecorder::handleResult(long gameCycle, ResultType type, const std::str
 }
 
 void StepsRecorder::saveAllFiles(const std::string& stepsFilename, const std::string& resultFilename) {
-    // 1. Save Steps
-    // The base class 'Steps::saveFile' is expected to handle the serialization 
-    // of the random seed, map file list, and the recorded input steps.
+    // 1. Save Steps (Inputs)
     if (saveFile(stepsFilename)) {
         std::cout << "Recorded steps successfully saved to " << stepsFilename << std::endl;
     }
@@ -41,7 +39,7 @@ void StepsRecorder::saveAllFiles(const std::string& stepsFilename, const std::st
         std::cerr << "Error: Failed to save steps file!" << std::endl;
     }
 
-    // 2. Save Results
+    // 2. Save Results (Events)
     if (saveResults(resultFilename)) {
         std::cout << "Expected results successfully saved to " << resultFilename << std::endl;
     }
@@ -49,6 +47,7 @@ void StepsRecorder::saveAllFiles(const std::string& stepsFilename, const std::st
         std::cerr << "Error: Failed to save results file!" << std::endl;
     }
 }
+
 
 bool StepsRecorder::saveResults(const std::string& filename) const {
     std::ofstream outfile(filename);

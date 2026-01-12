@@ -27,7 +27,7 @@ namespace {
 
 	// Game Configuration
 	constexpr int START_X = 6;
-	constexpr int START_Y = 5; 
+	constexpr int START_Y = 5;
 	constexpr int MAX_SIMON_LENGTH = 4;
 	constexpr int MIN_SIMON_LENGTH = 3;
 	constexpr int SIMON_DELAY_MS = 400;
@@ -240,9 +240,9 @@ void GameManger::run() {
 			// 3. Load the first room
 			loadRoom(0);
 		}
-		
-	
-	
+
+
+
 
 		// 4. Start the game loop
 		gameLoop();
@@ -322,8 +322,12 @@ bool GameManger::showMenu() {
 				gotoxy(cx - 20, cy);     std::cout << "Cannot find required map file: " << missingName;
 				gotoxy(cx - 20, cy + 2); std::cout << "Game cannot start.";
 				gotoxy(cx - 20, cy + 4); std::cout << "Press any key to return to menu...";
-				(void)_getch();
-				break; // Return to menu loop without starting
+				while (true) {
+					if (stepsHandler->getInput(gameCycle) != 0) break;
+					gameCycle++;
+					if (!stepsHandler->isSilent()) Sleep(30);
+				}
+				break;
 			}
 		}
 		cls();
@@ -401,7 +405,7 @@ void GameManger::printMainMenu() const { // added const
 	gotoxy(optX - 5, Screen::MAX_Y - 3);
 	std::cout << "Select an option using number keys...";
 	if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
-} 
+}
 
 void GameManger::printInstructions() {
 
@@ -494,7 +498,12 @@ void GameManger::printControls() {
 	std::cout << "Press any key to go back...";
 	if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
 
-	(void)_getch();
+	while (true) {
+		if (stepsHandler->getInput(gameCycle) != 0) break;
+		gameCycle++;
+		if (!stepsHandler->isSilent()) Sleep(30);
+	}
+
 }
 
 void GameManger::gameLoop()
@@ -515,8 +524,13 @@ void GameManger::gameLoop()
 				drawWithFog();
 			}
 			printStatsBar();
+			if (stepsHandler->isPlayback()) {
+				Sleep(20);
+			}
+			else {
+				Sleep(60);
+			}
 
-			Sleep(60);
 		}
 		// If it IS silent, the loop repeats instantly, 
 		// making the test run instantly
@@ -529,44 +543,43 @@ void GameManger::gameLoop()
 
 void GameManger::handleInput() {
 
-	// Always query handler (in -load it returns scheduled events)
-	int keyInt = stepsHandler->getInput(gameCycle);
-	char key = static_cast<char>(keyInt);
-
-	if (key == 0) return;
+	char key = stepsHandler->getInput(gameCycle);
+	if (key == 0) return; // No input this cycle
 
 	// Handle Global Keys (ESC)
-	if (key == 27) { // ASCII for ESC
-		// We are now "paused". Clear HUD area or show pause message.
+	if (key == 27) { // ESC
 		gotoxy(0, 0);
 		std::cout << "PAUSED: (ESC) Resume | (S) Save Game | (H) Exit to Menu    ";
 
 		while (true) {
-			// Wait for a key
-			char cmd = _getch();
+			// FIXED: Use stepsHandler instead of _getch() for Pause Menu
+			char cmd = stepsHandler->getInput(gameCycle);
+			if (cmd == 0) {
+				// Advance time to simulate waiting
+				gameCycle++;
+				if (!stepsHandler->isSilent()) Sleep(30);
+				continue;
+			}
 
-			if (cmd == 27) {
-				// Resume game
-				// Redraw stats bar to clear pause message
+			if (cmd == 27) { // ESC -> Resume
 				printStatsBar();
 				break;
 			}
 			else if (cmd == 'h' || cmd == 'H') {
-				running = false; // Exit game loop
+				running = false;
 				break;
 			}
 			else if (cmd == 's' || cmd == 'S') {
 				askAndSaveGame();
-				// After saving, redraw map and stats
 				if (rooms[currentRoom].dark) {
-					fogInitialized = false; // Force redraw
+					fogInitialized = false;
 					drawWithFog();
 				}
 				else {
 					screen.draw();
 				}
 				printStatsBar();
-				break; // Resume game after save
+				break;
 			}
 		}
 	}
@@ -611,7 +624,7 @@ void GameManger::updatePlayers() {
 	for (auto& player : players) {
 		// 1. Move logic
 		if (!player.isFinished()) {
-			player.move(globalDoors, MAX_DOORS, currentRoom,(&player == &players[0]) ? &players[1] : &players[0],!rooms[currentRoom].dark);
+			player.move(globalDoors, MAX_DOORS, currentRoom, (&player == &players[0]) ? &players[1] : &players[0], !rooms[currentRoom].dark);
 
 			// Check if HUD update is requested (e.g., key collected)
 			if (player.getHUD()) {
@@ -633,15 +646,15 @@ void GameManger::updatePlayers() {
 		}
 		// 3. Trap Logic
 		if (player.getTrapState() == true) {
-			activeBombs.push_back({ player.getTrapLocation(), 7});
+			activeBombs.push_back({ player.getTrapLocation(), 7 });
 			player.setTrapState(false);
 		}
 
 		// 4. Victory
 		if (player.hasWon()) {
-			won = true; 
+			won = true;
 			cls();      // Clear the maze
-				
+
 			// Play the animation 3 times
 			for (int cycle = 0; cycle < 5; cycle++) {
 
@@ -657,18 +670,18 @@ void GameManger::updatePlayers() {
 					screen.loadFromFileToMap(fileName);
 					screen.draw();
 
-					
+
 					Sleep(200);
 				}
 			}
 
-			
+
 			Sleep(2000);
 		}
 
 
 
-		
+
 	}
 
 	// 3. Room Transition (Synchronized)
@@ -783,7 +796,7 @@ void GameManger::initDoors() {
 
 	// ==========================================
 		//              LEVEL 4 DOORS
-    // ==========================================
+	// ==========================================
 
 		// Door 6: Back to Level 1 (Location: Upper part of Level 4)
 		// ID: 6
@@ -941,10 +954,10 @@ void GameManger::handleSimon(Riddle& riddle, Player& player)
 			return;
 		}
 	}
-	
+
 
 	// Success
-	increaseScore(WIN_POINTS,"SIMON SAYS WINS!");
+	increaseScore(WIN_POINTS, "SIMON SAYS WINS!");
 }
 
 void GameManger::handleMulti(Riddle& riddle, Player& player)
@@ -1074,18 +1087,21 @@ void GameManger::increaseScore(int points, const std::string& message)
 	Sleep(600);
 }
 
-int GameManger::NumbersInput()const
-{
-	char choice = 0;
+int GameManger::NumbersInput() {
 	while (true) {
-		int keyInt = stepsHandler->getInput(gameCycle);
-		char key = static_cast<char>(keyInt);
-		if (std::isdigit(key))
-			return key - '0';
-	}
-} // added const
+		char choice = stepsHandler->getInput(gameCycle);
 
-void GameManger::printStatsBar() const  { // added const
+		if (std::isdigit(choice)) {
+			return choice - '0';
+		}
+
+
+		gameCycle++;
+		if (!stepsHandler->isSilent()) Sleep(30);
+	}
+}
+
+void GameManger::printStatsBar() const { // added const
 	int totalKeys = Player::getCollectedKeys();
 
 	// Player 1 Status
@@ -1253,7 +1269,7 @@ void GameManger::drawExplosionFrame(const Point& center, int stage) const { // a
 
 	// 2. Draw
 	if (stage == 1) {
-		gotoxy(cx, cy); 
+		gotoxy(cx, cy);
 		std::cout << drawChar;
 	}
 	else {
@@ -1513,7 +1529,7 @@ void GameManger::showLoadGameMenu() {
 			}
 			// Restore the HUD
 			printStatsBar();
-			
+
 		}
 		else {
 			gotoxy(cx - 10, row + 3); std::cout << "Failed to load!";
@@ -1637,4 +1653,4 @@ bool GameManger::loadGame(const std::string& filename) {
 	}
 
 	return true;
-}	
+}

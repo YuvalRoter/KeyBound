@@ -21,6 +21,7 @@ protected:
 public:
     virtual bool isSilent() const = 0;
 
+    virtual bool isPlayback() const { return false; }
     Steps() : randomSeed(0), playbackIndex(0) {}
 
     enum class ResultType { ScreenChange, LifeLost, Riddle, GameEnd, BombTick };
