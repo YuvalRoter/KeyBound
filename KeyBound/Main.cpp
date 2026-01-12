@@ -8,6 +8,7 @@
 int main(int argc, char* argv[]) {
     Steps* handler = nullptr;
     bool isRecording = false;
+    bool isLoading = false;
 
     // --- Argument Parsing ---
     if (argc > 1) {
@@ -17,6 +18,7 @@ int main(int argc, char* argv[]) {
             // LOAD MODE: Playback from file
             bool silent = (argc > 2 && std::string(argv[2]) == "-silent");
             auto player = new StepsPlayer(silent);
+   
 
             // Load the files
             if (!player->loadFile("adv-world.steps")) {

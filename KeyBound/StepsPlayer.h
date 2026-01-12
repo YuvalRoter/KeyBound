@@ -25,7 +25,6 @@ public:
     virtual int getInput(long gameCycle) override;
     virtual void handleResult(long gameCycle, Steps::ResultType type, const std::string& data) override;
     virtual bool isSilent() const override { return silent; }
-    bool isPlaybackMode() const override { return true; }
 
     // New methods for Loading
     bool loadResultsFile(const std::string& filename);

@@ -17,14 +17,13 @@ protected:
 
     // Iterator index for O(1) access during playback
     size_t playbackIndex = 0;
-
+ 
 public:
     virtual bool isSilent() const = 0;
 
     Steps() : randomSeed(0), playbackIndex(0) {}
 
     enum class ResultType { ScreenChange, LifeLost, Riddle, GameEnd, BombTick };
-    virtual bool isPlaybackMode() const { return false; }
     virtual int getInput(long gameCycle) = 0;
     virtual void handleResult(long gameCycle, ResultType type, const std::string& data) = 0;
 

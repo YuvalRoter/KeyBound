@@ -535,10 +535,6 @@ void GameManger::handleInput() {
 
 	if (key == 0) return;
 
-	if (stepsHandler->isPlaybackMode()) {
-		return;
-	}
-
 	// Handle Global Keys (ESC)
 	if (key == 27) { // ASCII for ESC
 		// We are now "paused". Clear HUD area or show pause message.
@@ -1082,9 +1078,10 @@ int GameManger::NumbersInput()const
 {
 	char choice = 0;
 	while (true) {
-		choice = _getch();
-		if (std::isdigit(choice))
-			return choice - '0';
+		int keyInt = stepsHandler->getInput(gameCycle);
+		char key = static_cast<char>(keyInt);
+		if (std::isdigit(key))
+			return key - '0';
 	}
 } // added const
 
