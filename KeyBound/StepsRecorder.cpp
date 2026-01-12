@@ -18,8 +18,6 @@ int StepsRecorder::getInput(long gameCycle) {
     if (_kbhit()) {
         int ch = _getch();
 
-        // Handle special keys (arrows often send 0 or 224 first) if necessary,
-        // but for this implementation we simply record the raw int.
         addStep(gameCycle, ch);
 
         return ch;
