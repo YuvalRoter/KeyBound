@@ -528,12 +528,16 @@ void GameManger::gameLoop()
 }
 
 void GameManger::handleInput() {
-	if (!_kbhit()) return;
 
-	// Get input from our polymorphic handler (could be file or keyboard)
-	char key = stepsHandler->getInput(gameCycle);
+	// Always query handler (in -load it returns scheduled events)
+	int keyInt = stepsHandler->getInput(gameCycle);
+	char key = static_cast<char>(keyInt);
 
 	if (key == 0) return;
+
+	if (stepsHandler->isPlaybackMode()) {
+		return;
+	}
 
 	// Handle Global Keys (ESC)
 	if (key == 27) { // ASCII for ESC
