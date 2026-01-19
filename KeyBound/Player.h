@@ -1,130 +1,80 @@
-#pragma once
-
+﻿#pragma once
 #include "Point.h"
-#include "Screen.h"
 #include "Direction.h"
-
-
- 
-class Door;
+#include "Screen.h"
+#include "Door.h"
+#include <vector>
 
 class Player {
-    friend class GameManger;
-    static constexpr size_t NUM_KEYS = 5;
+public:
+    using Controls = std::vector<char>;
 
-    static constexpr size_t SwitchsToTurn = 3;
-
-    static constexpr size_t SWITCH_ID = 8;
-
-    Point body;
-    char keys[NUM_KEYS];
+private:
+    Point position;
     Direction dir;
+    Controls keys;
     Screen& screen;
+    char texture;
 
-    // Game State
-    int PlayerSpeed = 1;
-    static int AmountOfSwitches;
-    bool won = false;
-    bool inRiddleMode = false;
+    bool hasTorchFlag = false;
+    bool hasBombFlag = false;
     bool finishedLevel = false;
-    int targetRoomIndex = -1;
-    bool waiting = false;
-    int ourRoomIndex = 0;
-    int pendingTargetRoom = -1;
-    Point pendingSpawnPoint = Point(2, 3);
-
-    bool TrapActive = false;
+    bool won = false;
+    bool inRiddleState = false;
+    bool hudUpdateNeeded = false;
+    bool trapState = false;
     Point trapLocation;
 
-    // Spring / Launch Variables
-    int springCompressed = 0;
-    bool springCompressing = false;
-    Direction springCompressionDir = Direction::directions[Direction::STAY];
-    Direction springBoostDir = Direction::directions[Direction::STAY];
-    int springBoostSpeed = 1;
-    int springBoostTimer = 0;
-    int springCompressedCount = 0;
-
-    // Launch State
-    bool isLaunched = false;
-    int launchTimer = 0;
-    int launchSpeed = 0;
-    Direction launchDir = { 0,0 };
-
-    // Inventory
-    static int collectedKeys;
-    bool hasTorchFlag = false;
-    bool HUD_changes = false;
-    bool hasBombFlag = false;
-
 public:
-    struct Controls {
-        char up, right, stay, left, pause;
-    };
+    static int collectedKeys;   
+    static int AmountOfSwitches;  
 
+    Player(Point pos, Direction d, Controls k, Screen& scr);
     Player() = default;
 
-    Player(const Point& start_point, const Direction& start_dir, const Player::Controls& controls, Screen& theScreen, int speed = 1)
-        : body(start_point), dir(start_dir), screen(theScreen), PlayerSpeed(speed)
-    {
-        keys[0] = controls.up;
-        keys[1] = controls.right;
-        keys[2] = controls.stay;
-        keys[3] = controls.left;
-        keys[4] = controls.pause;
-    }
+    void move(Door* doors, int maxDoors, int currentRoom, Player* otherPlayer, bool isLight);
+    void keyPressed(char key);
+    Point dropActiveItem(char& type);
 
-    // Getters
-    char getChar() const { return body.getChar(); }
-    char getstaybutton() const { return keys[4]; }
-    bool hasWon() const { return won; }
-    bool inRiddle() const { return inRiddleMode; }
-    Point getPoint() const { return body; }
-    bool isFinished() const { return finishedLevel; }
-    int getX() const { return body.getX(); }
-    int getY() const { return body.getY(); }
-    int getTargetRoom() const { return targetRoomIndex; }
+    Point getPoint() const { return position; }
+    void setPosition(Point p) { position = p; }
+    int getX() const { return position.getX(); }
+    int getY() const { return position.getY(); }
+    char getChar() const { return texture; }
+
+    void setDirection(Direction d) { dir = d; }
+
     bool hasTorch() const { return hasTorchFlag; }
-    static int getCollectedKeys() {return collectedKeys; }
-    bool isWaiting() const { return waiting; }
-    int getPendingRoom() const { return pendingTargetRoom; }
-    Point getPendingSpawn() const { return pendingSpawnPoint; }
-    int getRoom() const { return ourRoomIndex; }
-    bool getHUD() const { return HUD_changes; }
+    void setTorch(bool t) { hasTorchFlag = t; }
+
     bool hasBomb() const { return hasBombFlag; }
-    bool getTrapState() const { return TrapActive; }
+    void setBomb(bool b) { hasBombFlag = b; }
+
+    bool isFinished() const { return finishedLevel; }
+    void setFinished(bool f) { finishedLevel = f; }
+
+    bool hasWon() const { return won; }
+    void setWin(bool w) { won = w; }
+
+    bool inRiddle() const { return inRiddleState; }
+    void setInRiddle(bool r) { inRiddleState = r; }
+
+    bool getHUD() const { return hudUpdateNeeded; }
+    void setHud(bool h) { hudUpdateNeeded = h; }
+
+    bool getTrapState() const { return trapState; }
+    void setTrapState(bool s) { trapState = s; }
     Point getTrapLocation() const { return trapLocation; }
 
+    char getstaybutton() { return keys[4]; }
 
-    // Setters
-    void setFinished(bool state) { finishedLevel = state; }
-    void setPosition(const Point& p) { body = p; }
-    void setDirection(Direction d) { dir = d; }
-    void setTorch(bool v) { hasTorchFlag = v; }
-    void setWaiting(bool w) { waiting = w; }
-    void setPendingMove(int room, Point spawn) {
-        pendingTargetRoom = room;
-        pendingSpawnPoint = spawn;
-    }
-    void setRoom(int room) { ourRoomIndex = room; }
-    void setHud(bool b) { HUD_changes = b; }
-    void setInRiddle(bool state) { inRiddleMode = state;}
-    void setWin(bool wins) { won = wins; }
-    void setBomb(bool v) { hasBombFlag = v; }  
-    void setTrapState(bool s) { TrapActive = s; }
+    void resetLevelData();
+    void removeKeys(int amount);
 
-    // Actions
-    void addkey() { collectedKeys++; }
-    void removeKeys(int keysToRemove) { collectedKeys -= keysToRemove; }
-    void resetLevelData() {
-        finishedLevel = false;
-        targetRoomIndex = -1;
-    }
-    Point dropActiveItem(char& droppedType);
-    void move(Door* doors, int maxDoors, int currentRoomIndex, Player* otherPlayer = nullptr, bool redrawMapNow = true);
+    // פונקציות חדשות שחסרות לך:
+    static void resetKeys();
+    static int getCollectedKeys() { return collectedKeys; }
 
-
-    void startSpringLaunch();
-    void keyPressed(char ch);
-    bool tryToOpenDoor(int requiredKeys);
-}; 
+    int ourRoomIndex = -1;
+    int targetRoomIndex = -1;
+};

@@ -17,35 +17,25 @@ private:
     Steps* stepsHandler = nullptr;
 
     // ===========================
-    //       Constants
-    // ===========================
-    static constexpr char ESC = 27;
-    static constexpr std::size_t NUMBER_OF_PLAYERS = 2;
-    static constexpr std::size_t NUMBER_OF_ROOMS = 5;
-    static const int MAX_DOORS = 7;
-    static const int MAX_QUESTIONS = 100;
-
-    // ===========================
     //       Game State
     // ===========================
     bool running = true;
     bool won = false;
-    int currentRoom = 0;
     int score = 0;
     int Health = 3;
-    bool backToMenu = false;
 
+    // Dynamic World Management
+    std::string currentLevelName;
+    std::map<std::string, std::unique_ptr<Room>> worldMap;
 
     // ===========================
     //       Objects
     // ===========================
     Screen screen;
+    Player players[2];
+    Question questions[100];
+    int numQuestions = 0;
 
-    // Arrays of objects
-    Player players[NUMBER_OF_PLAYERS];
-    Room rooms[NUMBER_OF_ROOMS];
-    Door globalDoors[MAX_DOORS];
-    Question questions[MAX_QUESTIONS];
 
     // ===========================
     //       Fog-of-War State
@@ -53,10 +43,9 @@ private:
     char fogLastFrame[Screen::MAX_Y + 1][Screen::MAX_X + 1]{};
     bool fogInitialized = false;
 
-    int numQuestions = 50;
 
     // Helper data
-    static const Point initialDoorLocations[MAX_DOORS];
+    void parseLevelFile(const std::string& filename, Room& room);
 
     // ===========================
     //       Bomb Struct
@@ -94,20 +83,18 @@ private:
     void updatePlayers();
 
     // Initialization
-    void initRooms();
-    void initDoors();
+    void loadLevel(const std::string& filename);
     bool loadQuestionsFromFile(const std::string& filename);
     void resetGame();
 
     // UI & Rendering
     bool showMenu();
-    void printStatsBar() const; // added const
+    void printStatsBar() const;
     void drawWithFog();
-    void loadRoom(int index);
 
 
     // MENU
-    void printMainMenu() const; // added const
+    void printMainMenu() const; 
     void printInstructions() ;
     void printControls() ;
     void drawSettingsMenu() ; 
@@ -119,8 +106,9 @@ private:
     Riddle generateRandomRiddle();
 
     // Utilities
-    int NumbersInput() ;  // added const
+    int NumbersInput() ;  
     void increaseScore(int points, const std::string& message);
+    Door* findDoorAt(Point p);
 
 
     // Save & Load
