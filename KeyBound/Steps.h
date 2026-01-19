@@ -1,8 +1,13 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <fstream>
 
-enum class ResultType { ScreenChange, LifeLost, Riddle, GameEnd, BombTick };
+// A single recorded event
+struct Step {
+    long time;   // The game cycle (iteration number) when the input occurred
+    int input;   // The character/key code pressed (int to handle special keys if needed)
+};
 
 class Steps {
 protected:
@@ -46,12 +51,12 @@ public:
     // Returns 0 if no input happened at this specific time.
     virtual int popEventAtTime(long currentTime);
 
-    // Core Interface
-    virtual int getInput(long gameCycle) = 0;
-    virtual void handleResult(long gameCycle, ResultType type, const std::string& data) = 0;
-    virtual bool isSilent() const = 0;
-    virtual long getRandomSeed() const { return randomSeed; }
+    // Resets the playback iterator to the beginning (for restarting)
+    void resetPlayback() { playbackIndex = 0; }
 
-    // Shared Helpers
-    void setRandomSeed(long seed) { randomSeed = seed; }
+    // ===========================
+    //       File I/O
+    // ===========================
+    virtual bool saveFile(const std::string& filename) const;
+    virtual bool loadFile(const std::string& filename);
 };
