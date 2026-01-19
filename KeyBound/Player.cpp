@@ -1,4 +1,4 @@
-#include <cstdlib>
+ #include <cstdlib>
 #include <cctype>
 #include <vector>
 #include <iostream>
@@ -120,7 +120,6 @@ namespace {
 }
 
 // Initialize static member
-int Player::collectedKeys = 0;
 int Player::AmountOfSwitches = 0;
 
 // ===========================
@@ -390,11 +389,9 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex, Player* other
 
         // 6. Key Pickup
         if (screen.isKey(next_pos)) {
-            collectedKeys++;
+            addKey(); // per-player key item (not shared)
 
- 
             screen.setCell(next_pos.getY(), next_pos.getX(), EMPTY_TILE);
-
             setHud(true);
         }
         // 7. Victory Pickup
@@ -485,8 +482,12 @@ void Player::keyPressed(char ch) {
 // ===========================
 
 bool Player::tryToOpenDoor(int requiredKeys) {
-    if (requiredKeys <= Player::collectedKeys) {
-        collectedKeys -= requiredKeys;
+    if (requiredKeys <= 0) return true;
+
+    if ((int)heldKeys.size() >= requiredKeys) {
+        // "use" specific keys (remove N key items)
+        heldKeys.erase(heldKeys.begin(), heldKeys.begin() + requiredKeys);
+        setHud(true);
         return true;
     }
     return false;

@@ -3,6 +3,7 @@
 #include "Point.h"
 #include "Screen.h"
 #include "Direction.h"
+#include <vector>;
 
 
  
@@ -52,7 +53,7 @@ class Player {
     Direction launchDir = { 0,0 };
 
     // Inventory
-    static int collectedKeys;
+    std::vector<char> heldKeys;   // each key is a real item (specific instance)
     bool hasTorchFlag = false;
     bool HUD_changes = false;
     bool hasBombFlag = false;
@@ -85,7 +86,7 @@ public:
     int getY() const { return body.getY(); }
     int getTargetRoom() const { return targetRoomIndex; }
     bool hasTorch() const { return hasTorchFlag; }
-    static int getCollectedKeys() {return collectedKeys; }
+    int getKeyCount() const { return (int)heldKeys.size(); }
     bool isWaiting() const { return waiting; }
     int getPendingRoom() const { return pendingTargetRoom; }
     Point getPendingSpawn() const { return pendingSpawnPoint; }
@@ -114,8 +115,13 @@ public:
     void setTrapState(bool s) { TrapActive = s; }
 
     // Actions
-    void addkey() { collectedKeys++; }
-    void removeKeys(int keysToRemove) { collectedKeys -= keysToRemove; }
+    void addKey() { heldKeys.push_back(Screen::KEY); }
+    void clearKeys() { heldKeys.clear(); }
+    void setKeyCount(int n) {
+        if (n < 0) n = 0;
+        heldKeys.assign((size_t)n, Screen::KEY);
+    }
+
     void resetLevelData() {
         finishedLevel = false;
         targetRoomIndex = -1;

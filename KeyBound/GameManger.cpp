@@ -723,8 +723,8 @@ void GameManger::resetGame() {
 	fogInitialized = false;
 	currentRoom = -1;
 	Health = 3;
-	players[0].removeKeys(Player::getCollectedKeys());
-	players[1].removeKeys(Player::getCollectedKeys());
+	players[0].clearKeys();
+	players[1].clearKeys();
 	players[0].setBomb(false);
 	players[1].setBomb(false);
 	players[0].setTorch(false);
@@ -1102,7 +1102,8 @@ int GameManger::NumbersInput() {
 }
 
 void GameManger::printStatsBar() const { // added const
-	int totalKeys = Player::getCollectedKeys();
+	int p1Keys = players[0].getKeyCount();
+	int p2Keys = players[1].getKeyCount();
 
 	// Player 1 Status
 	std::string inv1 = "P1:";
@@ -1119,7 +1120,7 @@ void GameManger::printStatsBar() const { // added const
 	std::cout << "LEVEL: " << (currentRoom + 1)
 		<< " | SCORE: " << score
 		<< " | HP: " << Health
-		<< " | KEYS: " << totalKeys
+		<< " | KEYS: P1=" << p1Keys << " P2=" << p2Keys
 		<< " | INV: " << inv1 << inv2;
 
 	int currentLen = 75;
@@ -1436,7 +1437,6 @@ void GameManger::saveGame(const std::string& filename) {
 	file << currentRoom << "\n";
 	file << score << "\n";
 	file << Health << "\n";
-	file << Player::collectedKeys << "\n";
 	file << Player::AmountOfSwitches << "\n";
 
 	// 3. Player State
@@ -1448,6 +1448,7 @@ void GameManger::saveGame(const std::string& filename) {
 		file << p.dir.getDirX() << " " << p.dir.getDirY() << "\n";               // Direction
 		file << p.hasTorchFlag << " " << p.hasBombFlag << " " << p.won << " " << p.finishedLevel << "\n";
 		file << p.ourRoomIndex << " " << p.targetRoomIndex << "\n";
+		file << p.getKeyCount() << "\n";
 	}
 
 	// 4. Doors
@@ -1548,7 +1549,7 @@ bool GameManger::loadGame(const std::string& filename) {
 
 	int loadedRoomIndex = 0;
 
-	if (!(file >> loadedRoomIndex >> score >> Health >> Player::collectedKeys >> Player::AmountOfSwitches)) {
+	if (!(file >> loadedRoomIndex >> score >> Health >> Player::AmountOfSwitches)) {
 		return false;
 	}
 
@@ -1568,6 +1569,7 @@ bool GameManger::loadGame(const std::string& filename) {
 		bool isFinished;
 		int currentRoomIdx;
 		int targetRoomIdx;
+		int keyCount;
 	};
 
 	std::vector<TempPlayerData> tempPlayers(NUMBER_OF_PLAYERS);
@@ -1586,6 +1588,7 @@ bool GameManger::loadGame(const std::string& filename) {
 			>> tempPlayers[i].isFinished;
 		file >> tempPlayers[i].currentRoomIdx
 			>> tempPlayers[i].targetRoomIdx;
+		file >> tempPlayers[i].keyCount;
 
 		tempPlayers[i].pos = Point(x, y, ch);
 		tempPlayers[i].dir = Direction(dx, dy);
@@ -1650,6 +1653,7 @@ bool GameManger::loadGame(const std::string& filename) {
 		players[i].setFinished(tempPlayers[i].isFinished);
 		players[i].setRoom(tempPlayers[i].currentRoomIdx);
 		players[i].targetRoomIndex = tempPlayers[i].targetRoomIdx;
+		players[i].setKeyCount(tempPlayers[i].keyCount);
 	}
 
 	return true;
