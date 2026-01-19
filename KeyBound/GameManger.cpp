@@ -225,7 +225,7 @@ void GameManger::drawWithFog() {
 // ===========================
 
 
-void GameManger::run(int argc, char* argv[]) {
+void GameManger::run() {
 	bool keepProgramRunning = true;
 
 	while (keepProgramRunning) {
