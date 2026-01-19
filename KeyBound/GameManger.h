@@ -8,10 +8,16 @@
 #include "Room.h"
 #include "Door.h"       
 #include "Question.h"  
-#include "Steps.h"
+
+class Steps;
+
 
 class GameManger {
 private:
+
+    long gameCycle = 0;
+    Steps* stepsHandler = nullptr;
+
     // ===========================
     //       Constants
     // ===========================
@@ -86,8 +92,8 @@ public:
     // ===========================
     //       Public API
     // ===========================
-    GameManger();
-    void run(int argc, char* argv[]);
+    GameManger(Steps* handler);
+    void run();
 
 private:
     // ===========================
@@ -123,7 +129,7 @@ private:
     Riddle generateRandomRiddle();
 
     // Utilities
-    int NumbersInput() const;  // added const
+    int NumbersInput() ;  // added const
     void increaseScore(int points, const std::string& message);
 
 
