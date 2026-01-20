@@ -361,4 +361,15 @@ We used AI assistance (ChatGPT and Gemini) and Stack Overflow mainly for:
 
 All external logic was reviewed, adapted and integrated by us.
 
----
+------------------------------------------------------------
+Exercise 2 – Previously Deducted Issues (Fixed)
+------------------------------------------------------------
+
+The following issues that resulted in point deductions in Exercise 2
+were fully fixed in Exercise 3:
+
+- Supporting only 3 rooms (hard coded)
+- Hard-coded player starting positions
+
+Both fixes are documented in the accompanying file:
+	- Ex2_Fixes.txt
