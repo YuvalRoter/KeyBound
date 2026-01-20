@@ -671,12 +671,12 @@ void GameManger::updatePlayers() {
 					screen.draw();
 
 
-					Sleep(200);
+					if (!stepsHandler->isSilent()) Sleep(200);
 				}
 			}
 
 
-			Sleep(2000);
+			if (!stepsHandler->isSilent()) Sleep(2000);
 		}
 
 
@@ -924,11 +924,11 @@ void GameManger::handleSimon(Riddle& riddle, Player& player)
 	// 1. Show Pattern
 	for (int idx : pattern) {
 		screen.drawSimon(-1); // Clear
-		Sleep(150);
+		if (!stepsHandler->isSilent()) Sleep(150);
 		screen.drawSimon(idx); // Flash
-		Sleep(flashDelayMs);
+		if (!stepsHandler->isSilent()) Sleep(flashDelayMs);
 		screen.drawSimon(-1); // Clear
-		Sleep(150);
+		if (!stepsHandler->isSilent()) Sleep(150);
 	}
 
 	// This loop consumes any keystrokes stored while the pattern was 
@@ -950,7 +950,7 @@ void GameManger::handleSimon(Riddle& riddle, Player& player)
 			cls();
 			gotoxy(30, 12);
 			std::cout << "YOU FAILED!";
-			Sleep(1000);
+			if (!stepsHandler->isSilent()) Sleep(700);
 			return;
 		}
 	}
@@ -995,13 +995,13 @@ void GameManger::handleMulti(Riddle& riddle, Player& player)
 		cls();
 		gotoxy(consoleWidth / 2 - 5, Screen::MAX_Y / 2);
 		std::cout << "YOU FAILED!";
-		Sleep(1000);
+		if (!stepsHandler->isSilent()) Sleep(700);
 	}
 	else {
 		cls();
 		gotoxy(consoleWidth / 2 - 5, Screen::MAX_Y / 2);
 		increaseScore(10, "CORRECT ANSWER!");
-		Sleep(700);
+		if (!stepsHandler->isSilent()) Sleep(700);
 		// Note: You might want to add score here too
 	}
 }
@@ -1080,11 +1080,11 @@ void GameManger::increaseScore(int points, const std::string& message)
 		std::cout << border;
 
 		if (i < 3) Beep(400 + (i * 100), 50);
-		Sleep(150);
+		if (!stepsHandler->isSilent()) Sleep(150);
 	}
 
 	setTextColor(Screen::Color::LightGray);
-	Sleep(600);
+	if (!stepsHandler->isSilent()) Sleep(500);
 }
 
 int GameManger::NumbersInput() {
@@ -1383,7 +1383,7 @@ void GameManger::explodeBomb(const Point& center) {
 		cls();
 		gotoxy(Screen::MAX_X / 2 - 5, Screen::MAX_Y / 2);
 		std::cout << "GAME OVER!";
-		Sleep(2000);
+		if (!stepsHandler->isSilent()) Sleep(1500);
 		running = false;
 		won = false;
 		stepsHandler->handleResult(gameCycle, Steps::ResultType::GameEnd, std::to_string(score));
@@ -1421,7 +1421,7 @@ void GameManger::askAndSaveGame() {
 
 	gotoxy(Screen::MAX_X / 2 - 15, Screen::MAX_Y / 2 + 2);
 	std::cout << "Game Saved Successfully!";
-	Sleep(1000);
+	if (!stepsHandler->isSilent()) Sleep(1000);
 }
 
 void GameManger::saveGame(const std::string& filename) {
@@ -1491,7 +1491,7 @@ void GameManger::showLoadGameMenu() {
 
 	if (saves.empty()) {
 		gotoxy(cx - 15, cy + 2); std::cout << "No save files found!";
-		Sleep(1500);
+		if (!stepsHandler->isSilent()) Sleep(1400);
 		return;
 	}
 
@@ -1512,7 +1512,7 @@ void GameManger::showLoadGameMenu() {
 		std::string selectedFile = saves[choice - 1];
 		if (loadGame(selectedFile)) {
 			gotoxy(cx - 10, row + 3); std::cout << "Loaded!";
-			Sleep(1000);
+			if (!stepsHandler->isSilent()) Sleep(1000);
 
 			// Redraw the screen to wipe the "Loaded!" message
 			if (rooms[currentRoom].dark) {
@@ -1534,7 +1534,7 @@ void GameManger::showLoadGameMenu() {
 		}
 		else {
 			gotoxy(cx - 10, row + 3); std::cout << "Failed to load!";
-			Sleep(1000);
+			if (!stepsHandler->isSilent()) Sleep(1000);
 		}
 	}
 }
