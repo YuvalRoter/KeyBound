@@ -300,7 +300,6 @@ void Player::move(std::vector<Door>& doors, int currentRoomIndex, Player* otherP
 
         // 3. Door Interaction
         if (screen.isDoor(next_pos)) {
-            bool doorHandled = false;
 
             for (auto& d : doors) {
                 if (d.sourceRoomIndex != currentRoomIndex) continue;
@@ -313,26 +312,34 @@ void Player::move(std::vector<Door>& doors, int currentRoomIndex, Player* otherP
                     return;
                 }
 
-                // Switch requirement (how many switches must be ON)
-                if (d.switchesRequired > 0) {
-                    if (AmountOfSwitches >= d.switchesRequired) {
-                        d.isOpen = true;
-                        finishedLevel = true;
-                        targetRoomIndex = d.targetRoomIndex;
+                // Require switches (if any)
+                bool switchesOk = (d.switchesRequired == 0) ||
+                    (AmountOfSwitches >= d.switchesRequired);
+
+                // Require keys (if any) - ONLY consume keys if switchesOk
+                bool keysOk = true;
+                if (d.KeysToOpen > 0) {
+                    if (switchesOk) {
+                        keysOk = tryToOpenDoor(d.KeysToOpen); // consumes keys from heldKeys
                     }
-                    return;
+                    else {
+                        keysOk = false;
+                    }
                 }
 
-                // Key requirement
-                if (tryToOpenDoor(d.KeysToOpen)) {
+                // Open only if both conditions satisfied
+                if (switchesOk && keysOk) {
                     d.isOpen = true;
                     finishedLevel = true;
                     targetRoomIndex = d.targetRoomIndex;
                 }
-                return;
+
+                return; // door found and handled
             }
-            return;
+
+            return; // on a door tile, but no matching Door object found
         }
+
 
         // 4. Riddle Interaction
         if (screen.isRiddle(next_pos)) {
