@@ -434,32 +434,33 @@ bool GameManger::showMenu() {
 
 void GameManger::printMainMenu() const { // added const
 	// 1. Draw the global frame first
+	if (!stepsHandler->isSilent()) {
+		int cx = Screen::MAX_X / 2;
+		int cy = 6;
+		// 2. Title
+		if (g_colorsEnabled) setTextColor(Screen::Color::Cyan);
+		gotoxy(cx - 12, cy);     std::cout << "########################";
+		gotoxy(cx - 12, cy + 1); std::cout << "#      KeyBound        #";
+		gotoxy(cx - 12, cy + 2); std::cout << "########################";
 
-	int cx = Screen::MAX_X / 2;
-	int cy = 6;
-	// 2. Title
-	if (g_colorsEnabled) setTextColor(Screen::Color::Cyan);
-	gotoxy(cx - 12, cy);     std::cout << "########################";
-	gotoxy(cx - 12, cy + 1); std::cout << "#      KeyBound        #";
-	gotoxy(cx - 12, cy + 2); std::cout << "########################";
+		if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
 
-	if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
+		// 3. Options
+		int optX = cx - 10;
 
-	// 3. Options
-	int optX = cx - 10;
+		gotoxy(optX, cy + 5); std::cout << "1. Start a New Game";
+		gotoxy(optX, cy + 7); std::cout << "2. Load Game";
+		gotoxy(optX, cy + 9); std::cout << "3. Instructions (Rules)";
+		gotoxy(optX, cy + 11); std::cout << "4. Choose Color Mode";
+		gotoxy(optX, cy + 13); std::cout << "5. Controls Guide";
+		gotoxy(optX, cy + 16); std::cout << "9. Exit Game";
 
-	gotoxy(optX, cy + 5); std::cout << "1. Start a New Game";
-	gotoxy(optX, cy + 7); std::cout << "2. Load Game";
-	gotoxy(optX, cy + 9); std::cout << "3. Instructions (Rules)";
-	gotoxy(optX, cy + 11); std::cout << "4. Choose Color Mode";
-	gotoxy(optX, cy + 13); std::cout << "5. Controls Guide";
-	gotoxy(optX, cy + 16); std::cout << "9. Exit Game";
-
-	// 4. Footer
-	if (g_colorsEnabled) setTextColor(Screen::Color::DarkGray);
-	gotoxy(optX - 5, Screen::MAX_Y - 3);
-	std::cout << "Select an option using number keys...";
-	if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
+		// 4. Footer
+		if (g_colorsEnabled) setTextColor(Screen::Color::DarkGray);
+		gotoxy(optX - 5, Screen::MAX_Y - 3);
+		std::cout << "Select an option using number keys...";
+		if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
+	}
 }
 
 void GameManger::printInstructions() {
@@ -647,7 +648,7 @@ void GameManger::handleInput() {
 		// Handle Action Keys
 		if (key == P1_DROP_KEY || key == std::toupper(P1_DROP_KEY)) {
 			char type = ' ';
-			Point p = players[0].dropActiveItem(type);
+			Point p = players[0].dropActiveItem(type, stepsHandler->isSilent());
 
 			if (type == Screen::BOMB && p.getX() != -1) {
 				screen.setCell(p.getY(), p.getX(), Screen::BOMB_ACTIVE);
@@ -657,7 +658,7 @@ void GameManger::handleInput() {
 		}
 		else if (key == P2_DROP_KEY || key == std::toupper(P2_DROP_KEY)) {
 			char type = ' ';
-			Point p = players[1].dropActiveItem(type);
+			Point p = players[1].dropActiveItem(type, stepsHandler->isSilent());
 
 			if (type == Screen::BOMB && p.getX() != -1) {
 				screen.setCell(p.getY(), p.getX(), Screen::BOMB_ACTIVE);

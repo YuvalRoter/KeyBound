@@ -1,4 +1,4 @@
- #include <cstdlib>
+#include <cstdlib>
 #include <cctype>
 #include <vector>
 #include <iostream>
@@ -37,7 +37,7 @@ namespace {
 // Collect only the obstacle "slice" along the push axis:
 // - pushing LEFT/RIGHT -> contiguous obstacles in the same ROW
 // - pushing UP/DOWN    -> contiguous obstacles in the same COLUMN
-    
+
     int sgn(int v) { return (v > 0) - (v < 0); }
 
     // Collect only the obstacle "slice" along the push axis, based on actual screen delta (dx,dy)
@@ -125,7 +125,7 @@ int Player::AmountOfSwitches = 0;
 // ===========================
 //      Movement Logic
 // ===========================
-void Player::move(std::vector<Door>& doors, int currentRoomIndex, Player* otherPlayer, bool redrawMapNow,bool isSilent) {
+void Player::move(std::vector<Door>& doors, int currentRoomIndex, Player* otherPlayer, bool redrawMapNow, bool isSilent) {
 
     // ===========================
      // 1. Visual Cleanup
@@ -266,7 +266,8 @@ void Player::move(std::vector<Door>& doors, int currentRoomIndex, Player* otherP
                 totalForce >= requiredForce &&
                 canPushObstacle(screen, obstacleCells, pushDx, pushDy)) {
 
-                pushObstacleOneStep(screen, obstacleCells, pushDx, pushDy, redrawMapNow);
+                // FIX: Guard obstacle drawing in silent mode
+                pushObstacleOneStep(screen, obstacleCells, pushDx, pushDy, redrawMapNow && !isSilent);
 
                 // Move player into the obstacle's previous tile
                 body = next_pos;
@@ -278,7 +279,7 @@ void Player::move(std::vector<Door>& doors, int currentRoomIndex, Player* otherP
             }
         }
 
-        
+
 
 
         // 2. Spring Interaction
@@ -350,8 +351,8 @@ void Player::move(std::vector<Door>& doors, int currentRoomIndex, Player* otherP
 
             // Save state and trigger Riddle Mode
             screen.saveBackup();
-            screen.loadFromFileToMap("riddle1.txt"); 
-            screen.draw();
+            screen.loadFromFileToMap("riddle1.txt");
+            if (!isSilent) screen.draw();
 
             setInRiddle(true);
             return;
@@ -384,7 +385,7 @@ void Player::move(std::vector<Door>& doors, int currentRoomIndex, Player* otherP
             setHud(true);
         }
         // 7. Victory Pickup
-        if (screen.isWonChar(next_pos)){
+        if (screen.isWonChar(next_pos)) {
             setWin(true);
 
         }
@@ -400,17 +401,17 @@ void Player::move(std::vector<Door>& doors, int currentRoomIndex, Player* otherP
             AmountOfSwitches--;
         }
         // 9. Trap Logic
-        if (screen.isTrap(next_pos)){
+        if (screen.isTrap(next_pos)) {
             screen.setCell(next_pos.getY(), next_pos.getX(), Screen::BOMB_ACTIVE);
             trapLocation = next_pos;
             TrapActive = true;
         }
-       
+
 
         // --- D. Commit Move ---
         body = next_pos;
     }
-   
+
     if (!isSilent) {
         // Render
         body.draw();
@@ -482,7 +483,7 @@ bool Player::tryToOpenDoor(int requiredKeys) {
     return false;
 }
 
-Point Player::dropActiveItem(char& droppedType) {
+Point Player::dropActiveItem(char& droppedType, bool isSilent) {
     droppedType = ' ';
 
     // 1. Check Inventory
@@ -518,7 +519,11 @@ Point Player::dropActiveItem(char& droppedType) {
     // 3. Drop the item
     if (targetX != -1) {
         screen.setCell(targetY, targetX, droppedType);
-        Point(targetX, targetY, droppedType).draw();
+
+        // FIX: Guard drawing in silent mode
+        if (!isSilent) {
+            Point(targetX, targetY, droppedType).draw();
+        }
 
         if (droppedType == Screen::TORCH) hasTorchFlag = false;
         if (droppedType == Screen::BOMB) hasBombFlag = false;
