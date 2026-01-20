@@ -128,8 +128,7 @@ public:
         targetRoomIndex = -1;
     }
     Point dropActiveItem(char& droppedType);
-    void move(std::vector<Door>& doors, int currentRoomIndex, Player* otherPlayer, bool redrawMapNow);
-
+    void move(std::vector<Door>& doors, int currentRoomIndex, Player* otherPlayer, bool redrawMapNow, bool isSilent);
 
     void startSpringLaunch();
     void keyPressed(char ch);

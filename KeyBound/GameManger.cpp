@@ -303,32 +303,34 @@ void GameManger::run() {
 // ===========================
 
 void GameManger::drawSettingsMenu() {
-	screen.loadFromFileToMap("menu.txt");
-	screen.draw();
+	if (!stepsHandler->isSilent()) {
+		screen.loadFromFileToMap("menu.txt");
+		screen.draw();
 
 
-	int cx = Screen::MAX_X / 2;
-	int cy = Screen::MAX_Y / 3;
+		int cx = Screen::MAX_X / 2;
+		int cy = Screen::MAX_Y / 3;
 
-	if (g_colorsEnabled) setTextColor(Screen::Color::Cyan);
-	gotoxy(cx - 10, cy);     std::cout << "=== COLOR SETTINGS ===";
-	if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
+		if (g_colorsEnabled) setTextColor(Screen::Color::Cyan);
+		gotoxy(cx - 10, cy);     std::cout << "=== COLOR SETTINGS ===";
+		if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
 
-	gotoxy(cx - 10, cy + 2); std::cout << "1. Enable Colors";
-	gotoxy(cx - 10, cy + 3); std::cout << "2. Disable Colors (B&W)";
-	gotoxy(cx - 10, cy + 5); std::cout << "3. Back to Main Menu";
+		gotoxy(cx - 10, cy + 2); std::cout << "1. Enable Colors";
+		gotoxy(cx - 10, cy + 3); std::cout << "2. Disable Colors (B&W)";
+		gotoxy(cx - 10, cy + 5); std::cout << "3. Back to Main Menu";
 
-	gotoxy(cx - 10, cy + 8);
-	std::cout << "Current Mode: ";
-	if (g_colorsEnabled) {
-		setTextColor(Screen::Color::Green);
-		std::cout << "COLOR ON";
+		gotoxy(cx - 10, cy + 8);
+		std::cout << "Current Mode: ";
+		if (g_colorsEnabled) {
+			setTextColor(Screen::Color::Green);
+			std::cout << "COLOR ON";
+		}
+		else {
+			setTextColor(Screen::Color::DarkGray);
+			std::cout << "COLOR OFF";
+		}
+		setTextColor(Screen::Color::LightGray);
 	}
-	else {
-		setTextColor(Screen::Color::DarkGray);
-		std::cout << "COLOR OFF";
-	}
-	setTextColor(Screen::Color::LightGray);
 }
 
 bool GameManger::showMenu() {
@@ -336,8 +338,10 @@ bool GameManger::showMenu() {
 	currentRoom = -1;
 
 	while (true) {
-		screen.loadFromFileToMap("menu.txt");
-		screen.draw();
+		if (!stepsHandler->isSilent()) {
+			screen.loadFromFileToMap("menu.txt");
+			screen.draw();
+		}
 		printMainMenu();
 
 		int choice = NumbersInput();
@@ -398,7 +402,7 @@ bool GameManger::showMenu() {
 
 		case MENU_OPT_SETTINGS:
 			while (true) {
-				drawSettingsMenu();
+				if (!stepsHandler->isSilent()) drawSettingsMenu();
 				int subChoice = NumbersInput();
 
 				if (subChoice == 1) {
@@ -459,96 +463,97 @@ void GameManger::printMainMenu() const { // added const
 }
 
 void GameManger::printInstructions() {
-
-	screen.loadFromFileToMap("menu.txt");
-	screen.draw();
-
-	int cx = Screen::MAX_X / 2;
-	int startY = 5;
-	int leftAlign = 15; // Indent from left border
-
-	if (g_colorsEnabled) setTextColor(Screen::Color::Yellow);
-	gotoxy(cx - 10, startY); std::cout << "=== INSTRUCTIONS ===";
-	if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
-
-	gotoxy(leftAlign, startY + 3); std::cout << "1. You control two players simultaneously.";
-	gotoxy(leftAlign, startY + 5); std::cout << "2. Navigate through the maze rooms.";
-	gotoxy(leftAlign, startY + 7); std::cout << "3. Collect KEYS to open DOORS.";
-	gotoxy(leftAlign, startY + 9); std::cout << "4. Solve Riddles (Simon Says & Math) to progress.";
-	gotoxy(leftAlign, startY + 11); std::cout << "5. Turn on Switches -> / To open doors with the number 8";
-	gotoxy(leftAlign, startY + 13); std::cout << "6. Watch out for traps -> ! <- you got 3 lives!";
-
-
-
-	gotoxy(leftAlign, Screen::MAX_Y - 3);
-	std::cout << "Press 1 to go to the next page or any key to go back...";
-	int choice = NumbersInput();
-	if (choice == 1) {
-		screen.loadFromFileToMap("SimonGuide.txt");
+	if (!stepsHandler->isSilent()) {
+		screen.loadFromFileToMap("menu.txt");
 		screen.draw();
-		int choice = NumbersInput();
-	}
 
+		int cx = Screen::MAX_X / 2;
+		int startY = 5;
+		int leftAlign = 15; // Indent from left border
+
+		if (g_colorsEnabled) setTextColor(Screen::Color::Yellow);
+		gotoxy(cx - 10, startY); std::cout << "=== INSTRUCTIONS ===";
+		if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
+
+		gotoxy(leftAlign, startY + 3); std::cout << "1. You control two players simultaneously.";
+		gotoxy(leftAlign, startY + 5); std::cout << "2. Navigate through the maze rooms.";
+		gotoxy(leftAlign, startY + 7); std::cout << "3. Collect KEYS to open DOORS.";
+		gotoxy(leftAlign, startY + 9); std::cout << "4. Solve Riddles (Simon Says & Math) to progress.";
+		gotoxy(leftAlign, startY + 11); std::cout << "5. Turn on Switches -> / To open doors with the number 8";
+		gotoxy(leftAlign, startY + 13); std::cout << "6. Watch out for traps -> ! <- you got 3 lives!";
+
+
+
+		gotoxy(leftAlign, Screen::MAX_Y - 3);
+		std::cout << "Press 1 to go to the next page or any key to go back...";
+		int choice = NumbersInput();
+		if (choice == 1) {
+			screen.loadFromFileToMap("SimonGuide.txt");
+			screen.draw();
+			int choice = NumbersInput();
+		}
+	}
 }
 
 void GameManger::printControls() {
+	if (!stepsHandler->isSilent()) {
+		screen.loadFromFileToMap("menu.txt");
+		screen.draw();
 
-	screen.loadFromFileToMap("menu.txt");
-	screen.draw();
-	// 1. Define Layout Coordinates
-	int cx = Screen::MAX_X / 2;
-	int col1 = 15; // X position for Player 1
-	int col2 = 45; // X position for Player 2
-	int row = 4;   // Starting Y position
+		// 1. Define Layout Coordinates
+		int cx = Screen::MAX_X / 2;
+		int col1 = 15; // X position for Player 1
+		int col2 = 45; // X position for Player 2
+		int row = 4;   // Starting Y position
 
-	// 2. Draw Title (Centered)
-	if (g_colorsEnabled) setTextColor(Screen::Color::Green);
-	gotoxy(cx - 9, row); std::cout << "=== CONTROLS GUIDE ===";
-	if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
+		// 2. Draw Title (Centered)
+		if (g_colorsEnabled) setTextColor(Screen::Color::Green);
+		gotoxy(cx - 9, row); std::cout << "=== CONTROLS GUIDE ===";
+		if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
 
-	row += 3; // Move down
+		row += 3; // Move down
 
-	// 3. Draw Column Headers
-	if (g_colorsEnabled) setTextColor(Screen::Color::Cyan);
-	gotoxy(col1, row); std::cout << "PLAYER 1 (Left):";
-	gotoxy(col2, row); std::cout << "PLAYER 2 (Right):";
-	if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
+		// 3. Draw Column Headers
+		if (g_colorsEnabled) setTextColor(Screen::Color::Cyan);
+		gotoxy(col1, row); std::cout << "PLAYER 1 (Left):";
+		gotoxy(col2, row); std::cout << "PLAYER 2 (Right):";
+		if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
 
-	row += 2; // Move down for keys
+		row += 2; // Move down for keys
 
-	// 4. Draw Keys (Row by Row for perfect alignment)
-	gotoxy(col1, row);   std::cout << "[W] Up";
-	gotoxy(col2, row++); std::cout << "[I] Up";
+		// 4. Draw Keys (Row by Row for perfect alignment)
+		gotoxy(col1, row);   std::cout << "[W] Up";
+		gotoxy(col2, row++); std::cout << "[I] Up";
 
-	gotoxy(col1, row);   std::cout << "[S] Down";
-	gotoxy(col2, row++); std::cout << "[K] Down";
+		gotoxy(col1, row);   std::cout << "[S] Down";
+		gotoxy(col2, row++); std::cout << "[K] Down";
 
-	gotoxy(col1, row);   std::cout << "[A] Left";
-	gotoxy(col2, row++); std::cout << "[J] Left";
+		gotoxy(col1, row);   std::cout << "[A] Left";
+		gotoxy(col2, row++); std::cout << "[J] Left";
 
-	gotoxy(col1, row);   std::cout << "[D] Right";
-	gotoxy(col2, row++); std::cout << "[L] Right";
+		gotoxy(col1, row);   std::cout << "[D] Right";
+		gotoxy(col2, row++); std::cout << "[L] Right";
 
-	gotoxy(col1, row);   std::cout << "[SPC] Stop Move";
-	gotoxy(col2, row++); std::cout << "[M]   Stop Move";
+		gotoxy(col1, row);   std::cout << "[SPC] Stop Move";
+		gotoxy(col2, row++); std::cout << "[M]   Stop Move";
 
-	gotoxy(col1, row);   std::cout << "[E] Drop Torch";
-	gotoxy(col2, row++); std::cout << "[O] Drop Torch";
+		gotoxy(col1, row);   std::cout << "[E] Drop Torch";
+		gotoxy(col2, row++); std::cout << "[O] Drop Torch";
 
-	// 5. General Section (Lower down)
-	row += 3;
-	if (g_colorsEnabled) setTextColor(Screen::Color::Yellow);
-	gotoxy(col1, row++); std::cout << "GENERAL:";
-	if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
+		// 5. General Section (Lower down)
+		row += 3;
+		if (g_colorsEnabled) setTextColor(Screen::Color::Yellow);
+		gotoxy(col1, row++); std::cout << "GENERAL:";
+		if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
 
-	gotoxy(col1, row);   std::cout << "[ESC] Pause / Exit Menu";
+		gotoxy(col1, row);   std::cout << "[ESC] Pause / Exit Menu";
 
-	// 6. Footer
-	if (g_colorsEnabled) setTextColor(Screen::Color::DarkGray);
-	gotoxy(col1, Screen::MAX_Y - 2);
-	std::cout << "Press any key to go back...";
-	if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
-
+		// 6. Footer
+		if (g_colorsEnabled) setTextColor(Screen::Color::DarkGray);
+		gotoxy(col1, Screen::MAX_Y - 2);
+		std::cout << "Press any key to go back...";
+		if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
+	}
 	while (true) {
 		if (stepsHandler->getInput(gameCycle) != 0) break;
 		gameCycle++;
@@ -576,7 +581,7 @@ void GameManger::gameLoop()
 			if (rooms[currentRoom].dark) {
 				drawWithFog();
 			}
-			printStatsBar();
+			if (!stepsHandler->isSilent()) printStatsBar();
 			if (stepsHandler->isPlayback()) {
 				Sleep(20);
 			}
@@ -617,7 +622,7 @@ void GameManger::handleInput() {
 			}
 
 			if (cmd == 27) { // ESC -> Resume
-				printStatsBar();
+				if (!stepsHandler->isSilent()) printStatsBar();
 				break;
 			}
 			else if (cmd == 'h' || cmd == 'H') {
@@ -628,12 +633,12 @@ void GameManger::handleInput() {
 				askAndSaveGame();
 				if (rooms[currentRoom].dark) {
 					fogInitialized = false;
-					drawWithFog();
+					if (!stepsHandler->isSilent()) drawWithFog();
 				}
 				else {
-					screen.draw();
+					if (!stepsHandler->isSilent()) screen.draw();
 				}
-				printStatsBar();
+				if (!stepsHandler->isSilent()) printStatsBar();
 				break;
 			}
 		}
@@ -648,7 +653,7 @@ void GameManger::handleInput() {
 				screen.setCell(p.getY(), p.getX(), Screen::BOMB_ACTIVE);
 				activeBombs.push_back({ p, 100 });
 			}
-			printStatsBar();
+			if (!stepsHandler->isSilent()) printStatsBar();
 		}
 		else if (key == P2_DROP_KEY || key == std::toupper(P2_DROP_KEY)) {
 			char type = ' ';
@@ -658,7 +663,7 @@ void GameManger::handleInput() {
 				screen.setCell(p.getY(), p.getX(), Screen::BOMB_ACTIVE);
 				activeBombs.push_back({ p, 100 });
 			}
-			printStatsBar();
+			if (!stepsHandler->isSilent()) printStatsBar();
 		}
 		else {
 			// Pass movement keys to players
@@ -679,12 +684,12 @@ void GameManger::updatePlayers() {
 	for (auto& player : players) {
 		// 1. Move logic
 		if (!player.isFinished()) {
-			player.move(globalDoors, currentRoom, (&player == &players[0]) ? &players[1] : &players[0], !rooms[currentRoom].dark);
+			player.move(globalDoors, currentRoom, (&player == &players[0]) ? &players[1] : &players[0], !rooms[currentRoom].dark, stepsHandler->isSilent());
 
 			// Check if HUD update is requested (e.g., key collected)
 			if (player.getHUD()) {
 				player.setHud(false);
-				printStatsBar();
+				if (!stepsHandler->isSilent()) printStatsBar();
 			}
 
 			if (!player.isFinished()) {
@@ -697,7 +702,7 @@ void GameManger::updatePlayers() {
 			// Stop movement
 			player.keyPressed(player.getstaybutton());
 			handleRiddle(player);
-			printStatsBar();
+			if (!stepsHandler->isSilent()) printStatsBar();
 		}
 		// 3. Trap Logic
 		if (player.getTrapState() == true) {
@@ -724,7 +729,7 @@ void GameManger::updatePlayers() {
 
 				for (const auto& fileName : frames) {
 					screen.loadFromFileToMap(fileName);
-					screen.draw();
+					if (!stepsHandler->isSilent()) screen.draw();
 
 
 					if (!stepsHandler->isSilent()) {
@@ -851,7 +856,7 @@ void GameManger::loadRoom(int index)
 		for (int y = 0; y <= Screen::MAX_Y; ++y) {
 			for (int x = 0; x <= Screen::MAX_X; ++x) {
 				char c = screen.getCharAt(y, x);
-				if (c >= '0' && c <= '9'){
+				if (c >= '0' && c <= '9') {
 					Door d;
 					d.id = c - '0';
 					d.position = Point(x, y);
@@ -893,13 +898,13 @@ void GameManger::loadRoom(int index)
 
 	// 6. First draw for the new room
 	if (rooms[currentRoom].dark) {
-		drawWithFog();          // fog rendering for dark rooms
+		if (!stepsHandler->isSilent()) drawWithFog();          // fog rendering for dark rooms
 	}
 	else {
-		screen.draw();          // normal full draw for bright rooms
+		if (!stepsHandler->isSilent()) screen.draw();          // normal full draw for bright rooms
 	}
 	stepsHandler->handleResult(gameCycle, Steps::ResultType::ScreenChange, std::to_string(index));
-	printStatsBar();
+	if (!stepsHandler->isSilent()) printStatsBar();
 }
 
 // ===========================
@@ -946,16 +951,16 @@ void GameManger::handleRiddle(Player& player) {
 	if (rooms[currentRoom].dark) {
 		// Force a fresh fog draw after the riddle screen
 		fogInitialized = false;
-		drawWithFog();
+		if (!stepsHandler->isSilent()) drawWithFog();
 	}
 	else {
-		screen.draw();
+		if (!stepsHandler->isSilent()) screen.draw();
 
-		players[0].getPoint().draw(players[0].getChar());
-		players[1].getPoint().draw(players[1].getChar());
+		if (!stepsHandler->isSilent()) players[0].getPoint().draw(players[0].getChar());
+		if (!stepsHandler->isSilent()) players[1].getPoint().draw(players[1].getChar());
 	}
 
-	printStatsBar();
+	if (!stepsHandler->isSilent()) printStatsBar();
 
 	// Release player from riddle state
 	player.setInRiddle(false);
@@ -968,15 +973,15 @@ void GameManger::handleSimon(Riddle& riddle, Player& player)
 
 	// 1. Show Pattern
 	for (int idx : pattern) {
-		screen.drawSimon(-1); // Clear
+		if (!stepsHandler->isSilent()) screen.drawSimon(-1); // Clear
 		if (!stepsHandler->isSilent()) {
 			Sleep(stepsHandler->isPlayback() ? 50 : 150);
 		}
-		screen.drawSimon(idx); // Flash
+		if (!stepsHandler->isSilent()) screen.drawSimon(idx); // Flash
 		if (!stepsHandler->isSilent()) {
 			Sleep(stepsHandler->isPlayback() ? 50 : 150);
 		}
-		screen.drawSimon(-1); // Clear
+		if (!stepsHandler->isSilent()) screen.drawSimon(-1); // Clear
 		if (!stepsHandler->isSilent()) {
 			Sleep(stepsHandler->isPlayback() ? 50 : 150);
 		}
@@ -994,7 +999,7 @@ void GameManger::handleSimon(Riddle& riddle, Player& player)
 		int digit = NumbersInput();
 		int choiceIndex = digit - 1; // Map 1-4 to 0-3
 
-		screen.drawSimon(choiceIndex);
+		if (!stepsHandler->isSilent()) screen.drawSimon(choiceIndex);
 
 		if (choiceIndex != pattern[i]) {
 			// Failure
@@ -1065,86 +1070,88 @@ void GameManger::handleMulti(Riddle& riddle, Player& player)
 
 void GameManger::increaseScore(int points, const std::string& message)
 {
+
 	cls();
 	score += points;
-
-	// --- 1. Calculate Dimensions ---
-	int cx = Screen::MAX_X / 2;
-	int cy = Screen::MAX_Y / 2;
-
-	std::string scoreLine = "SCORE + " + std::to_string(points);
-
-	// Determine the widest content (either the message or the score)
-	size_t contentLen = (std::max)(message.length(), scoreLine.length());
-
-	// Ensure the box is at least 20 chars wide for aesthetics
-	int minWidth = 22;
-	int boxWidth = (std::max)((int)contentLen + 6, minWidth); // +6 for padding (3 spaces each side)
-
-	// Calculate the top-left starting position to center the box
-	int startX = cx - (boxWidth / 2);
-
-	// Create the border string dynamically
-	std::string border(boxWidth, '#');
-
-	// --- 2. Animation Loop ---
-	Screen::Color colors[] = { Screen::Color::Yellow, Screen::Color::LightGreen, Screen::Color::LightCyan };
-
-	for (int i = 0; i < 6; ++i) {
-		setTextColor(colors[i % 3]);
-
-		// DRAW: Top Border
-		gotoxy(startX, cy - 2);
-		std::cout << border;
-
-		// DRAW: Message Line
-		gotoxy(startX, cy - 1);
-		std::cout << "#";
-
-		// Calculate dynamic padding for Message
-		int totalSpacesMsg = boxWidth - 2 - (int)message.length();
-		int padLeftMsg = totalSpacesMsg / 2;
-		int padRightMsg = totalSpacesMsg - padLeftMsg; // Handles odd numbers safely
-
-		// Print: [Spaces] + [Message] + [Spaces]
-		for (int k = 0; k < padLeftMsg; k++) std::cout << " ";
-		std::cout << message;
-		for (int k = 0; k < padRightMsg; k++) std::cout << " ";
-		std::cout << "#";
-
-		// DRAW: Spacer Line (Empty middle row)
-		gotoxy(startX, cy);
-		std::cout << "#";
-		for (int k = 0; k < boxWidth - 2; k++) std::cout << " ";
-		std::cout << "#";
-
-		// DRAW: Score Line
-		gotoxy(startX, cy + 1);
-		std::cout << "#";
-
-		// Calculate dynamic padding for Score
-		int totalSpacesScore = boxWidth - 2 - (int)scoreLine.length();
-		int padLeftScore = totalSpacesScore / 2;
-		int padRightScore = totalSpacesScore - padLeftScore;
-
-		for (int k = 0; k < padLeftScore; k++) std::cout << " ";
-		std::cout << scoreLine;
-		for (int k = 0; k < padRightScore; k++) std::cout << " ";
-		std::cout << "#";
-
-		// DRAW: Bottom Border
-		gotoxy(startX, cy + 2);
-		std::cout << border;
-
-		if (i < 3) Beep(400 + (i * 100), 50);
-		if (!stepsHandler->isSilent()) {
-			Sleep(stepsHandler->isPlayback() ? 50 : 150);
-		}
-	}
-
-	setTextColor(Screen::Color::LightGray);
 	if (!stepsHandler->isSilent()) {
+		// --- 1. Calculate Dimensions ---
+		int cx = Screen::MAX_X / 2;
+		int cy = Screen::MAX_Y / 2;
+
+		std::string scoreLine = "SCORE + " + std::to_string(points);
+
+		// Determine the widest content (either the message or the score)
+		size_t contentLen = (std::max)(message.length(), scoreLine.length());
+
+		// Ensure the box is at least 20 chars wide for aesthetics
+		int minWidth = 22;
+		int boxWidth = (std::max)((int)contentLen + 6, minWidth); // +6 for padding (3 spaces each side)
+
+		// Calculate the top-left starting position to center the box
+		int startX = cx - (boxWidth / 2);
+
+		// Create the border string dynamically
+		std::string border(boxWidth, '#');
+
+		// --- 2. Animation Loop ---
+		Screen::Color colors[] = { Screen::Color::Yellow, Screen::Color::LightGreen, Screen::Color::LightCyan };
+
+		for (int i = 0; i < 6; ++i) {
+			setTextColor(colors[i % 3]);
+
+			// DRAW: Top Border
+			gotoxy(startX, cy - 2);
+			std::cout << border;
+
+			// DRAW: Message Line
+			gotoxy(startX, cy - 1);
+			std::cout << "#";
+
+			// Calculate dynamic padding for Message
+			int totalSpacesMsg = boxWidth - 2 - (int)message.length();
+			int padLeftMsg = totalSpacesMsg / 2;
+			int padRightMsg = totalSpacesMsg - padLeftMsg; // Handles odd numbers safely
+
+			// Print: [Spaces] + [Message] + [Spaces]
+			for (int k = 0; k < padLeftMsg; k++) std::cout << " ";
+			std::cout << message;
+			for (int k = 0; k < padRightMsg; k++) std::cout << " ";
+			std::cout << "#";
+
+			// DRAW: Spacer Line (Empty middle row)
+			gotoxy(startX, cy);
+			std::cout << "#";
+			for (int k = 0; k < boxWidth - 2; k++) std::cout << " ";
+			std::cout << "#";
+
+			// DRAW: Score Line
+			gotoxy(startX, cy + 1);
+			std::cout << "#";
+
+			// Calculate dynamic padding for Score
+			int totalSpacesScore = boxWidth - 2 - (int)scoreLine.length();
+			int padLeftScore = totalSpacesScore / 2;
+			int padRightScore = totalSpacesScore - padLeftScore;
+
+			for (int k = 0; k < padLeftScore; k++) std::cout << " ";
+			std::cout << scoreLine;
+			for (int k = 0; k < padRightScore; k++) std::cout << " ";
+			std::cout << "#";
+
+			// DRAW: Bottom Border
+			gotoxy(startX, cy + 2);
+			std::cout << border;
+
+			if (i < 3) Beep(400 + (i * 100), 50);
+
+			Sleep(stepsHandler->isPlayback() ? 50 : 150);
+
+		}
+
+		setTextColor(Screen::Color::LightGray);
+
 		Sleep(stepsHandler->isPlayback() ? 200 : 600);
+
 	}
 }
 
@@ -1165,6 +1172,7 @@ int GameManger::NumbersInput() {
 }
 
 void GameManger::printStatsBar() const { // added const
+
 	int p1Keys = players[0].getKeyCount();
 	int p2Keys = players[1].getKeyCount();
 
@@ -1255,11 +1263,12 @@ void GameManger::updateBombs() {
 				? Screen::Color::Red
 				: Screen::Color::DarkGray;
 
-			gotoxy(it->position.getX(), it->position.getY());
-			setTextColor(displayColor);
-			std::cout << Screen::BOMB; // Draw 'B'
-			setTextColor(Screen::Color::LightGray);
-
+			if (!stepsHandler->isSilent()) {
+				gotoxy(it->position.getX(), it->position.getY());
+				setTextColor(displayColor);
+				std::cout << Screen::BOMB; // Draw 'B'
+				setTextColor(Screen::Color::LightGray);
+			}
 			// 2. Decrement Fuse
 			it->timer--;
 
@@ -1277,7 +1286,7 @@ void GameManger::updateBombs() {
 		// STATE: ANIMATION SEQUENCES
 		// ===========================
 		else if (it->state == BombState::IGNITION) {
-			drawExplosionFrame(it->position, 1); // Draw White Center
+			if (!stepsHandler->isSilent()) drawExplosionFrame(it->position, 1); // Draw White Center
 			it->timer--;
 			if (it->timer <= 0) {
 				it->state = BombState::EXPANSION;
@@ -1287,7 +1296,7 @@ void GameManger::updateBombs() {
 			++it;
 		}
 		else if (it->state == BombState::EXPANSION) {
-			drawExplosionFrame(it->position, 2); // Draw Red Box
+			if (!stepsHandler->isSilent()) drawExplosionFrame(it->position, 2); // Draw Red Box
 			it->timer--;
 			if (it->timer <= 0) {
 				it->state = BombState::HEAT;
@@ -1296,7 +1305,7 @@ void GameManger::updateBombs() {
 			++it;
 		}
 		else if (it->state == BombState::HEAT) {
-			drawExplosionFrame(it->position, 3); // Draw Yellow Box
+			if (!stepsHandler->isSilent()) drawExplosionFrame(it->position, 3); // Draw Yellow Box
 			it->timer--;
 			if (it->timer <= 0) {
 				// Animation done, perform actual destruction logic
@@ -1315,55 +1324,57 @@ void GameManger::updateBombs() {
 	}
 }
 
-void GameManger::drawExplosionFrame(const Point& center, int stage) const { // added const
-	int cx = center.getX();
-	int cy = center.getY();
+void GameManger::drawExplosionFrame(const Point& center, int stage) const {
+	if (!stepsHandler->isSilent()) {
+		int cx = center.getX();
+		int cy = center.getY();
 
-	// 1. Setup Style
-	char drawChar = ' ';
-	Screen::Color color = Screen::Color::LightGray;
+		// 1. Setup Style
+		char drawChar = ' ';
+		Screen::Color color = Screen::Color::LightGray;
 
-	if (stage == 1) {      // IGNITION
-		drawChar = static_cast<char>(Screen::BlockType::FullBlock);
-		color = Screen::Color::White;
-	}
-	else if (stage == 2) { // EXPANSION
-		drawChar = static_cast<char>(Screen::BlockType::MediumBlock);
-		color = Screen::Color::Red;
-	}
-	else if (stage == 3) { // HEAT
-		drawChar = static_cast<char>(Screen::BlockType::LightBlock);
-		color = Screen::Color::Yellow;
-	}
+		if (stage == 1) {      // IGNITION
+			drawChar = static_cast<char>(Screen::BlockType::FullBlock);
+			color = Screen::Color::White;
+		}
+		else if (stage == 2) { // EXPANSION
+			drawChar = static_cast<char>(Screen::BlockType::MediumBlock);
+			color = Screen::Color::Red;
+		}
+		else if (stage == 3) { // HEAT
+			drawChar = static_cast<char>(Screen::BlockType::LightBlock);
+			color = Screen::Color::Yellow;
+		}
 
-	setTextColor(color);
+		setTextColor(color);
 
-	// 2. Draw
-	if (stage == 1) {
-		gotoxy(cx, cy);
-		std::cout << drawChar;
-	}
-	else {
-		// Stages 2 & 3 (5x5 box)
-		for (int y = cy - 2; y <= cy + 2; ++y) {
-			for (int x = cx - 4; x <= cx + 4; ++x) {
-				// Bounds Check
-				if (y < 0 || y > Screen::MAX_Y || x < 0 || x > Screen::MAX_X) continue;
+		// 2. Draw
+		if (stage == 1) {
+			gotoxy(cx, cy);
+			std::cout << drawChar;
+		}
+		else {
+			// Stages 2 & 3 (5x5 box)
+			for (int y = cy - 2; y <= cy + 2; ++y) {
+				for (int x = cx - 4; x <= cx + 4; ++x) {
+					// Bounds Check
+					if (y < 0 || y > Screen::MAX_Y || x < 0 || x > Screen::MAX_X) continue;
 
-				Point target(x, y);
+					Point target(x, y);
 
-				// Don't draw ON walls
-				if (screen.isWall(target) || screen.isDoor(target) || screen.isSwitchOn(target) || screen.isSwitchOff(target))continue;
+					// Don't draw ON walls
+					if (screen.isWall(target) || screen.isDoor(target) || screen.isSwitchOn(target) || screen.isSwitchOff(target))continue;
 
-				// SHARED LOGIC: Only draw if we have Line of Sight
-				if (hasClearPath(center, target)) {
-					gotoxy(x, y);
-					std::cout << drawChar;
+					// SHARED LOGIC: Only draw if we have Line of Sight
+					if (hasClearPath(center, target)) {
+						gotoxy(x, y);
+						std::cout << drawChar;
+					}
 				}
 			}
 		}
+		setTextColor(Screen::Color::LightGray);
 	}
-	setTextColor(Screen::Color::LightGray);
 }
 
 bool GameManger::hasClearPath(const Point& start, const Point& target) const {
@@ -1406,7 +1417,7 @@ void GameManger::explodeBomb(const Point& center) {
 	screen.setCell(cy, cx, ' ');
 
 	// 2. Cleanup Visuals (optional, just to be safe)
-	drawExplosionFrame(center, 0); // Assuming 0 or a clear helper clears it, 
+	if (!stepsHandler->isSilent()) drawExplosionFrame(center, 0); // Assuming 0 or a clear helper clears it, 
 	// or relies on the next frame redraw.
 
 // 3. Radius Logic (Items/Objects)
@@ -1429,7 +1440,7 @@ void GameManger::explodeBomb(const Point& center) {
 
 				screen.setCell(y, x, ' ');
 				// Visual update for the map data (not the animation)
-				Point(x, y).draw(' ');
+				if (!stepsHandler->isSilent()) Point(x, y).draw(' ');
 			}
 
 			// Handle Player Damage
@@ -1441,7 +1452,7 @@ void GameManger::explodeBomb(const Point& center) {
 					// Decrease health
 					Health--;
 					hit = true;
-					printStatsBar();
+					if (!stepsHandler->isSilent()) printStatsBar();
 					stepsHandler->handleResult(gameCycle, Steps::ResultType::LifeLost, std::to_string(Health));
 				}
 			}
@@ -1593,18 +1604,18 @@ void GameManger::showLoadGameMenu() {
 			if (rooms[currentRoom].dark) {
 				// If the room is dark, reset fog logic and redraw
 				fogInitialized = false;
-				drawWithFog();
+				if (!stepsHandler->isSilent()) drawWithFog();
 			}
 			else {
 				// If the room is light, redraw the map
-				screen.draw();
+				if (!stepsHandler->isSilent()) screen.draw();
 				// Draw players immediately so they don't flicker in
 				for (const auto& p : players) {
-					p.getPoint().draw(p.getChar());
+					if (!stepsHandler->isSilent()) p.getPoint().draw(p.getChar());
 				}
 			}
 			// Restore the HUD
-			printStatsBar();
+			if (!stepsHandler->isSilent()) printStatsBar();
 
 		}
 		else {

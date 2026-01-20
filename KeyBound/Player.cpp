@@ -125,7 +125,7 @@ int Player::AmountOfSwitches = 0;
 // ===========================
 //      Movement Logic
 // ===========================
-void Player::move(std::vector<Door>& doors, int currentRoomIndex, Player* otherPlayer, bool redrawMapNow) {
+void Player::move(std::vector<Door>& doors, int currentRoomIndex, Player* otherPlayer, bool redrawMapNow,bool isSilent) {
 
     // ===========================
      // 1. Visual Cleanup
@@ -133,16 +133,16 @@ void Player::move(std::vector<Door>& doors, int currentRoomIndex, Player* otherP
      // We look at the map to see what we are currently standing on.
      // This handles Springs, Switches, and Empty Tiles automatically.
     char objectUnderPlayer = screen.getCharAt(body.getY(), body.getX());
-
-    // If the map data says "Player" is here, we treat it as empty floor underneath.
-    if (objectUnderPlayer == Screen::PLAYER1 || objectUnderPlayer == Screen::PLAYER2) {
-        body.draw(EMPTY_TILE);
+    if (!isSilent) {
+        // If the map data says "Player" is here, we treat it as empty floor underneath.
+        if (objectUnderPlayer == Screen::PLAYER1 || objectUnderPlayer == Screen::PLAYER2) {
+            body.draw(EMPTY_TILE);
+        }
+        else {
+            // Restore the object (Switch ON/OFF, Spring, etc.)
+            body.draw(objectUnderPlayer);
+        }
     }
-    else {
-        // Restore the object (Switch ON/OFF, Spring, etc.)
-        body.draw(objectUnderPlayer);
-    }
-
     // 2. Handle Spring Physics (Launch State)
     if (isLaunched) {
         if (launchTimer > 0) {
@@ -411,10 +411,10 @@ void Player::move(std::vector<Door>& doors, int currentRoomIndex, Player* otherP
         body = next_pos;
     }
    
-
-    // Render
-    body.draw();
-
+    if (!isSilent) {
+        // Render
+        body.draw();
+    }
     // Reset Speed (if launch ended during this frame)
     if (!isLaunched && PlayerSpeed > DEFAULT_SPEED) {
         PlayerSpeed = DEFAULT_SPEED;
