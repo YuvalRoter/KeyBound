@@ -1,5 +1,6 @@
 #pragma once
 #include "Point.h"
+#include <vector>
 
 // Forward declarations:
 // We tell the compiler these classes exist so we can befriend them.
@@ -13,14 +14,15 @@ private:
     // ===========================
     // These are now accessible ONLY to Door, GameManger, and Player.
 
+public:
     Point position;       // The specific (x,y) location
     int id = -1;          // Unique identifier
     int sourceRoomIndex = -1;
     int targetRoomIndex = -1;
     int KeysToOpen = 0;
     bool isOpen = false;
+    int switchesRequired = 0;
 
-public:
     // ===========================
     //       Constructors
     // ===========================

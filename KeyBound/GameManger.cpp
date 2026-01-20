@@ -49,42 +49,89 @@ namespace {
 	constexpr char P2_DROP_KEY = 'o';
 }
 
-// helper struct
-struct LevelMetadata {
-	std::string filename;
-	Point spawnP1;
-	Point spawnP2;
-	bool isDark;
-};
-std::vector<LevelMetadata> getLevelDefs() {
-	return {
-		{"level1.txt",     Point(6, 4, Screen::PLAYER1),   Point(6, 3, Screen::PLAYER2),   false},
-		{"level2.txt",     Point(3, 3, Screen::PLAYER1),   Point(3, 5, Screen::PLAYER2),   true},
-		{"level3.txt",     Point(35, 23, Screen::PLAYER1), Point(36, 23, Screen::PLAYER2), false},
-		{"levelFinal.txt", Point(3, 3, Screen::PLAYER1),   Point(3, 5, Screen::PLAYER2),   false},
-		{"level4.txt",     Point(23, 3, Screen::PLAYER1),  Point(22, 3, Screen::PLAYER2),  false}
-	};
-}
-
-// ===========================
-//    Static Door Locations
-// ===========================
-// Define the physical coordinates for the doors
-const Point GameManger::initialDoorLocations[MAX_DOORS] = {
-	Point(79, 2),   // [0] Right Side (Used for Level 1 -> Level 2)
-	Point(36, 1),   // [1] Top Side   (Used for Level 1 -> Level 3)
-	Point(38, 24),  // [2] Bottom Side (Used for Level 1 -> Final)
-	Point(77, 7),    // [3] Switch Door Location (Lvl 1 -> Lvl 4)
-	Point(0, 4),    // [4] Left Side (Used for Level 1 <- Level 2)
-	Point(36, 24),   // [5] Bottom Side (Used for Level 1 <- Level 3)
-	Point(10, 1)    // [6] Upper Side (Lvl 4 -> Lvl 1)
-};
 
 // Helper for random numbers
 static int randomInt(int min, int max) {
 	std::uniform_int_distribution<int> dist(min, max);
 	return dist(rng);
 }
+
+static void applyDoorConfigFromFile(const std::string& filename, std::vector<Door>& doors, int currentRoomIdx) {
+	std::ifstream f(filename);
+	if (!f) return;
+
+	std::string line;
+	while (std::getline(f, line)) {
+		if (line.empty()) continue;
+		if (line[0] != '@') break; // headers end
+
+		// expected: @DOOR id=1 dst=2 keys=2 switchesRequired=0
+		if (line.rfind("@DOOR", 0) == 0) {
+			int id = -1, dst = -1, keys = 0, sw = 0;
+
+			auto getInt = [&](const std::string& key, int& out) {
+				size_t p = line.find(key);
+				if (p == std::string::npos) return;
+				p += key.size();
+				out = std::atoi(line.c_str() + p);
+				};
+
+			getInt("id=", id);
+			getInt("dst=", dst);
+			getInt("keys=", keys);
+			getInt("switchesRequired=", sw);
+
+			if (id < 0) continue;
+
+			// find door in 'doors' by id + currentRoomIdx
+			for (auto& d : doors) {
+				if (d.sourceRoomIndex == currentRoomIdx && d.id == id) {
+					if (dst > 0) d.targetRoomIndex = dst - 1;
+					else         d.targetRoomIndex = 0;
+					d.KeysToOpen = keys;
+					d.switchesRequired = sw;
+				}
+			}
+		}
+	}
+}
+
+static void extractMarkersFromScreen(Screen& screen, Room& room) {
+	room.hasLegend = false;
+
+	std::vector<Point> spawns;
+	spawns.reserve(2);
+
+	for (int y = 0; y <= Screen::MAX_Y; ++y) {
+		for (int x = 0; x <= Screen::MAX_X; ++x) {
+			char c = screen.getCharAt(y, x);
+
+			// Legend marker
+			if (c == 'L') {
+				room.legendPos = Point(x, y);
+				room.hasLegend = true;
+				screen.setCell(y, x, ' ');
+			}
+
+			// Player spawns (use your actual player chars)
+			if (c == Screen::PLAYER1) {          // '@'
+				spawns.push_back(Point(x, y, Screen::PLAYER1));
+				screen.setCell(y, x, ' ');
+			}
+			if (c == Screen::PLAYER2) {          // '&'
+				spawns.push_back(Point(x, y, Screen::PLAYER2));
+				screen.setCell(y, x, ' ');
+			}
+		}
+	}
+
+	// If file had spawns, save them; otherwise keep old fallback
+	if (!spawns.empty()) {
+		room.startPositions = spawns;
+	}
+}
+
+
 
 // ===========================
 //      Constructor
@@ -297,31 +344,30 @@ bool GameManger::showMenu() {
 
 		switch (choice) {
 		case MENU_OPT_START:
-		{// Check if files exist
-			auto levels = getLevelDefs();
-			bool missingFiles = false;
-			std::string missingName;
-
-			for (const auto& level : levels) {
-				if (!fs::exists(level.filename)) {
-					missingFiles = true;
-					missingName = level.filename;
+		{
+			// Check if there are any screen files adv-world*.screen
+			bool found = false;
+			for (const auto& entry : fs::directory_iterator(".")) {
+				if (!entry.is_regular_file()) continue;
+				const std::string name = entry.path().filename().string();
+				if (name.rfind("adv-world", 0) == 0 && entry.path().extension() == ".screen") {
+					found = true;
 					break;
 				}
 			}
 
-			if (missingFiles) {
+			if (!found) {
 				cls();
 				int cx = Screen::MAX_X / 2;
 				int cy = Screen::MAX_Y / 2;
 
 				if (g_colorsEnabled) setTextColor(Screen::Color::Red);
-				gotoxy(cx - 15, cy - 2); std::cout << "ERROR: MISSING FILES";
+				gotoxy(cx - 15, cy - 2); std::cout << "ERROR: NO SCREEN FILES";
 				if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
 
-				gotoxy(cx - 20, cy);     std::cout << "Cannot find required map file: " << missingName;
-				gotoxy(cx - 20, cy + 2); std::cout << "Game cannot start.";
-				gotoxy(cx - 20, cy + 4); std::cout << "Press any key to return to menu...";
+				gotoxy(cx - 25, cy);     std::cout << "Missing files: adv-world*.screen";
+				gotoxy(cx - 25, cy + 2); std::cout << "Press any key to return to menu...";
+
 				while (true) {
 					if (stepsHandler->getInput(gameCycle) != 0) break;
 					gameCycle++;
@@ -329,6 +375,9 @@ bool GameManger::showMenu() {
 				}
 				break;
 			}
+
+			cls();
+			return true;
 		}
 		cls();
 		return true;
@@ -624,7 +673,7 @@ void GameManger::updatePlayers() {
 	for (auto& player : players) {
 		// 1. Move logic
 		if (!player.isFinished()) {
-			player.move(globalDoors, MAX_DOORS, currentRoom, (&player == &players[0]) ? &players[1] : &players[0], !rooms[currentRoom].dark);
+			player.move(globalDoors, currentRoom, (&player == &players[0]) ? &players[1] : &players[0], !rooms[currentRoom].dark);
 
 			// Check if HUD update is requested (e.g., key collected)
 			if (player.getHUD()) {
@@ -697,15 +746,15 @@ void GameManger::updatePlayers() {
 			destination = players[1].getTargetRoom();
 		}
 
-		if (destination >= 0 && destination < NUMBER_OF_ROOMS) {
+		if (destination >= 0 && destination < (int)rooms.size()) {
 			loadRoom(destination);
 			for (auto& player : players) {
 				player.resetLevelData();
 			}
 		}
 		else {
-			// Fallback: Restart Level 1
-			loadRoom(0);
+			// Fallback: stay in current room (don't teleport to level 1)
+			loadRoom(currentRoom);
 			for (auto& player : players) player.resetLevelData();
 		}
 	}
@@ -739,77 +788,38 @@ void GameManger::resetGame() {
 
 }
 
-void GameManger::initRooms()
-{
-	// 1. Get definitions
-	std::vector<LevelMetadata> levels = getLevelDefs();
+void GameManger::initRooms() {
+	rooms.clear();
 
-	// 2. SORT Lexicographically
-	// Order becomes: level1, level2, level3, level4, levelFinal
-	std::sort(levels.begin(), levels.end(), [](const LevelMetadata& a, const LevelMetadata& b) {
-		return a.filename < b.filename;
-		});
+	std::vector<std::string> files;
+	for (const auto& entry : fs::directory_iterator(".")) {
+		if (!entry.is_regular_file()) continue;
+		const std::string name = entry.path().filename().string();
+		if (name.rfind("adv-world", 0) == 0 && entry.path().extension() == ".screen") {
+			files.push_back(name);
+		}
+	}
 
-	// 3. Initialize Rooms from sorted data
-	for (size_t i = 0; i < levels.size() && i < NUMBER_OF_ROOMS; ++i) {
-		std::vector<Point> starts = { levels[i].spawnP1, levels[i].spawnP2 };
-		rooms[i] = Room(levels[i].filename, starts, levels[i].isDark);
+	std::sort(files.begin(), files.end());
+
+	if (files.empty()) {
+		// keep rooms empty; menu should show message when trying to start
+		return;
+	}
+
+	for (const auto& f : files) {
+		rooms.emplace_back(Room(f));
 	}
 }
 
 void GameManger::initDoors() {
-	// Format: { Position, ID, SourceRoom, TargetRoom, KeysCost, IsOpen }
-
-	// ==========================================
-	//          LEVEL 1 DOORS (The Hub)
-	// ==========================================
-
-	// Door 0: Goes to Level 2 (Location: Right Side)
-	globalDoors[0] = { initialDoorLocations[0], 0, 0, 1, 1, false };
-
-	// Door 1: Goes to Level 3 (Location: Top Side)
-	globalDoors[1] = { initialDoorLocations[1], 1, 0, 2, 1, false };
-
-	// Door 2: Goes to Final Level (Location: Bottom Side)
-	globalDoors[2] = { initialDoorLocations[2], 2, 0, 4, 7, false };
-
-	// Door 4: Switch Door Goes to level 3
-	globalDoors[4] = { initialDoorLocations[3], 4, 0, 3, 8, false };
-
-
-	// ==========================================
-	//              LEVEL 2 DOORS
-	// ==========================================
-
-	// Door 3: Back to Level 1 (Location: Right Side - SAME AS ENTERING)
-	globalDoors[3] = { initialDoorLocations[4], 3, 1, 0, 0, true }; // 0 cost, already open
-
-
-
-
-	// ==========================================
-	//              LEVEL 3 DOORS
-	// ==========================================
-
-	// Door 5: Back to Level 1 (Location: Top Side - SAME AS ENTERING)
-	globalDoors[5] = { initialDoorLocations[5], 5, 2, 0, 0, true }; // 0 cost, already open
-
-	// ==========================================
-		//              LEVEL 4 DOORS
-	// ==========================================
-
-		// Door 6: Back to Level 1 (Location: Upper part of Level 4)
-		// ID: 6
-		// Source Room: 4 (Level 4)
-		// Target Room: 0 (Level 1)
-		// Cost: 0 keys (Open)
-	globalDoors[6] = { initialDoorLocations[6], 6, 3, 0, 0, true };
+	globalDoors.clear();
 }
 
 void GameManger::loadRoom(int index)
 {
 	// 1. Save state of current room
-	if (currentRoom >= 0 && currentRoom < NUMBER_OF_ROOMS) {
+	if (currentRoom >= 0 && currentRoom < (int)rooms.size()) {
 		screen.saveScreenToRoom(rooms[currentRoom]);
 	}
 
@@ -822,15 +832,43 @@ void GameManger::loadRoom(int index)
 	else {
 		screen.loadFromFileToMap(rooms[currentRoom].mapFile);
 
-	}
+		extractMarkersFromScreen(screen, rooms[currentRoom]);
 
-	// 3. Render Doors
-	for (int i = 0; i < MAX_DOORS; ++i) {
-		if (globalDoors[i].sourceRoomIndex == currentRoom) {
-			int x = globalDoors[i].position.getX();
-			int y = globalDoors[i].position.getY();
-			// Show keys required (e.g., '1', '2') on the door tile
-			screen.setCell(y, x, '0' + globalDoors[i].KeysToOpen);
+		globalDoors.erase(
+			std::remove_if(globalDoors.begin(), globalDoors.end(),
+				[&](const Door& d) { return d.sourceRoomIndex == currentRoom; }),
+			globalDoors.end()
+		);
+
+		for (int y = 0; y <= Screen::MAX_Y; ++y) {
+			for (int x = 0; x <= Screen::MAX_X; ++x) {
+				char c = screen.getCharAt(y, x);
+				if (c >= '1' && c <= '9') {
+					Door d;
+					d.id = c - '0';
+					d.position = Point(x, y);
+					d.sourceRoomIndex = currentRoom;
+					d.targetRoomIndex = currentRoom; // will be overridden by @DOOR header
+					d.KeysToOpen = 0;
+					d.isOpen = false;
+					// אם הוספת: d.switchesRequired = 0;
+					globalDoors.push_back(d);
+				}
+			}
+		}
+
+		applyDoorConfigFromFile(rooms[currentRoom].mapFile, globalDoors, currentRoom);
+
+		rooms[currentRoom].dark = false;
+		{
+			std::ifstream f(rooms[currentRoom].mapFile);
+			std::string line;
+			while (std::getline(f, line)) {
+				if (!line.empty() && line[0] != '@') break; // headers end
+				if (line.rfind("@DARK=", 0) == 0) {
+					rooms[currentRoom].dark = (line.size() >= 7 && line[6] == '1');
+				}
+			}
 		}
 	}
 
@@ -1114,7 +1152,14 @@ void GameManger::printStatsBar() const { // added const
 	std::string inv2 = "P2:";
 	if (players[1].hasTorch()) inv2 += " [T]";
 	if (players[1].hasBomb())  inv2 += " [B]";
-	gotoxy(0, 0);
+
+	int lx = 0, ly = 0;
+	if (currentRoom >= 0 && currentRoom < (int)rooms.size() && rooms[currentRoom].hasLegend) {
+		lx = rooms[currentRoom].legendPos.getX();
+		ly = rooms[currentRoom].legendPos.getY();
+	}
+	gotoxy(lx, ly);
+
 	setTextColor(Screen::Color::Cyan);
 
 	std::cout << "LEVEL: " << (currentRoom + 1)
@@ -1429,7 +1474,7 @@ void GameManger::saveGame(const std::string& filename) {
 	if (!file) return;
 
 	// 1. Commit current room screen to memory before saving
-	if (currentRoom >= 0 && currentRoom < NUMBER_OF_ROOMS) {
+	if (currentRoom >= 0 && currentRoom < (int)rooms.size()) {
 		screen.saveScreenToRoom(rooms[currentRoom]);
 	}
 
@@ -1452,14 +1497,14 @@ void GameManger::saveGame(const std::string& filename) {
 	}
 
 	// 4. Doors
-	file << MAX_DOORS << "\n";
-	for (int i = 0; i < MAX_DOORS; ++i) {
+	file << (int)globalDoors.size() << "\n";
+	for (int i = 0; i < (int)globalDoors.size(); ++i) {
 		file << globalDoors[i].isOpen << "\n";
 	}
 
 	// 5. Rooms (Map state)
-	file << NUMBER_OF_ROOMS << "\n";
-	for (int i = 0; i < NUMBER_OF_ROOMS; ++i) {
+	file << (int)rooms.size() << "\n";
+	for (int i = 0; i < (int)rooms.size(); ++i) {
 		file << rooms[i].isVisited << "\n";
 		if (rooms[i].isVisited) {
 			size_t rows = rooms[i].savedMapState.size();
@@ -1595,14 +1640,19 @@ bool GameManger::loadGame(const std::string& filename) {
 	}
 
 	// ===========================
-	// 3. Read Doors
+	// 3. Read Doors (only open/closed flags)
 	// ===========================
-	int maxDoorsFromFile;
-	file >> maxDoorsFromFile;
-	for (int i = 0; i < MAX_DOORS; ++i) {
-		bool isOpen;
+	int doorsCountFromFile = 0;
+	file >> doorsCountFromFile;
+
+	std::vector<bool> doorOpenFlags;
+	doorOpenFlags.resize(doorsCountFromFile);
+	// We'll restore door open/close AFTER loadRoom() rebuilds doors from the screen
+
+	for (int i = 0; i < doorsCountFromFile; ++i) {
+		bool isOpen = false;
 		file >> isOpen;
-		globalDoors[i].isOpen = isOpen;
+		doorOpenFlags[i] = isOpen;
 	}
 
 	// ===========================
@@ -1611,8 +1661,8 @@ bool GameManger::loadGame(const std::string& filename) {
 	int numRoomsFromFile;
 	file >> numRoomsFromFile;
 
-	// Protect against mismatch if NUMBER_OF_ROOMS changed
-	int loopLimit = (numRoomsFromFile < NUMBER_OF_ROOMS) ? numRoomsFromFile : NUMBER_OF_ROOMS;
+	// Protect against mismatch if (int)rooms.size() changed
+	int loopLimit = (numRoomsFromFile < (int)rooms.size()) ? numRoomsFromFile : (int)rooms.size();
 
 	for (int i = 0; i < loopLimit; ++i) {
 		bool isVisited;
@@ -1642,6 +1692,11 @@ bool GameManger::loadGame(const std::string& filename) {
 	// Now call loadRoom. Because currentRoom is -1, it won't save over our data.
 	// It will simply load the map for 'loadedRoomIndex'.
 	loadRoom(loadedRoomIndex);
+
+	// Restore door open/closed flags (best-effort by index)
+	for (int i = 0; i < (int)globalDoors.size() && i < (int)doorOpenFlags.size(); ++i) {
+		globalDoors[i].isOpen = doorOpenFlags[i];
+	}
 
 	// Finally, overwrite the default spawn positions with our saved player data.
 	for (int i = 0; i < NUMBER_OF_PLAYERS; ++i) {

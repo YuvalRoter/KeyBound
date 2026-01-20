@@ -125,7 +125,7 @@ int Player::AmountOfSwitches = 0;
 // ===========================
 //      Movement Logic
 // ===========================
-void Player::move(Door* doors, int maxDoors, int currentRoomIndex, Player* otherPlayer, bool redrawMapNow) {
+void Player::move(std::vector<Door>& doors, int currentRoomIndex, Player* otherPlayer, bool redrawMapNow) {
 
     // ===========================
      // 1. Visual Cleanup
@@ -302,53 +302,35 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex, Player* other
         if (screen.isDoor(next_pos)) {
             bool doorHandled = false;
 
-            for (int k = 0; k < maxDoors; ++k) {
-                // Optimization: Only check doors in this room
-                if (doors[k].sourceRoomIndex == currentRoomIndex) {
-                    if (doors[k].position == next_pos) {
+            for (auto& d : doors) {
+                if (d.sourceRoomIndex != currentRoomIndex) continue;
+                if (!(d.position == next_pos)) continue;
 
-                        // Case: Door Open -> Exit
-                        if (doors[k].isOpen) {
-                            finishedLevel = true;
-                            targetRoomIndex = doors[k].targetRoomIndex;
-                            doorHandled = true;
-                        }
-                        // Case: Switchs on?   
-                        // 8 - indicator for switch door
-                        if (doors[k].KeysToOpen == SWITCH_ID)
-                        {
-                            // Only open if the switch count matches the target
-                            if (AmountOfSwitches >= SwitchsToTurn)
-                            {
-                                doors[k].isOpen = true;
-                                finishedLevel = true;
-                                targetRoomIndex = doors[k].targetRoomIndex;
-                                doorHandled = true;
-                            }
-                            else
-                            {
-                                // Switch count not met; door remains closed (collision happens)
-                                doorHandled = true;
-                            }
-                        }
-                        // If not a switch door, try standard key opening
-                        else if (tryToOpenDoor(doors[k].KeysToOpen))
-                        {
-                            doors[k].isOpen = true;
-                            finishedLevel = true;
-                            targetRoomIndex = doors[k].targetRoomIndex;
-                            doorHandled = true;
-                        }
-                        // Door is locked and we have no keys
-                        else
-                        {
-                            doorHandled = true;
-                        }
-                        break;
-                    }
+                // If door already open
+                if (d.isOpen) {
+                    finishedLevel = true;
+                    targetRoomIndex = d.targetRoomIndex;
+                    return;
                 }
+
+                // Switch requirement (how many switches must be ON)
+                if (d.switchesRequired > 0) {
+                    if (AmountOfSwitches >= d.switchesRequired) {
+                        d.isOpen = true;
+                        finishedLevel = true;
+                        targetRoomIndex = d.targetRoomIndex;
+                    }
+                    return;
+                }
+
+                // Key requirement
+                if (tryToOpenDoor(d.KeysToOpen)) {
+                    d.isOpen = true;
+                    finishedLevel = true;
+                    targetRoomIndex = d.targetRoomIndex;
+                }
+                return;
             }
-            // Whether we opened it or hit it locked, we stop moving (it's solid)
             return;
         }
 

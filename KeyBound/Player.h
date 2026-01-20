@@ -2,8 +2,9 @@
 
 #include "Point.h"
 #include "Screen.h"
+#include "Door.h"
 #include "Direction.h"
-#include <vector>;
+#include <vector>
 
 
  
@@ -127,7 +128,7 @@ public:
         targetRoomIndex = -1;
     }
     Point dropActiveItem(char& droppedType);
-    void move(Door* doors, int maxDoors, int currentRoomIndex, Player* otherPlayer = nullptr, bool redrawMapNow = true);
+    void move(std::vector<Door>& doors, int currentRoomIndex, Player* otherPlayer, bool redrawMapNow);
 
 
     void startSpringLaunch();
