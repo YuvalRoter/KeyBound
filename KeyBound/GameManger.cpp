@@ -739,9 +739,6 @@ void GameManger::updatePlayers() {
 			}
 		}
 
-
-
-
 	}
 
 	// 3. Room Transition (Synchronized)
@@ -854,7 +851,7 @@ void GameManger::loadRoom(int index)
 		for (int y = 0; y <= Screen::MAX_Y; ++y) {
 			for (int x = 0; x <= Screen::MAX_X; ++x) {
 				char c = screen.getCharAt(y, x);
-				if (c >= '1' && c <= '9') {
+				if (c >= '0' && c <= '9'){
 					Door d;
 					d.id = c - '0';
 					d.position = Point(x, y);
@@ -862,7 +859,6 @@ void GameManger::loadRoom(int index)
 					d.targetRoomIndex = currentRoom; // will be overridden by @DOOR header
 					d.KeysToOpen = 0;
 					d.isOpen = false;
-					// אם הוספת: d.switchesRequired = 0;
 					globalDoors.push_back(d);
 				}
 			}
