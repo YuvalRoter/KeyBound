@@ -255,7 +255,81 @@ Bonus Part 1:
 
 ---
 
-13. Self Decisions and Clarifications
+13. Exercise 3 – Recording Examples and Test Results
+
+---
+
+This project includes three example recordings for Exercise 3 (steps + results files).
+Each example demonstrates a different gameplay outcome and validates the replay and
+verification logic.
+
+All recordings use the mandatory file formats:
+- adv-world.steps
+- adv-world.result
+
+They can be replayed using:
+    adv-world.exe -load
+or tested using:
+    adv-world.exe -load -silent
+
+------------------------------------------------------------
+Example 1 – Failed Test (Error Case)
+------------------------------------------------------------
+Description:
+- This example demonstrates a gameplay recording where the expected result file
+  does NOT match the actual replayed behavior.
+
+Purpose:
+- To verify that the silent replay mode correctly detects mismatches between:
+  - adv-world.steps
+  - adv-world.result
+
+------------------------------------------------------------
+Example 2 – Game Won (Successful Run)
+------------------------------------------------------------
+Description:
+- This example demonstrates a full successful gameplay session in which both players
+  reach the final room and complete the game.
+
+Expected behavior:
+- Running:
+      adv-world.exe -load -silent
+
+- Output:
+      TEST PASSED
+
+------------------------------------------------------------
+Example 3 – Game Over (Successful Run with Failure Outcome)
+------------------------------------------------------------
+Description:
+- This example demonstrates a gameplay session that ends with GAME OVER
+  after both players lose all lives (e.g., due to bombs or mines).
+
+Expected behavior:
+- Running:
+      adv-world.exe -load -silent
+
+- Output:
+      TEST PASSED
+
+------------------------------------------------------------
+Notes
+------------------------------------------------------------
+- These three examples demonstrate that:
+  - The recording format is deterministic.
+  - The replay engine reproduces gameplay exactly.
+  - The silent verification mode correctly detects both success and failure cases.
+
+- The examples can be replaced or extended by recording new sessions using:
+      adv-world.exe -save
+
+  and then replaying them with:
+      adv-world.exe -load
+      adv-world.exe -load -silent
+
+---
+
+14. Self Decisions and Clarifications
 
 ---
 
@@ -273,7 +347,7 @@ Bonus Part 1:
 
 ---
 
-14. Use of External / AI‑Generated Code
+15. Use of External / AI‑Generated Code
 
 ---
 
