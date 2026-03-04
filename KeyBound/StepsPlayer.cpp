@@ -9,6 +9,48 @@ StepsPlayer::StepsPlayer(bool isSilentMode)
 
 // --- INPUT PLAYBACK ---
 int StepsPlayer::getInput(long gameCycle) {
+    // 1. Handling Test Failure (Stop the Game)
+   
+    static int exitSequenceStep = 0;
+
+    if (testFailed) {
+        if (exitSequenceStep == 0) {
+            exitSequenceStep++;
+            return 27; // Step 1: Send ESC (Pause Game / Close Dialogs)
+        }
+        else if (exitSequenceStep == 1) {
+            exitSequenceStep++;
+            return 'h'; // Step 2: Send 'h' (Exit Gameplay to Main Menu)
+        }
+        else {
+            return '9'; // Step 3: Send '9' (Select "Exit Game" in Main Menu)
+        }
+    }
+
+    // 2. Timeout Check (Fix for "results doesn't work")
+    // If the game time has passed the time of the next expected result,
+    // it means the event didn't happen when it should have. Fail immediately.
+    if (resultIndex < expectedResults.size()) {
+        const auto& expected = expectedResults[resultIndex];
+
+        // If we missed the timestamp of an event
+        if (gameCycle > expected.time) {
+            testFailed = true;
+            if (!silent) {
+                // We print to cerr to ensure it's not buffered or lost easily
+                std::cerr << "\n[TEST FAILED] Timeout / Missed Event!"
+                    << "\n              Expected Event at Cycle: " << expected.time
+                    << "\n              Current Cycle: " << gameCycle
+                    << "\n              Type: " << (int)expected.type
+                    << " Data: " << expected.data << std::endl;
+            }
+            // Trigger exit sequence immediately
+            exitSequenceStep = 1; // Start at 1 because we want to return 27 now
+            return 27;
+        }
+    }
+
+    // 3. Normal Playback
     // popEventAtTime is already implemented in your Steps.cpp!
     // It checks if the current cycle matches the recorded time.
     return popEventAtTime(gameCycle);
@@ -26,13 +68,6 @@ void StepsPlayer::handleResult(long gameCycle, Steps::ResultType type, const std
         }
     }
 
-    // If we reach here, the game performed differently than the recording!
-    testFailed = true;
-    if (!silent) {
-        std::cout << "\n[TEST FAILED] Cycle: " << gameCycle
-            << " | Expected Type: " << (int)type
-            << " | Received Data: " << data << std::endl;
-    }
     // If we reach here, the game performed differently than the recording!
     testFailed = true;
     if (!silent) {

@@ -1,0 +1,62 @@
+------------------------------------------------------------
+Exercise 2 – Fixes for Previously Deducted Points
+------------------------------------------------------------
+
+In Exercise 2, the following points were deducted:
+
+(-10) Supporting only 3 rooms, hard coded  
+(-15) Position of players is hard coded  
+
+Both issues were fully fixed in Exercise 3, as detailed below.
+
+
+------------------------------------------------------------
+Fix #1 – Hard-Coded Number of Rooms
+------------------------------------------------------------
+
+Original Issue (Exercise 2):
+- The game supported only exactly 3 rooms.
+- Room files were hard-coded and loaded manually.
+
+Fix Implemented (Exercise 3):
+- The game now dynamically loads all room files listed in the steps file
+  or found in the working directory (adv-world_XX.screen).
+- The number of rooms is no longer hard-coded.
+- Rooms are stored in a vector and indexed dynamically.
+
+Result:
+- Any number of rooms can be added without modifying the code.
+- The game logic automatically adapts to the number of loaded rooms.
+
+
+------------------------------------------------------------
+Fix #2 – Hard-Coded Player Positions
+------------------------------------------------------------
+
+Original Issue (Exercise 2):
+- Initial player positions were hard-coded in the code.
+
+Fix Implemented (Exercise 3):
+- Player starting positions are now read directly from the room files.
+- Each room file contains the initial positions of both players.
+- The players are spawned based on the positions found in the map data.
+
+Result:
+- Player positions are no longer hard-coded.
+- Changing a room file is sufficient to change player spawn positions.
+- No code changes are required to modify starting positions.
+
+
+------------------------------------------------------------
+Summary
+------------------------------------------------------------
+
+Both previously deducted issues from Exercise 2 were fully resolved
+in Exercise 3.
+
+The game now:
+- Supports a dynamic number of rooms.
+- Uses non-hard-coded player starting positions loaded from room files.
+
+We respectfully request reconsideration of the deducted points
+based on these fixes.

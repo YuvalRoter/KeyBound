@@ -49,42 +49,89 @@ namespace {
 	constexpr char P2_DROP_KEY = 'o';
 }
 
-// helper struct
-struct LevelMetadata {
-	std::string filename;
-	Point spawnP1;
-	Point spawnP2;
-	bool isDark;
-};
-std::vector<LevelMetadata> getLevelDefs() {
-	return {
-		{"level1.txt",     Point(6, 4, Screen::PLAYER1),   Point(6, 3, Screen::PLAYER2),   false},
-		{"level2.txt",     Point(3, 3, Screen::PLAYER1),   Point(3, 5, Screen::PLAYER2),   true},
-		{"level3.txt",     Point(35, 23, Screen::PLAYER1), Point(36, 23, Screen::PLAYER2), false},
-		{"levelFinal.txt", Point(3, 3, Screen::PLAYER1),   Point(3, 5, Screen::PLAYER2),   false},
-		{"level4.txt",     Point(23, 3, Screen::PLAYER1),  Point(22, 3, Screen::PLAYER2),  false}
-	};
-}
-
-// ===========================
-//    Static Door Locations
-// ===========================
-// Define the physical coordinates for the doors
-const Point GameManger::initialDoorLocations[MAX_DOORS] = {
-	Point(79, 2),   // [0] Right Side (Used for Level 1 -> Level 2)
-	Point(36, 1),   // [1] Top Side   (Used for Level 1 -> Level 3)
-	Point(38, 24),  // [2] Bottom Side (Used for Level 1 -> Final)
-	Point(77, 7),    // [3] Switch Door Location (Lvl 1 -> Lvl 4)
-	Point(0, 4),    // [4] Left Side (Used for Level 1 <- Level 2)
-	Point(36, 24),   // [5] Bottom Side (Used for Level 1 <- Level 3)
-	Point(10, 1)    // [6] Upper Side (Lvl 4 -> Lvl 1)
-};
 
 // Helper for random numbers
 static int randomInt(int min, int max) {
 	std::uniform_int_distribution<int> dist(min, max);
 	return dist(rng);
 }
+
+static void applyDoorConfigFromFile(const std::string& filename, std::vector<Door>& doors, int currentRoomIdx) {
+	std::ifstream f(filename);
+	if (!f) return;
+
+	std::string line;
+	while (std::getline(f, line)) {
+		if (line.empty()) continue;
+		if (line[0] != '@') break; // headers end
+
+		// expected: @DOOR id=1 dst=2 keys=2 switchesRequired=0
+		if (line.rfind("@DOOR", 0) == 0) {
+			int id = -1, dst = -1, keys = 0, sw = 0;
+
+			auto getInt = [&](const std::string& key, int& out) {
+				size_t p = line.find(key);
+				if (p == std::string::npos) return;
+				p += key.size();
+				out = std::atoi(line.c_str() + p);
+				};
+
+			getInt("id=", id);
+			getInt("dst=", dst);
+			getInt("keys=", keys);
+			getInt("switchesRequired=", sw);
+
+			if (id < 0) continue;
+
+			// find door in 'doors' by id + currentRoomIdx
+			for (auto& d : doors) {
+				if (d.sourceRoomIndex == currentRoomIdx && d.id == id) {
+					if (dst > 0) d.targetRoomIndex = dst - 1;
+					else         d.targetRoomIndex = 0;
+					d.KeysToOpen = keys;
+					d.switchesRequired = sw;
+				}
+			}
+		}
+	}
+}
+
+static void extractMarkersFromScreen(Screen& screen, Room& room) {
+	room.hasLegend = false;
+
+	std::vector<Point> spawns;
+	spawns.reserve(2);
+
+	for (int y = 0; y <= Screen::MAX_Y; ++y) {
+		for (int x = 0; x <= Screen::MAX_X; ++x) {
+			char c = screen.getCharAt(y, x);
+
+			// Legend marker
+			if (c == 'L') {
+				room.legendPos = Point(x, y);
+				room.hasLegend = true;
+				screen.setCell(y, x, ' ');
+			}
+
+			// Player spawns (use your actual player chars)
+			if (c == Screen::PLAYER1) {          // '@'
+				spawns.push_back(Point(x, y, Screen::PLAYER1));
+				screen.setCell(y, x, ' ');
+			}
+			if (c == Screen::PLAYER2) {          // '&'
+				spawns.push_back(Point(x, y, Screen::PLAYER2));
+				screen.setCell(y, x, ' ');
+			}
+		}
+	}
+
+	// If file had spawns, save them; otherwise keep old fallback
+	if (!spawns.empty()) {
+		room.startPositions = spawns;
+	}
+}
+
+
 
 // ===========================
 //      Constructor
@@ -256,32 +303,34 @@ void GameManger::run() {
 // ===========================
 
 void GameManger::drawSettingsMenu() {
-	screen.loadFromFileToMap("menu.txt");
-	screen.draw();
+	if (!stepsHandler->isSilent()) {
+		screen.loadFromFileToMap("menu.txt");
+		screen.draw();
 
 
-	int cx = Screen::MAX_X / 2;
-	int cy = Screen::MAX_Y / 3;
+		int cx = Screen::MAX_X / 2;
+		int cy = Screen::MAX_Y / 3;
 
-	if (g_colorsEnabled) setTextColor(Screen::Color::Cyan);
-	gotoxy(cx - 10, cy);     std::cout << "=== COLOR SETTINGS ===";
-	if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
+		if (g_colorsEnabled) setTextColor(Screen::Color::Cyan);
+		gotoxy(cx - 10, cy);     std::cout << "=== COLOR SETTINGS ===";
+		if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
 
-	gotoxy(cx - 10, cy + 2); std::cout << "1. Enable Colors";
-	gotoxy(cx - 10, cy + 3); std::cout << "2. Disable Colors (B&W)";
-	gotoxy(cx - 10, cy + 5); std::cout << "3. Back to Main Menu";
+		gotoxy(cx - 10, cy + 2); std::cout << "1. Enable Colors";
+		gotoxy(cx - 10, cy + 3); std::cout << "2. Disable Colors (B&W)";
+		gotoxy(cx - 10, cy + 5); std::cout << "3. Back to Main Menu";
 
-	gotoxy(cx - 10, cy + 8);
-	std::cout << "Current Mode: ";
-	if (g_colorsEnabled) {
-		setTextColor(Screen::Color::Green);
-		std::cout << "COLOR ON";
+		gotoxy(cx - 10, cy + 8);
+		std::cout << "Current Mode: ";
+		if (g_colorsEnabled) {
+			setTextColor(Screen::Color::Green);
+			std::cout << "COLOR ON";
+		}
+		else {
+			setTextColor(Screen::Color::DarkGray);
+			std::cout << "COLOR OFF";
+		}
+		setTextColor(Screen::Color::LightGray);
 	}
-	else {
-		setTextColor(Screen::Color::DarkGray);
-		std::cout << "COLOR OFF";
-	}
-	setTextColor(Screen::Color::LightGray);
 }
 
 bool GameManger::showMenu() {
@@ -289,46 +338,52 @@ bool GameManger::showMenu() {
 	currentRoom = -1;
 
 	while (true) {
-		screen.loadFromFileToMap("menu.txt");
-		screen.draw();
+		if (!stepsHandler->isSilent()) {
+			screen.loadFromFileToMap("menu.txt");
+			screen.draw();
+		}
 		printMainMenu();
 
 		int choice = NumbersInput();
 
 		switch (choice) {
 		case MENU_OPT_START:
-		{// Check if files exist
-			auto levels = getLevelDefs();
-			bool missingFiles = false;
-			std::string missingName;
-
-			for (const auto& level : levels) {
-				if (!fs::exists(level.filename)) {
-					missingFiles = true;
-					missingName = level.filename;
+		{
+			// Check if there are any screen files adv-world*.screen
+			bool found = false;
+			for (const auto& entry : fs::directory_iterator(".")) {
+				if (!entry.is_regular_file()) continue;
+				const std::string name = entry.path().filename().string();
+				if (name.rfind("adv-world", 0) == 0 && entry.path().extension() == ".screen") {
+					found = true;
 					break;
 				}
 			}
 
-			if (missingFiles) {
+			if (!found) {
 				cls();
 				int cx = Screen::MAX_X / 2;
 				int cy = Screen::MAX_Y / 2;
 
 				if (g_colorsEnabled) setTextColor(Screen::Color::Red);
-				gotoxy(cx - 15, cy - 2); std::cout << "ERROR: MISSING FILES";
+				gotoxy(cx - 15, cy - 2); std::cout << "ERROR: NO SCREEN FILES";
 				if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
 
-				gotoxy(cx - 20, cy);     std::cout << "Cannot find required map file: " << missingName;
-				gotoxy(cx - 20, cy + 2); std::cout << "Game cannot start.";
-				gotoxy(cx - 20, cy + 4); std::cout << "Press any key to return to menu...";
+				gotoxy(cx - 25, cy);     std::cout << "Missing files: adv-world*.screen";
+				gotoxy(cx - 25, cy + 2); std::cout << "Press any key to return to menu...";
+
 				while (true) {
 					if (stepsHandler->getInput(gameCycle) != 0) break;
 					gameCycle++;
-					if (!stepsHandler->isSilent()) Sleep(30);
+					if (!stepsHandler->isSilent()) {
+						Sleep(stepsHandler->isPlayback() ? 10 : 30);
+					}
 				}
 				break;
 			}
+
+			cls();
+			return true;
 		}
 		cls();
 		return true;
@@ -347,7 +402,7 @@ bool GameManger::showMenu() {
 
 		case MENU_OPT_SETTINGS:
 			while (true) {
-				drawSettingsMenu();
+				if (!stepsHandler->isSilent()) drawSettingsMenu();
 				int subChoice = NumbersInput();
 
 				if (subChoice == 1) {
@@ -379,129 +434,133 @@ bool GameManger::showMenu() {
 
 void GameManger::printMainMenu() const { // added const
 	// 1. Draw the global frame first
+	if (!stepsHandler->isSilent()) {
+		int cx = Screen::MAX_X / 2;
+		int cy = 6;
+		// 2. Title
+		if (g_colorsEnabled) setTextColor(Screen::Color::Cyan);
+		gotoxy(cx - 12, cy);     std::cout << "########################";
+		gotoxy(cx - 12, cy + 1); std::cout << "#      KeyBound        #";
+		gotoxy(cx - 12, cy + 2); std::cout << "########################";
 
-	int cx = Screen::MAX_X / 2;
-	int cy = 6;
-	// 2. Title
-	if (g_colorsEnabled) setTextColor(Screen::Color::Cyan);
-	gotoxy(cx - 12, cy);     std::cout << "########################";
-	gotoxy(cx - 12, cy + 1); std::cout << "#      KeyBound        #";
-	gotoxy(cx - 12, cy + 2); std::cout << "########################";
+		if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
 
-	if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
+		// 3. Options
+		int optX = cx - 10;
 
-	// 3. Options
-	int optX = cx - 10;
+		gotoxy(optX, cy + 5); std::cout << "1. Start a New Game";
+		gotoxy(optX, cy + 7); std::cout << "2. Load Game";
+		gotoxy(optX, cy + 9); std::cout << "3. Instructions (Rules)";
+		gotoxy(optX, cy + 11); std::cout << "4. Choose Color Mode";
+		gotoxy(optX, cy + 13); std::cout << "5. Controls Guide";
+		gotoxy(optX, cy + 16); std::cout << "9. Exit Game";
 
-	gotoxy(optX, cy + 5); std::cout << "1. Start a New Game";
-	gotoxy(optX, cy + 7); std::cout << "2. Load Game";
-	gotoxy(optX, cy + 9); std::cout << "3. Instructions (Rules)";
-	gotoxy(optX, cy + 11); std::cout << "4. Choose Color Mode";
-	gotoxy(optX, cy + 13); std::cout << "5. Controls Guide";
-	gotoxy(optX, cy + 16); std::cout << "9. Exit Game";
-
-	// 4. Footer
-	if (g_colorsEnabled) setTextColor(Screen::Color::DarkGray);
-	gotoxy(optX - 5, Screen::MAX_Y - 3);
-	std::cout << "Select an option using number keys...";
-	if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
+		// 4. Footer
+		if (g_colorsEnabled) setTextColor(Screen::Color::DarkGray);
+		gotoxy(optX - 5, Screen::MAX_Y - 3);
+		std::cout << "Select an option using number keys...";
+		if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
+	}
 }
 
 void GameManger::printInstructions() {
-
-	screen.loadFromFileToMap("menu.txt");
-	screen.draw();
-
-	int cx = Screen::MAX_X / 2;
-	int startY = 5;
-	int leftAlign = 15; // Indent from left border
-
-	if (g_colorsEnabled) setTextColor(Screen::Color::Yellow);
-	gotoxy(cx - 10, startY); std::cout << "=== INSTRUCTIONS ===";
-	if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
-
-	gotoxy(leftAlign, startY + 3); std::cout << "1. You control two players simultaneously.";
-	gotoxy(leftAlign, startY + 5); std::cout << "2. Navigate through the maze rooms.";
-	gotoxy(leftAlign, startY + 7); std::cout << "3. Collect KEYS to open DOORS.";
-	gotoxy(leftAlign, startY + 9); std::cout << "4. Solve Riddles (Simon Says & Math) to progress.";
-	gotoxy(leftAlign, startY + 11); std::cout << "5. Turn on Switches -> / To open doors with the number 8";
-	gotoxy(leftAlign, startY + 13); std::cout << "6. Watch out for traps -> ! <- you got 3 lives!";
-
-
-
-	gotoxy(leftAlign, Screen::MAX_Y - 3);
-	std::cout << "Press 1 to go to the next page or any key to go back...";
-	int choice = NumbersInput();
-	if (choice == 1) {
-		screen.loadFromFileToMap("SimonGuide.txt");
+	if (!stepsHandler->isSilent()) {
+		screen.loadFromFileToMap("menu.txt");
 		screen.draw();
-		int choice = NumbersInput();
-	}
 
+		int cx = Screen::MAX_X / 2;
+		int startY = 5;
+		int leftAlign = 15; // Indent from left border
+
+		if (g_colorsEnabled) setTextColor(Screen::Color::Yellow);
+		gotoxy(cx - 10, startY); std::cout << "=== INSTRUCTIONS ===";
+		if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
+
+		gotoxy(leftAlign, startY + 3); std::cout << "1. You control two players simultaneously.";
+		gotoxy(leftAlign, startY + 5); std::cout << "2. Navigate through the maze rooms.";
+		gotoxy(leftAlign, startY + 7); std::cout << "3. Collect KEYS to open DOORS.";
+		gotoxy(leftAlign, startY + 9); std::cout << "4. Solve Riddles (Simon Says & Math) to progress.";
+		gotoxy(leftAlign, startY + 11); std::cout << "5. Turn on Switches -> / To open doors with the number 8";
+		gotoxy(leftAlign, startY + 13); std::cout << "6. Watch out for traps -> ! <- you got 3 lives!";
+
+
+
+		gotoxy(leftAlign, Screen::MAX_Y - 3);
+		std::cout << "Press 1 to go to the next page or any key to go back...";
+		int choice = NumbersInput();
+		if (choice == 1) {
+			screen.loadFromFileToMap("SimonGuide.txt");
+			screen.draw();
+			int choice = NumbersInput();
+		}
+	}
 }
 
 void GameManger::printControls() {
+	if (!stepsHandler->isSilent()) {
+		screen.loadFromFileToMap("menu.txt");
+		screen.draw();
 
-	screen.loadFromFileToMap("menu.txt");
-	screen.draw();
-	// 1. Define Layout Coordinates
-	int cx = Screen::MAX_X / 2;
-	int col1 = 15; // X position for Player 1
-	int col2 = 45; // X position for Player 2
-	int row = 4;   // Starting Y position
+		// 1. Define Layout Coordinates
+		int cx = Screen::MAX_X / 2;
+		int col1 = 15; // X position for Player 1
+		int col2 = 45; // X position for Player 2
+		int row = 4;   // Starting Y position
 
-	// 2. Draw Title (Centered)
-	if (g_colorsEnabled) setTextColor(Screen::Color::Green);
-	gotoxy(cx - 9, row); std::cout << "=== CONTROLS GUIDE ===";
-	if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
+		// 2. Draw Title (Centered)
+		if (g_colorsEnabled) setTextColor(Screen::Color::Green);
+		gotoxy(cx - 9, row); std::cout << "=== CONTROLS GUIDE ===";
+		if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
 
-	row += 3; // Move down
+		row += 3; // Move down
 
-	// 3. Draw Column Headers
-	if (g_colorsEnabled) setTextColor(Screen::Color::Cyan);
-	gotoxy(col1, row); std::cout << "PLAYER 1 (Left):";
-	gotoxy(col2, row); std::cout << "PLAYER 2 (Right):";
-	if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
+		// 3. Draw Column Headers
+		if (g_colorsEnabled) setTextColor(Screen::Color::Cyan);
+		gotoxy(col1, row); std::cout << "PLAYER 1 (Left):";
+		gotoxy(col2, row); std::cout << "PLAYER 2 (Right):";
+		if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
 
-	row += 2; // Move down for keys
+		row += 2; // Move down for keys
 
-	// 4. Draw Keys (Row by Row for perfect alignment)
-	gotoxy(col1, row);   std::cout << "[W] Up";
-	gotoxy(col2, row++); std::cout << "[I] Up";
+		// 4. Draw Keys (Row by Row for perfect alignment)
+		gotoxy(col1, row);   std::cout << "[W] Up";
+		gotoxy(col2, row++); std::cout << "[I] Up";
 
-	gotoxy(col1, row);   std::cout << "[S] Down";
-	gotoxy(col2, row++); std::cout << "[K] Down";
+		gotoxy(col1, row);   std::cout << "[S] Down";
+		gotoxy(col2, row++); std::cout << "[K] Down";
 
-	gotoxy(col1, row);   std::cout << "[A] Left";
-	gotoxy(col2, row++); std::cout << "[J] Left";
+		gotoxy(col1, row);   std::cout << "[A] Left";
+		gotoxy(col2, row++); std::cout << "[J] Left";
 
-	gotoxy(col1, row);   std::cout << "[D] Right";
-	gotoxy(col2, row++); std::cout << "[L] Right";
+		gotoxy(col1, row);   std::cout << "[D] Right";
+		gotoxy(col2, row++); std::cout << "[L] Right";
 
-	gotoxy(col1, row);   std::cout << "[SPC] Stop Move";
-	gotoxy(col2, row++); std::cout << "[M]   Stop Move";
+		gotoxy(col1, row);   std::cout << "[SPC] Stop Move";
+		gotoxy(col2, row++); std::cout << "[M]   Stop Move";
 
-	gotoxy(col1, row);   std::cout << "[E] Drop Torch";
-	gotoxy(col2, row++); std::cout << "[O] Drop Torch";
+		gotoxy(col1, row);   std::cout << "[E] Drop Torch";
+		gotoxy(col2, row++); std::cout << "[O] Drop Torch";
 
-	// 5. General Section (Lower down)
-	row += 3;
-	if (g_colorsEnabled) setTextColor(Screen::Color::Yellow);
-	gotoxy(col1, row++); std::cout << "GENERAL:";
-	if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
+		// 5. General Section (Lower down)
+		row += 3;
+		if (g_colorsEnabled) setTextColor(Screen::Color::Yellow);
+		gotoxy(col1, row++); std::cout << "GENERAL:";
+		if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
 
-	gotoxy(col1, row);   std::cout << "[ESC] Pause / Exit Menu";
+		gotoxy(col1, row);   std::cout << "[ESC] Pause / Exit Menu";
 
-	// 6. Footer
-	if (g_colorsEnabled) setTextColor(Screen::Color::DarkGray);
-	gotoxy(col1, Screen::MAX_Y - 2);
-	std::cout << "Press any key to go back...";
-	if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
-
+		// 6. Footer
+		if (g_colorsEnabled) setTextColor(Screen::Color::DarkGray);
+		gotoxy(col1, Screen::MAX_Y - 2);
+		std::cout << "Press any key to go back...";
+		if (g_colorsEnabled) setTextColor(Screen::Color::LightGray);
+	}
 	while (true) {
 		if (stepsHandler->getInput(gameCycle) != 0) break;
 		gameCycle++;
-		if (!stepsHandler->isSilent()) Sleep(30);
+		if (!stepsHandler->isSilent()) {
+			Sleep(stepsHandler->isPlayback() ? 10 : 30);
+		}
 	}
 
 }
@@ -523,7 +582,7 @@ void GameManger::gameLoop()
 			if (rooms[currentRoom].dark) {
 				drawWithFog();
 			}
-			printStatsBar();
+			if (!stepsHandler->isSilent()) printStatsBar();
 			if (stepsHandler->isPlayback()) {
 				Sleep(20);
 			}
@@ -557,12 +616,14 @@ void GameManger::handleInput() {
 			if (cmd == 0) {
 				// Advance time to simulate waiting
 				gameCycle++;
-				if (!stepsHandler->isSilent()) Sleep(30);
+				if (!stepsHandler->isSilent()) {
+					Sleep(stepsHandler->isPlayback() ? 10 : 30);
+				}
 				continue;
 			}
 
 			if (cmd == 27) { // ESC -> Resume
-				printStatsBar();
+				if (!stepsHandler->isSilent()) printStatsBar();
 				break;
 			}
 			else if (cmd == 'h' || cmd == 'H') {
@@ -573,12 +634,12 @@ void GameManger::handleInput() {
 				askAndSaveGame();
 				if (rooms[currentRoom].dark) {
 					fogInitialized = false;
-					drawWithFog();
+					if (!stepsHandler->isSilent()) drawWithFog();
 				}
 				else {
-					screen.draw();
+					if (!stepsHandler->isSilent()) screen.draw();
 				}
-				printStatsBar();
+				if (!stepsHandler->isSilent()) printStatsBar();
 				break;
 			}
 		}
@@ -587,23 +648,23 @@ void GameManger::handleInput() {
 		// Handle Action Keys
 		if (key == P1_DROP_KEY || key == std::toupper(P1_DROP_KEY)) {
 			char type = ' ';
-			Point p = players[0].dropActiveItem(type);
+			Point p = players[0].dropActiveItem(type, stepsHandler->isSilent());
 
 			if (type == Screen::BOMB && p.getX() != -1) {
 				screen.setCell(p.getY(), p.getX(), Screen::BOMB_ACTIVE);
 				activeBombs.push_back({ p, 100 });
 			}
-			printStatsBar();
+			if (!stepsHandler->isSilent()) printStatsBar();
 		}
 		else if (key == P2_DROP_KEY || key == std::toupper(P2_DROP_KEY)) {
 			char type = ' ';
-			Point p = players[1].dropActiveItem(type);
+			Point p = players[1].dropActiveItem(type, stepsHandler->isSilent());
 
 			if (type == Screen::BOMB && p.getX() != -1) {
 				screen.setCell(p.getY(), p.getX(), Screen::BOMB_ACTIVE);
 				activeBombs.push_back({ p, 100 });
 			}
-			printStatsBar();
+			if (!stepsHandler->isSilent()) printStatsBar();
 		}
 		else {
 			// Pass movement keys to players
@@ -624,12 +685,12 @@ void GameManger::updatePlayers() {
 	for (auto& player : players) {
 		// 1. Move logic
 		if (!player.isFinished()) {
-			player.move(globalDoors, MAX_DOORS, currentRoom, (&player == &players[0]) ? &players[1] : &players[0], !rooms[currentRoom].dark);
+			player.move(globalDoors, currentRoom, (&player == &players[0]) ? &players[1] : &players[0], !rooms[currentRoom].dark, stepsHandler->isSilent());
 
 			// Check if HUD update is requested (e.g., key collected)
 			if (player.getHUD()) {
 				player.setHud(false);
-				printStatsBar();
+				if (!stepsHandler->isSilent()) printStatsBar();
 			}
 
 			if (!player.isFinished()) {
@@ -642,7 +703,7 @@ void GameManger::updatePlayers() {
 			// Stop movement
 			player.keyPressed(player.getstaybutton());
 			handleRiddle(player);
-			printStatsBar();
+			if (!stepsHandler->isSilent()) printStatsBar();
 		}
 		// 3. Trap Logic
 		if (player.getTrapState() == true) {
@@ -652,6 +713,7 @@ void GameManger::updatePlayers() {
 
 		// 4. Victory
 		if (player.hasWon()) {
+			stepsHandler->handleResult(gameCycle, Steps::ResultType::GameEnd, std::to_string(score));
 			won = true;
 			cls();      // Clear the maze
 
@@ -668,19 +730,20 @@ void GameManger::updatePlayers() {
 
 				for (const auto& fileName : frames) {
 					screen.loadFromFileToMap(fileName);
-					screen.draw();
+					if (!stepsHandler->isSilent()) screen.draw();
 
 
-					if (!stepsHandler->isSilent()) Sleep(200);
+					if (!stepsHandler->isSilent()) {
+						Sleep(stepsHandler->isPlayback() ? 50 : 200);
+					}
 				}
 			}
 
 
-			if (!stepsHandler->isSilent()) Sleep(2000);
+			if (!stepsHandler->isSilent()) {
+				Sleep(stepsHandler->isPlayback() ? 500 : 1500);
+			}
 		}
-
-
-
 
 	}
 
@@ -697,15 +760,15 @@ void GameManger::updatePlayers() {
 			destination = players[1].getTargetRoom();
 		}
 
-		if (destination >= 0 && destination < NUMBER_OF_ROOMS) {
+		if (destination >= 0 && destination < (int)rooms.size()) {
 			loadRoom(destination);
 			for (auto& player : players) {
 				player.resetLevelData();
 			}
 		}
 		else {
-			// Fallback: Restart Level 1
-			loadRoom(0);
+			// Fallback: stay in current room (don't teleport to level 1)
+			loadRoom(currentRoom);
 			for (auto& player : players) player.resetLevelData();
 		}
 	}
@@ -739,77 +802,38 @@ void GameManger::resetGame() {
 
 }
 
-void GameManger::initRooms()
-{
-	// 1. Get definitions
-	std::vector<LevelMetadata> levels = getLevelDefs();
+void GameManger::initRooms() {
+	rooms.clear();
 
-	// 2. SORT Lexicographically
-	// Order becomes: level1, level2, level3, level4, levelFinal
-	std::sort(levels.begin(), levels.end(), [](const LevelMetadata& a, const LevelMetadata& b) {
-		return a.filename < b.filename;
-		});
+	std::vector<std::string> files;
+	for (const auto& entry : fs::directory_iterator(".")) {
+		if (!entry.is_regular_file()) continue;
+		const std::string name = entry.path().filename().string();
+		if (name.rfind("adv-world", 0) == 0 && entry.path().extension() == ".screen") {
+			files.push_back(name);
+		}
+	}
 
-	// 3. Initialize Rooms from sorted data
-	for (size_t i = 0; i < levels.size() && i < NUMBER_OF_ROOMS; ++i) {
-		std::vector<Point> starts = { levels[i].spawnP1, levels[i].spawnP2 };
-		rooms[i] = Room(levels[i].filename, starts, levels[i].isDark);
+	std::sort(files.begin(), files.end());
+
+	if (files.empty()) {
+		// keep rooms empty; menu should show message when trying to start
+		return;
+	}
+
+	for (const auto& f : files) {
+		rooms.emplace_back(Room(f));
 	}
 }
 
 void GameManger::initDoors() {
-	// Format: { Position, ID, SourceRoom, TargetRoom, KeysCost, IsOpen }
-
-	// ==========================================
-	//          LEVEL 1 DOORS (The Hub)
-	// ==========================================
-
-	// Door 0: Goes to Level 2 (Location: Right Side)
-	globalDoors[0] = { initialDoorLocations[0], 0, 0, 1, 1, false };
-
-	// Door 1: Goes to Level 3 (Location: Top Side)
-	globalDoors[1] = { initialDoorLocations[1], 1, 0, 2, 1, false };
-
-	// Door 2: Goes to Final Level (Location: Bottom Side)
-	globalDoors[2] = { initialDoorLocations[2], 2, 0, 4, 7, false };
-
-	// Door 4: Switch Door Goes to level 3
-	globalDoors[4] = { initialDoorLocations[3], 4, 0, 3, 8, false };
-
-
-	// ==========================================
-	//              LEVEL 2 DOORS
-	// ==========================================
-
-	// Door 3: Back to Level 1 (Location: Right Side - SAME AS ENTERING)
-	globalDoors[3] = { initialDoorLocations[4], 3, 1, 0, 0, true }; // 0 cost, already open
-
-
-
-
-	// ==========================================
-	//              LEVEL 3 DOORS
-	// ==========================================
-
-	// Door 5: Back to Level 1 (Location: Top Side - SAME AS ENTERING)
-	globalDoors[5] = { initialDoorLocations[5], 5, 2, 0, 0, true }; // 0 cost, already open
-
-	// ==========================================
-		//              LEVEL 4 DOORS
-	// ==========================================
-
-		// Door 6: Back to Level 1 (Location: Upper part of Level 4)
-		// ID: 6
-		// Source Room: 4 (Level 4)
-		// Target Room: 0 (Level 1)
-		// Cost: 0 keys (Open)
-	globalDoors[6] = { initialDoorLocations[6], 6, 3, 0, 0, true };
+	globalDoors.clear();
 }
 
 void GameManger::loadRoom(int index)
 {
 	// 1. Save state of current room
-	if (currentRoom >= 0 && currentRoom < NUMBER_OF_ROOMS) {
+	if (currentRoom >= 0 && currentRoom < (int)rooms.size()) {
 		screen.saveScreenToRoom(rooms[currentRoom]);
 	}
 
@@ -822,15 +846,42 @@ void GameManger::loadRoom(int index)
 	else {
 		screen.loadFromFileToMap(rooms[currentRoom].mapFile);
 
-	}
+		extractMarkersFromScreen(screen, rooms[currentRoom]);
 
-	// 3. Render Doors
-	for (int i = 0; i < MAX_DOORS; ++i) {
-		if (globalDoors[i].sourceRoomIndex == currentRoom) {
-			int x = globalDoors[i].position.getX();
-			int y = globalDoors[i].position.getY();
-			// Show keys required (e.g., '1', '2') on the door tile
-			screen.setCell(y, x, '0' + globalDoors[i].KeysToOpen);
+		globalDoors.erase(
+			std::remove_if(globalDoors.begin(), globalDoors.end(),
+				[&](const Door& d) { return d.sourceRoomIndex == currentRoom; }),
+			globalDoors.end()
+		);
+
+		for (int y = 0; y <= Screen::MAX_Y; ++y) {
+			for (int x = 0; x <= Screen::MAX_X; ++x) {
+				char c = screen.getCharAt(y, x);
+				if (c >= '0' && c <= '9') {
+					Door d;
+					d.id = c - '0';
+					d.position = Point(x, y);
+					d.sourceRoomIndex = currentRoom;
+					d.targetRoomIndex = currentRoom; // will be overridden by @DOOR header
+					d.KeysToOpen = 0;
+					d.isOpen = false;
+					globalDoors.push_back(d);
+				}
+			}
+		}
+
+		applyDoorConfigFromFile(rooms[currentRoom].mapFile, globalDoors, currentRoom);
+
+		rooms[currentRoom].dark = false;
+		{
+			std::ifstream f(rooms[currentRoom].mapFile);
+			std::string line;
+			while (std::getline(f, line)) {
+				if (!line.empty() && line[0] != '@') break; // headers end
+				if (line.rfind("@DARK=", 0) == 0) {
+					rooms[currentRoom].dark = (line.size() >= 7 && line[6] == '1');
+				}
+			}
 		}
 	}
 
@@ -848,13 +899,13 @@ void GameManger::loadRoom(int index)
 
 	// 6. First draw for the new room
 	if (rooms[currentRoom].dark) {
-		drawWithFog();          // fog rendering for dark rooms
+		if (!stepsHandler->isSilent()) drawWithFog();          // fog rendering for dark rooms
 	}
 	else {
-		screen.draw();          // normal full draw for bright rooms
+		if (!stepsHandler->isSilent()) screen.draw();          // normal full draw for bright rooms
 	}
 	stepsHandler->handleResult(gameCycle, Steps::ResultType::ScreenChange, std::to_string(index));
-	printStatsBar();
+	if (!stepsHandler->isSilent()) printStatsBar();
 }
 
 // ===========================
@@ -901,16 +952,16 @@ void GameManger::handleRiddle(Player& player) {
 	if (rooms[currentRoom].dark) {
 		// Force a fresh fog draw after the riddle screen
 		fogInitialized = false;
-		drawWithFog();
+		if (!stepsHandler->isSilent()) drawWithFog();
 	}
 	else {
-		screen.draw();
+		if (!stepsHandler->isSilent()) screen.draw();
 
-		players[0].getPoint().draw(players[0].getChar());
-		players[1].getPoint().draw(players[1].getChar());
+		if (!stepsHandler->isSilent()) players[0].getPoint().draw(players[0].getChar());
+		if (!stepsHandler->isSilent()) players[1].getPoint().draw(players[1].getChar());
 	}
 
-	printStatsBar();
+	if (!stepsHandler->isSilent()) printStatsBar();
 
 	// Release player from riddle state
 	player.setInRiddle(false);
@@ -923,12 +974,18 @@ void GameManger::handleSimon(Riddle& riddle, Player& player)
 
 	// 1. Show Pattern
 	for (int idx : pattern) {
-		screen.drawSimon(-1); // Clear
-		if (!stepsHandler->isSilent()) Sleep(150);
-		screen.drawSimon(idx); // Flash
-		if (!stepsHandler->isSilent()) Sleep(flashDelayMs);
-		screen.drawSimon(-1); // Clear
-		if (!stepsHandler->isSilent()) Sleep(150);
+		if (!stepsHandler->isSilent()) screen.drawSimon(-1); // Clear
+		if (!stepsHandler->isSilent()) {
+			Sleep(stepsHandler->isPlayback() ? 50 : 150);
+		}
+		if (!stepsHandler->isSilent()) screen.drawSimon(idx); // Flash
+		if (!stepsHandler->isSilent()) {
+			Sleep(stepsHandler->isPlayback() ? 50 : 150);
+		}
+		if (!stepsHandler->isSilent()) screen.drawSimon(-1); // Clear
+		if (!stepsHandler->isSilent()) {
+			Sleep(stepsHandler->isPlayback() ? 50 : 150);
+		}
 	}
 
 	// This loop consumes any keystrokes stored while the pattern was 
@@ -943,14 +1000,16 @@ void GameManger::handleSimon(Riddle& riddle, Player& player)
 		int digit = NumbersInput();
 		int choiceIndex = digit - 1; // Map 1-4 to 0-3
 
-		screen.drawSimon(choiceIndex);
+		if (!stepsHandler->isSilent()) screen.drawSimon(choiceIndex);
 
 		if (choiceIndex != pattern[i]) {
 			// Failure
 			cls();
 			gotoxy(30, 12);
 			std::cout << "YOU FAILED!";
-			if (!stepsHandler->isSilent()) Sleep(700);
+			if (!stepsHandler->isSilent()) {
+				Sleep(stepsHandler->isPlayback() ? 250 : 1000);
+			}
 			return;
 		}
 	}
@@ -995,96 +1054,106 @@ void GameManger::handleMulti(Riddle& riddle, Player& player)
 		cls();
 		gotoxy(consoleWidth / 2 - 5, Screen::MAX_Y / 2);
 		std::cout << "YOU FAILED!";
-		if (!stepsHandler->isSilent()) Sleep(700);
+		if (!stepsHandler->isSilent()) {
+			Sleep(stepsHandler->isPlayback() ? 300 : 900);
+		}
 	}
 	else {
 		cls();
 		gotoxy(consoleWidth / 2 - 5, Screen::MAX_Y / 2);
 		increaseScore(10, "CORRECT ANSWER!");
-		if (!stepsHandler->isSilent()) Sleep(700);
+		if (!stepsHandler->isSilent()) {
+			Sleep(stepsHandler->isPlayback() ? 200 : 700);
+		}
 		// Note: You might want to add score here too
 	}
 }
 
 void GameManger::increaseScore(int points, const std::string& message)
 {
+
 	cls();
 	score += points;
+	if (!stepsHandler->isSilent()) {
+		// --- 1. Calculate Dimensions ---
+		int cx = Screen::MAX_X / 2;
+		int cy = Screen::MAX_Y / 2;
 
-	// --- 1. Calculate Dimensions ---
-	int cx = Screen::MAX_X / 2;
-	int cy = Screen::MAX_Y / 2;
+		std::string scoreLine = "SCORE + " + std::to_string(points);
 
-	std::string scoreLine = "SCORE + " + std::to_string(points);
+		// Determine the widest content (either the message or the score)
+		size_t contentLen = (std::max)(message.length(), scoreLine.length());
 
-	// Determine the widest content (either the message or the score)
-	size_t contentLen = (std::max)(message.length(), scoreLine.length());
+		// Ensure the box is at least 20 chars wide for aesthetics
+		int minWidth = 22;
+		int boxWidth = (std::max)((int)contentLen + 6, minWidth); // +6 for padding (3 spaces each side)
 
-	// Ensure the box is at least 20 chars wide for aesthetics
-	int minWidth = 22;
-	int boxWidth = (std::max)((int)contentLen + 6, minWidth); // +6 for padding (3 spaces each side)
+		// Calculate the top-left starting position to center the box
+		int startX = cx - (boxWidth / 2);
 
-	// Calculate the top-left starting position to center the box
-	int startX = cx - (boxWidth / 2);
+		// Create the border string dynamically
+		std::string border(boxWidth, '#');
 
-	// Create the border string dynamically
-	std::string border(boxWidth, '#');
+		// --- 2. Animation Loop ---
+		Screen::Color colors[] = { Screen::Color::Yellow, Screen::Color::LightGreen, Screen::Color::LightCyan };
 
-	// --- 2. Animation Loop ---
-	Screen::Color colors[] = { Screen::Color::Yellow, Screen::Color::LightGreen, Screen::Color::LightCyan };
+		for (int i = 0; i < 6; ++i) {
+			setTextColor(colors[i % 3]);
 
-	for (int i = 0; i < 6; ++i) {
-		setTextColor(colors[i % 3]);
+			// DRAW: Top Border
+			gotoxy(startX, cy - 2);
+			std::cout << border;
 
-		// DRAW: Top Border
-		gotoxy(startX, cy - 2);
-		std::cout << border;
+			// DRAW: Message Line
+			gotoxy(startX, cy - 1);
+			std::cout << "#";
 
-		// DRAW: Message Line
-		gotoxy(startX, cy - 1);
-		std::cout << "#";
+			// Calculate dynamic padding for Message
+			int totalSpacesMsg = boxWidth - 2 - (int)message.length();
+			int padLeftMsg = totalSpacesMsg / 2;
+			int padRightMsg = totalSpacesMsg - padLeftMsg; // Handles odd numbers safely
 
-		// Calculate dynamic padding for Message
-		int totalSpacesMsg = boxWidth - 2 - (int)message.length();
-		int padLeftMsg = totalSpacesMsg / 2;
-		int padRightMsg = totalSpacesMsg - padLeftMsg; // Handles odd numbers safely
+			// Print: [Spaces] + [Message] + [Spaces]
+			for (int k = 0; k < padLeftMsg; k++) std::cout << " ";
+			std::cout << message;
+			for (int k = 0; k < padRightMsg; k++) std::cout << " ";
+			std::cout << "#";
 
-		// Print: [Spaces] + [Message] + [Spaces]
-		for (int k = 0; k < padLeftMsg; k++) std::cout << " ";
-		std::cout << message;
-		for (int k = 0; k < padRightMsg; k++) std::cout << " ";
-		std::cout << "#";
+			// DRAW: Spacer Line (Empty middle row)
+			gotoxy(startX, cy);
+			std::cout << "#";
+			for (int k = 0; k < boxWidth - 2; k++) std::cout << " ";
+			std::cout << "#";
 
-		// DRAW: Spacer Line (Empty middle row)
-		gotoxy(startX, cy);
-		std::cout << "#";
-		for (int k = 0; k < boxWidth - 2; k++) std::cout << " ";
-		std::cout << "#";
+			// DRAW: Score Line
+			gotoxy(startX, cy + 1);
+			std::cout << "#";
 
-		// DRAW: Score Line
-		gotoxy(startX, cy + 1);
-		std::cout << "#";
+			// Calculate dynamic padding for Score
+			int totalSpacesScore = boxWidth - 2 - (int)scoreLine.length();
+			int padLeftScore = totalSpacesScore / 2;
+			int padRightScore = totalSpacesScore - padLeftScore;
 
-		// Calculate dynamic padding for Score
-		int totalSpacesScore = boxWidth - 2 - (int)scoreLine.length();
-		int padLeftScore = totalSpacesScore / 2;
-		int padRightScore = totalSpacesScore - padLeftScore;
+			for (int k = 0; k < padLeftScore; k++) std::cout << " ";
+			std::cout << scoreLine;
+			for (int k = 0; k < padRightScore; k++) std::cout << " ";
+			std::cout << "#";
 
-		for (int k = 0; k < padLeftScore; k++) std::cout << " ";
-		std::cout << scoreLine;
-		for (int k = 0; k < padRightScore; k++) std::cout << " ";
-		std::cout << "#";
+			// DRAW: Bottom Border
+			gotoxy(startX, cy + 2);
+			std::cout << border;
 
-		// DRAW: Bottom Border
-		gotoxy(startX, cy + 2);
-		std::cout << border;
+			if (i < 3) Beep(400 + (i * 100), 50);
 
-		if (i < 3) Beep(400 + (i * 100), 50);
-		if (!stepsHandler->isSilent()) Sleep(150);
+			Sleep(stepsHandler->isPlayback() ? 50 : 150);
+
+		}
+
+		setTextColor(Screen::Color::LightGray);
+
+		Sleep(stepsHandler->isPlayback() ? 200 : 600);
+
 	}
-
-	setTextColor(Screen::Color::LightGray);
-	if (!stepsHandler->isSilent()) Sleep(500);
 }
 
 int GameManger::NumbersInput() {
@@ -1097,11 +1166,14 @@ int GameManger::NumbersInput() {
 
 
 		gameCycle++;
-		if (!stepsHandler->isSilent()) Sleep(30);
+		if (!stepsHandler->isSilent()) {
+			Sleep(stepsHandler->isPlayback() ? 5 : 30);
+		}
 	}
 }
 
 void GameManger::printStatsBar() const { // added const
+
 	int p1Keys = players[0].getKeyCount();
 	int p2Keys = players[1].getKeyCount();
 
@@ -1114,7 +1186,14 @@ void GameManger::printStatsBar() const { // added const
 	std::string inv2 = "P2:";
 	if (players[1].hasTorch()) inv2 += " [T]";
 	if (players[1].hasBomb())  inv2 += " [B]";
-	gotoxy(0, 0);
+
+	int lx = 0, ly = 0;
+	if (currentRoom >= 0 && currentRoom < (int)rooms.size() && rooms[currentRoom].hasLegend) {
+		lx = rooms[currentRoom].legendPos.getX();
+		ly = rooms[currentRoom].legendPos.getY();
+	}
+	gotoxy(lx, ly);
+
 	setTextColor(Screen::Color::Cyan);
 
 	std::cout << "LEVEL: " << (currentRoom + 1)
@@ -1185,11 +1264,12 @@ void GameManger::updateBombs() {
 				? Screen::Color::Red
 				: Screen::Color::DarkGray;
 
-			gotoxy(it->position.getX(), it->position.getY());
-			setTextColor(displayColor);
-			std::cout << Screen::BOMB; // Draw 'B'
-			setTextColor(Screen::Color::LightGray);
-
+			if (!stepsHandler->isSilent()) {
+				gotoxy(it->position.getX(), it->position.getY());
+				setTextColor(displayColor);
+				std::cout << Screen::BOMB; // Draw 'B'
+				setTextColor(Screen::Color::LightGray);
+			}
 			// 2. Decrement Fuse
 			it->timer--;
 
@@ -1207,7 +1287,7 @@ void GameManger::updateBombs() {
 		// STATE: ANIMATION SEQUENCES
 		// ===========================
 		else if (it->state == BombState::IGNITION) {
-			drawExplosionFrame(it->position, 1); // Draw White Center
+			if (!stepsHandler->isSilent()) drawExplosionFrame(it->position, 1); // Draw White Center
 			it->timer--;
 			if (it->timer <= 0) {
 				it->state = BombState::EXPANSION;
@@ -1217,7 +1297,7 @@ void GameManger::updateBombs() {
 			++it;
 		}
 		else if (it->state == BombState::EXPANSION) {
-			drawExplosionFrame(it->position, 2); // Draw Red Box
+			if (!stepsHandler->isSilent()) drawExplosionFrame(it->position, 2); // Draw Red Box
 			it->timer--;
 			if (it->timer <= 0) {
 				it->state = BombState::HEAT;
@@ -1226,7 +1306,7 @@ void GameManger::updateBombs() {
 			++it;
 		}
 		else if (it->state == BombState::HEAT) {
-			drawExplosionFrame(it->position, 3); // Draw Yellow Box
+			if (!stepsHandler->isSilent()) drawExplosionFrame(it->position, 3); // Draw Yellow Box
 			it->timer--;
 			if (it->timer <= 0) {
 				// Animation done, perform actual destruction logic
@@ -1245,55 +1325,57 @@ void GameManger::updateBombs() {
 	}
 }
 
-void GameManger::drawExplosionFrame(const Point& center, int stage) const { // added const
-	int cx = center.getX();
-	int cy = center.getY();
+void GameManger::drawExplosionFrame(const Point& center, int stage) const {
+	if (!stepsHandler->isSilent()) {
+		int cx = center.getX();
+		int cy = center.getY();
 
-	// 1. Setup Style
-	char drawChar = ' ';
-	Screen::Color color = Screen::Color::LightGray;
+		// 1. Setup Style
+		char drawChar = ' ';
+		Screen::Color color = Screen::Color::LightGray;
 
-	if (stage == 1) {      // IGNITION
-		drawChar = static_cast<char>(Screen::BlockType::FullBlock);
-		color = Screen::Color::White;
-	}
-	else if (stage == 2) { // EXPANSION
-		drawChar = static_cast<char>(Screen::BlockType::MediumBlock);
-		color = Screen::Color::Red;
-	}
-	else if (stage == 3) { // HEAT
-		drawChar = static_cast<char>(Screen::BlockType::LightBlock);
-		color = Screen::Color::Yellow;
-	}
+		if (stage == 1) {      // IGNITION
+			drawChar = static_cast<char>(Screen::BlockType::FullBlock);
+			color = Screen::Color::White;
+		}
+		else if (stage == 2) { // EXPANSION
+			drawChar = static_cast<char>(Screen::BlockType::MediumBlock);
+			color = Screen::Color::Red;
+		}
+		else if (stage == 3) { // HEAT
+			drawChar = static_cast<char>(Screen::BlockType::LightBlock);
+			color = Screen::Color::Yellow;
+		}
 
-	setTextColor(color);
+		setTextColor(color);
 
-	// 2. Draw
-	if (stage == 1) {
-		gotoxy(cx, cy);
-		std::cout << drawChar;
-	}
-	else {
-		// Stages 2 & 3 (5x5 box)
-		for (int y = cy - 2; y <= cy + 2; ++y) {
-			for (int x = cx - 4; x <= cx + 4; ++x) {
-				// Bounds Check
-				if (y < 0 || y > Screen::MAX_Y || x < 0 || x > Screen::MAX_X) continue;
+		// 2. Draw
+		if (stage == 1) {
+			gotoxy(cx, cy);
+			std::cout << drawChar;
+		}
+		else {
+			// Stages 2 & 3 (5x5 box)
+			for (int y = cy - 2; y <= cy + 2; ++y) {
+				for (int x = cx - 4; x <= cx + 4; ++x) {
+					// Bounds Check
+					if (y < 0 || y > Screen::MAX_Y || x < 0 || x > Screen::MAX_X) continue;
 
-				Point target(x, y);
+					Point target(x, y);
 
-				// Don't draw ON walls
-				if (screen.isWall(target) || screen.isDoor(target) || screen.isSwitchOn(target) || screen.isSwitchOff(target))continue;
+					// Don't draw ON walls
+					if (screen.isWall(target) || screen.isDoor(target) || screen.isSwitchOn(target) || screen.isSwitchOff(target))continue;
 
-				// SHARED LOGIC: Only draw if we have Line of Sight
-				if (hasClearPath(center, target)) {
-					gotoxy(x, y);
-					std::cout << drawChar;
+					// SHARED LOGIC: Only draw if we have Line of Sight
+					if (hasClearPath(center, target)) {
+						gotoxy(x, y);
+						std::cout << drawChar;
+					}
 				}
 			}
 		}
+		setTextColor(Screen::Color::LightGray);
 	}
-	setTextColor(Screen::Color::LightGray);
 }
 
 bool GameManger::hasClearPath(const Point& start, const Point& target) const {
@@ -1336,7 +1418,7 @@ void GameManger::explodeBomb(const Point& center) {
 	screen.setCell(cy, cx, ' ');
 
 	// 2. Cleanup Visuals (optional, just to be safe)
-	drawExplosionFrame(center, 0); // Assuming 0 or a clear helper clears it, 
+	if (!stepsHandler->isSilent()) drawExplosionFrame(center, 0); // Assuming 0 or a clear helper clears it, 
 	// or relies on the next frame redraw.
 
 // 3. Radius Logic (Items/Objects)
@@ -1359,7 +1441,7 @@ void GameManger::explodeBomb(const Point& center) {
 
 				screen.setCell(y, x, ' ');
 				// Visual update for the map data (not the animation)
-				Point(x, y).draw(' ');
+				if (!stepsHandler->isSilent()) Point(x, y).draw(' ');
 			}
 
 			// Handle Player Damage
@@ -1371,7 +1453,7 @@ void GameManger::explodeBomb(const Point& center) {
 					// Decrease health
 					Health--;
 					hit = true;
-					printStatsBar();
+					if (!stepsHandler->isSilent()) printStatsBar();
 					stepsHandler->handleResult(gameCycle, Steps::ResultType::LifeLost, std::to_string(Health));
 				}
 			}
@@ -1383,7 +1465,6 @@ void GameManger::explodeBomb(const Point& center) {
 		cls();
 		gotoxy(Screen::MAX_X / 2 - 5, Screen::MAX_Y / 2);
 		std::cout << "GAME OVER!";
-		if (!stepsHandler->isSilent()) Sleep(1500);
 		running = false;
 		won = false;
 		stepsHandler->handleResult(gameCycle, Steps::ResultType::GameEnd, std::to_string(score));
@@ -1421,7 +1502,9 @@ void GameManger::askAndSaveGame() {
 
 	gotoxy(Screen::MAX_X / 2 - 15, Screen::MAX_Y / 2 + 2);
 	std::cout << "Game Saved Successfully!";
-	if (!stepsHandler->isSilent()) Sleep(1000);
+	if (!stepsHandler->isSilent()) {
+		Sleep(stepsHandler->isPlayback() ? 250 : 1000);
+	}
 }
 
 void GameManger::saveGame(const std::string& filename) {
@@ -1429,7 +1512,7 @@ void GameManger::saveGame(const std::string& filename) {
 	if (!file) return;
 
 	// 1. Commit current room screen to memory before saving
-	if (currentRoom >= 0 && currentRoom < NUMBER_OF_ROOMS) {
+	if (currentRoom >= 0 && currentRoom < (int)rooms.size()) {
 		screen.saveScreenToRoom(rooms[currentRoom]);
 	}
 
@@ -1452,14 +1535,14 @@ void GameManger::saveGame(const std::string& filename) {
 	}
 
 	// 4. Doors
-	file << MAX_DOORS << "\n";
-	for (int i = 0; i < MAX_DOORS; ++i) {
+	file << (int)globalDoors.size() << "\n";
+	for (int i = 0; i < (int)globalDoors.size(); ++i) {
 		file << globalDoors[i].isOpen << "\n";
 	}
 
 	// 5. Rooms (Map state)
-	file << NUMBER_OF_ROOMS << "\n";
-	for (int i = 0; i < NUMBER_OF_ROOMS; ++i) {
+	file << (int)rooms.size() << "\n";
+	for (int i = 0; i < (int)rooms.size(); ++i) {
 		file << rooms[i].isVisited << "\n";
 		if (rooms[i].isVisited) {
 			size_t rows = rooms[i].savedMapState.size();
@@ -1491,7 +1574,9 @@ void GameManger::showLoadGameMenu() {
 
 	if (saves.empty()) {
 		gotoxy(cx - 15, cy + 2); std::cout << "No save files found!";
-		if (!stepsHandler->isSilent()) Sleep(1400);
+		if (!stepsHandler->isSilent()) {
+			Sleep(stepsHandler->isPlayback() ? 600 : 1400);
+		}
 		return;
 	}
 
@@ -1512,29 +1597,33 @@ void GameManger::showLoadGameMenu() {
 		std::string selectedFile = saves[choice - 1];
 		if (loadGame(selectedFile)) {
 			gotoxy(cx - 10, row + 3); std::cout << "Loaded!";
-			if (!stepsHandler->isSilent()) Sleep(1000);
+			if (!stepsHandler->isSilent()) {
+				Sleep(stepsHandler->isPlayback() ? 250 : 1000);
+			}
 
 			// Redraw the screen to wipe the "Loaded!" message
 			if (rooms[currentRoom].dark) {
 				// If the room is dark, reset fog logic and redraw
 				fogInitialized = false;
-				drawWithFog();
+				if (!stepsHandler->isSilent()) drawWithFog();
 			}
 			else {
 				// If the room is light, redraw the map
-				screen.draw();
+				if (!stepsHandler->isSilent()) screen.draw();
 				// Draw players immediately so they don't flicker in
 				for (const auto& p : players) {
-					p.getPoint().draw(p.getChar());
+					if (!stepsHandler->isSilent()) p.getPoint().draw(p.getChar());
 				}
 			}
 			// Restore the HUD
-			printStatsBar();
+			if (!stepsHandler->isSilent()) printStatsBar();
 
 		}
 		else {
 			gotoxy(cx - 10, row + 3); std::cout << "Failed to load!";
-			if (!stepsHandler->isSilent()) Sleep(1000);
+			if (!stepsHandler->isSilent()) {
+				Sleep(stepsHandler->isPlayback() ? 250 : 1000);
+			}
 		}
 	}
 }
@@ -1595,14 +1684,19 @@ bool GameManger::loadGame(const std::string& filename) {
 	}
 
 	// ===========================
-	// 3. Read Doors
+	// 3. Read Doors (only open/closed flags)
 	// ===========================
-	int maxDoorsFromFile;
-	file >> maxDoorsFromFile;
-	for (int i = 0; i < MAX_DOORS; ++i) {
-		bool isOpen;
+	int doorsCountFromFile = 0;
+	file >> doorsCountFromFile;
+
+	std::vector<bool> doorOpenFlags;
+	doorOpenFlags.resize(doorsCountFromFile);
+	// We'll restore door open/close AFTER loadRoom() rebuilds doors from the screen
+
+	for (int i = 0; i < doorsCountFromFile; ++i) {
+		bool isOpen = false;
 		file >> isOpen;
-		globalDoors[i].isOpen = isOpen;
+		doorOpenFlags[i] = isOpen;
 	}
 
 	// ===========================
@@ -1611,8 +1705,8 @@ bool GameManger::loadGame(const std::string& filename) {
 	int numRoomsFromFile;
 	file >> numRoomsFromFile;
 
-	// Protect against mismatch if NUMBER_OF_ROOMS changed
-	int loopLimit = (numRoomsFromFile < NUMBER_OF_ROOMS) ? numRoomsFromFile : NUMBER_OF_ROOMS;
+	// Protect against mismatch if (int)rooms.size() changed
+	int loopLimit = (numRoomsFromFile < (int)rooms.size()) ? numRoomsFromFile : (int)rooms.size();
 
 	for (int i = 0; i < loopLimit; ++i) {
 		bool isVisited;
@@ -1642,6 +1736,11 @@ bool GameManger::loadGame(const std::string& filename) {
 	// Now call loadRoom. Because currentRoom is -1, it won't save over our data.
 	// It will simply load the map for 'loadedRoomIndex'.
 	loadRoom(loadedRoomIndex);
+
+	// Restore door open/closed flags (best-effort by index)
+	for (int i = 0; i < (int)globalDoors.size() && i < (int)doorOpenFlags.size(); ++i) {
+		globalDoors[i].isOpen = doorOpenFlags[i];
+	}
 
 	// Finally, overwrite the default spawn positions with our saved player data.
 	for (int i = 0; i < NUMBER_OF_PLAYERS; ++i) {

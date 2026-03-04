@@ -13,13 +13,18 @@ private:
     //       Private Data
     // ===========================
 
+    
+public:
     std::string mapFile;                // The initial template file (e.g., "level1.txt")
     std::vector<std::string> savedMapState; // Saves the map state (removed keys, open doors) when leaving
     std::vector<Point> startPositions;  // Spawn points for P1 and P2
     bool dark = false;                  // Is this a "fog of war" level?
     bool isVisited = false;             // Have we been here before?
 
-public:
+    Point legendPos = Point(0, 0);   // where 'L' was found
+    bool hasLegend = false;
+
+
     // ===========================
     //       Constructors
     // ===========================
@@ -27,8 +32,8 @@ public:
     Room() = default;
 
     // Constructor used in GameManger::initRooms
-    Room(const std::string& file, const std::vector<Point>& starts, bool isDark)
-        : mapFile(file), startPositions(starts), dark(isDark), isVisited(false)
+    Room(const std::string& file)
+        : mapFile(file), isVisited(false)
     {
     }
 

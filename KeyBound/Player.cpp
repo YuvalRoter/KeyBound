@@ -1,4 +1,4 @@
- #include <cstdlib>
+#include <cstdlib>
 #include <cctype>
 #include <vector>
 #include <iostream>
@@ -37,7 +37,7 @@ namespace {
 // Collect only the obstacle "slice" along the push axis:
 // - pushing LEFT/RIGHT -> contiguous obstacles in the same ROW
 // - pushing UP/DOWN    -> contiguous obstacles in the same COLUMN
-    
+
     int sgn(int v) { return (v > 0) - (v < 0); }
 
     // Collect only the obstacle "slice" along the push axis, based on actual screen delta (dx,dy)
@@ -125,7 +125,7 @@ int Player::AmountOfSwitches = 0;
 // ===========================
 //      Movement Logic
 // ===========================
-void Player::move(Door* doors, int maxDoors, int currentRoomIndex, Player* otherPlayer, bool redrawMapNow) {
+void Player::move(std::vector<Door>& doors, int currentRoomIndex, Player* otherPlayer, bool redrawMapNow, bool isSilent) {
 
     // ===========================
      // 1. Visual Cleanup
@@ -133,16 +133,16 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex, Player* other
      // We look at the map to see what we are currently standing on.
      // This handles Springs, Switches, and Empty Tiles automatically.
     char objectUnderPlayer = screen.getCharAt(body.getY(), body.getX());
-
-    // If the map data says "Player" is here, we treat it as empty floor underneath.
-    if (objectUnderPlayer == Screen::PLAYER1 || objectUnderPlayer == Screen::PLAYER2) {
-        body.draw(EMPTY_TILE);
+    if (!isSilent) {
+        // If the map data says "Player" is here, we treat it as empty floor underneath.
+        if (objectUnderPlayer == Screen::PLAYER1 || objectUnderPlayer == Screen::PLAYER2) {
+            body.draw(EMPTY_TILE);
+        }
+        else {
+            // Restore the object (Switch ON/OFF, Spring, etc.)
+            body.draw(objectUnderPlayer);
+        }
     }
-    else {
-        // Restore the object (Switch ON/OFF, Spring, etc.)
-        body.draw(objectUnderPlayer);
-    }
-
     // 2. Handle Spring Physics (Launch State)
     if (isLaunched) {
         if (launchTimer > 0) {
@@ -266,7 +266,8 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex, Player* other
                 totalForce >= requiredForce &&
                 canPushObstacle(screen, obstacleCells, pushDx, pushDy)) {
 
-                pushObstacleOneStep(screen, obstacleCells, pushDx, pushDy, redrawMapNow);
+                // FIX: Guard obstacle drawing in silent mode
+                pushObstacleOneStep(screen, obstacleCells, pushDx, pushDy, redrawMapNow && !isSilent);
 
                 // Move player into the obstacle's previous tile
                 body = next_pos;
@@ -278,7 +279,7 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex, Player* other
             }
         }
 
-        
+
 
 
         // 2. Spring Interaction
@@ -300,57 +301,46 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex, Player* other
 
         // 3. Door Interaction
         if (screen.isDoor(next_pos)) {
-            bool doorHandled = false;
 
-            for (int k = 0; k < maxDoors; ++k) {
-                // Optimization: Only check doors in this room
-                if (doors[k].sourceRoomIndex == currentRoomIndex) {
-                    if (doors[k].position == next_pos) {
+            for (auto& d : doors) {
+                if (d.sourceRoomIndex != currentRoomIndex) continue;
+                if (!(d.position == next_pos)) continue;
 
-                        // Case: Door Open -> Exit
-                        if (doors[k].isOpen) {
-                            finishedLevel = true;
-                            targetRoomIndex = doors[k].targetRoomIndex;
-                            doorHandled = true;
-                        }
-                        // Case: Switchs on?   
-                        // 8 - indicator for switch door
-                        if (doors[k].KeysToOpen == SWITCH_ID)
-                        {
-                            // Only open if the switch count matches the target
-                            if (AmountOfSwitches >= SwitchsToTurn)
-                            {
-                                doors[k].isOpen = true;
-                                finishedLevel = true;
-                                targetRoomIndex = doors[k].targetRoomIndex;
-                                doorHandled = true;
-                            }
-                            else
-                            {
-                                // Switch count not met; door remains closed (collision happens)
-                                doorHandled = true;
-                            }
-                        }
-                        // If not a switch door, try standard key opening
-                        else if (tryToOpenDoor(doors[k].KeysToOpen))
-                        {
-                            doors[k].isOpen = true;
-                            finishedLevel = true;
-                            targetRoomIndex = doors[k].targetRoomIndex;
-                            doorHandled = true;
-                        }
-                        // Door is locked and we have no keys
-                        else
-                        {
-                            doorHandled = true;
-                        }
-                        break;
+                // If door already open
+                if (d.isOpen) {
+                    finishedLevel = true;
+                    targetRoomIndex = d.targetRoomIndex;
+                    return;
+                }
+
+                // Require switches (if any)
+                bool switchesOk = (d.switchesRequired == 0) ||
+                    (AmountOfSwitches >= d.switchesRequired);
+
+                // Require keys (if any) - ONLY consume keys if switchesOk
+                bool keysOk = true;
+                if (d.KeysToOpen > 0) {
+                    if (switchesOk) {
+                        keysOk = tryToOpenDoor(d.KeysToOpen); // consumes keys from heldKeys
+                    }
+                    else {
+                        keysOk = false;
                     }
                 }
+
+                // Open only if both conditions satisfied
+                if (switchesOk && keysOk) {
+                    d.isOpen = true;
+                    finishedLevel = true;
+                    targetRoomIndex = d.targetRoomIndex;
+                }
+
+                return; // door found and handled
             }
-            // Whether we opened it or hit it locked, we stop moving (it's solid)
-            return;
+
+            return; // on a door tile, but no matching Door object found
         }
+
 
         // 4. Riddle Interaction
         if (screen.isRiddle(next_pos)) {
@@ -361,8 +351,8 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex, Player* other
 
             // Save state and trigger Riddle Mode
             screen.saveBackup();
-            screen.loadFromFileToMap("riddle1.txt"); 
-            screen.draw();
+            screen.loadFromFileToMap("riddle1.txt");
+            if (!isSilent) screen.draw();
 
             setInRiddle(true);
             return;
@@ -395,7 +385,7 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex, Player* other
             setHud(true);
         }
         // 7. Victory Pickup
-        if (screen.isWonChar(next_pos)){
+        if (screen.isWonChar(next_pos)) {
             setWin(true);
 
         }
@@ -411,21 +401,21 @@ void Player::move(Door* doors, int maxDoors, int currentRoomIndex, Player* other
             AmountOfSwitches--;
         }
         // 9. Trap Logic
-        if (screen.isTrap(next_pos)){
+        if (screen.isTrap(next_pos)) {
             screen.setCell(next_pos.getY(), next_pos.getX(), Screen::BOMB_ACTIVE);
             trapLocation = next_pos;
             TrapActive = true;
         }
-       
+
 
         // --- D. Commit Move ---
         body = next_pos;
     }
-   
 
-    // Render
-    body.draw();
-
+    if (!isSilent) {
+        // Render
+        body.draw();
+    }
     // Reset Speed (if launch ended during this frame)
     if (!isLaunched && PlayerSpeed > DEFAULT_SPEED) {
         PlayerSpeed = DEFAULT_SPEED;
@@ -493,7 +483,7 @@ bool Player::tryToOpenDoor(int requiredKeys) {
     return false;
 }
 
-Point Player::dropActiveItem(char& droppedType) {
+Point Player::dropActiveItem(char& droppedType, bool isSilent) {
     droppedType = ' ';
 
     // 1. Check Inventory
@@ -529,7 +519,11 @@ Point Player::dropActiveItem(char& droppedType) {
     // 3. Drop the item
     if (targetX != -1) {
         screen.setCell(targetY, targetX, droppedType);
-        Point(targetX, targetY, droppedType).draw();
+
+        // FIX: Guard drawing in silent mode
+        if (!isSilent) {
+            Point(targetX, targetY, droppedType).draw();
+        }
 
         if (droppedType == Screen::TORCH) hasTorchFlag = false;
         if (droppedType == Screen::BOMB) hasBombFlag = false;

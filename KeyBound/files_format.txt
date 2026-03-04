@@ -1,0 +1,29 @@
+Format Description for KeyBound Game Recording
+
+1. Steps File (adv-world.steps)
+--------------------------------
+Stores the initial configuration and the sequence of user inputs.
+
+Line 1: <RandomSeed> (unsigned int)
+        - Ensures deterministic behavior for random events (Riddles, Simon Says).
+Line 2: <MapFileCount> <MapFile1> <MapFile2> ...
+        - The number of map files followed by their names, ensuring the game loads the correct levels.
+Subsequent Lines: <Time> <InputChar>
+        - Time: The game cycle number (long) when the key was pressed.
+        - InputChar: The ASCII integer value of the key pressed.
+
+2. Results File (adv-world.result)
+----------------------------------
+Stores expected game events for validation during playback.
+
+Line 1: <EventCount> (size_t)
+        - Total number of recorded events.
+Subsequent Lines: <Time> <Type> <Data>
+        - Time: The game cycle number (long) when the event occurred.
+        - Type: Integer representing the event type:
+            0 = ScreenChange (Player moved to a new room)
+            1 = LifeLost (Player was hit by a bomb/mine)
+            2 = Riddle (Riddle encountered)
+            3 = GameEnd (Victory or Game Over)
+            4 = BombTick (Internal bomb state, if tracked)
+        - Data: A string providing details (e.g., the room index moved to, or the final score).

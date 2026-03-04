@@ -13,31 +13,44 @@
 bool Screen::loadFromFileToMap(const std::string& filename)
 {
     std::ifstream file;
-
-    // "map" is the description for error logging in utils
     if (!openFileForRead(filename, file, "map"))
         return false;
 
-    std::string line;
-
+    // Clear buffer (optional but safe)
     for (int y = 0; y <= MAX_Y; ++y) {
-        if (!std::getline(file, line)) {
-            line = ""; // Handle empty or short files gracefully
-        }
-
         for (int x = 0; x <= MAX_X; ++x) {
-            if (x < line.length()) {
-                screen[y][x] = line[x];
-            }
-            else {
-                screen[y][x] = ' '; // Pad with spaces
-            }
+            screen[y][x] = ' ';
         }
-        // Ensure null termination for C-string compatibility
         screen[y][MAX_X + 1] = '\0';
     }
 
-    return true;
+    std::string line;
+    int y = 0;
+
+    while (y <= MAX_Y && std::getline(file, line)) {
+
+        // Skip header lines
+        if (!line.empty() && line[0] == '@') {
+            continue;
+        }
+
+        // Make sure the line is exactly 80 chars (MAX_X+1)
+        if ((int)line.size() < MAX_X + 1) {
+            line += std::string((MAX_X + 1) - line.size(), ' ');
+        }
+        else if ((int)line.size() > MAX_X + 1) {
+            line = line.substr(0, MAX_X + 1);
+        }
+
+        for (int x = 0; x <= MAX_X; ++x) {
+            screen[y][x] = line[x];
+        }
+
+        screen[y][MAX_X + 1] = '\0';
+        ++y;
+    }
+
+    return (y == MAX_Y + 1);
 }
 
 // ===========================

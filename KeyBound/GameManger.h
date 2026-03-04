@@ -21,7 +21,6 @@ private:
     // ===========================
     static constexpr char ESC = 27;
     static constexpr std::size_t NUMBER_OF_PLAYERS = 2;
-    static constexpr std::size_t NUMBER_OF_ROOMS = 5;
     static const int MAX_DOORS = 7;
     static const int MAX_QUESTIONS = 100;
 
@@ -43,9 +42,9 @@ private:
 
     // Arrays of objects
     Player players[NUMBER_OF_PLAYERS];
-    Room rooms[NUMBER_OF_ROOMS];
-    Door globalDoors[MAX_DOORS];
     Question questions[MAX_QUESTIONS];
+    std::vector<Room> rooms;        // dynamic rooms
+    std::vector<Door> globalDoors;  // dynamic doors
 
     // ===========================
     //       Fog-of-War State

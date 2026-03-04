@@ -2,11 +2,12 @@
 
 #include "Point.h"
 #include "Screen.h"
+#include "Door.h"
 #include "Direction.h"
-#include <vector>;
+#include <vector>
 
 
- 
+
 class Door;
 
 class Player {
@@ -109,9 +110,9 @@ public:
     }
     void setRoom(int room) { ourRoomIndex = room; }
     void setHud(bool b) { HUD_changes = b; }
-    void setInRiddle(bool state) { inRiddleMode = state;}
+    void setInRiddle(bool state) { inRiddleMode = state; }
     void setWin(bool wins) { won = wins; }
-    void setBomb(bool v) { hasBombFlag = v; }  
+    void setBomb(bool v) { hasBombFlag = v; }
     void setTrapState(bool s) { TrapActive = s; }
 
     // Actions
@@ -126,11 +127,10 @@ public:
         finishedLevel = false;
         targetRoomIndex = -1;
     }
-    Point dropActiveItem(char& droppedType);
-    void move(Door* doors, int maxDoors, int currentRoomIndex, Player* otherPlayer = nullptr, bool redrawMapNow = true);
-
+    Point dropActiveItem(char& droppedType, bool isSilent);
+    void move(std::vector<Door>& doors, int currentRoomIndex, Player* otherPlayer, bool redrawMapNow, bool isSilent);
 
     void startSpringLaunch();
     void keyPressed(char ch);
     bool tryToOpenDoor(int requiredKeys);
-}; 
+};
